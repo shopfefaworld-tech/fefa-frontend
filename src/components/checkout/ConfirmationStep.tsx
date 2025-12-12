@@ -83,6 +83,15 @@ export default function ConfirmationStep() {
     }
   }, [order, razorpayLoaded, paymentInitiated, paymentSuccess]);
 
+  const handlePayment = () => {
+    setPaymentInitiated(false);
+    setIsProcessingPayment(false);
+    // Reset and retry payment
+    setTimeout(() => {
+      handleRazorpayPayment();
+    }, 100);
+  };
+
   const handleRazorpayPayment = async () => {
     if (!order || !razorpayLoaded || !window.Razorpay || paymentInitiated) {
       return;
