@@ -193,41 +193,35 @@ class DataService {
     }
   }
 
-  // Get all data at once with sequential loading to prevent rate limiting
+  // Get all data at once - optimized for parallel loading
   async getAllData() {
     try {
-      // Helper to add delay between requests
-      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-      
-      // Load critical API data sequentially with delays to prevent rate limiting
       // Skip carousel - it's loaded separately in page.tsx to avoid duplicate requests
       const carousel = { success: false, data: null };
-      await delay(300);
       
-      const categories = await this.getCategories();
-      await delay(300);
-      
-      // Skip collections - loaded separately in page.tsx to avoid rate limiting
+      // Skip collections - loaded separately in page.tsx
       const collectionsCategories = { success: false, data: null };
-      await delay(100);
-      
       const collectionsOccasions = { success: false, data: null };
-      await delay(100);
       
-      // Load products (may use API or fallback) - this is a heavy request
-      const collectionsProducts = await this.getCollectionsProducts();
-      await delay(400);
-      
-      // Load remaining data in parallel (these use local fallback, less critical)
-      const [features, styles, testimonials, trending] = await Promise.all([
+      // Load all data in parallel for maximum speed
+      // Group API calls and local file loads together
+      const [
+        categories,
+        collectionsProducts,
+        features,
+        styles,
+        testimonials,
+        trending,
+        products
+      ] = await Promise.all([
+        this.getCategories(),
+        this.getCollectionsProducts(),
         this.getFeatures(),
         this.getStyles(),
         this.getTestimonials(),
-        this.getTrending()
+        this.getTrending(),
+        this.getProducts()
       ]);
-      
-      // Products can be loaded separately as it's heavy
-      const products = await this.getProducts();
 
       return {
         success: true,
@@ -245,7 +239,9 @@ class DataService {
         }
       };
     } catch (error) {
-      console.error('Failed to fetch all data:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to fetch all data:', error);
+      }
       return { success: false, error: error.message };
     }
   }

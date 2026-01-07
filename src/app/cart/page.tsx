@@ -10,7 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useLoginModal } from '@/contexts/LoginModalContext';
 import MainLayout from '@/components/layout/MainLayout';
+import QuickPicks from '@/components/cart/QuickPicks';
 import '@/styles/components/cart/Cart.css';
+
+// Discount thresholds
+const THRESHOLD_10_PERCENT = 2000;
+const THRESHOLD_15_PERCENT = 4000;
 
 // Helper function to get valid image URL
 const getValidImageUrl = (images: any[] | undefined, fallback: string = '/images/logo.jpg'): string => {
@@ -80,13 +85,35 @@ export default function CartPage() {
     }
   };
 
-  const handleUpdateQuantity = async (productId: string, newQuantity: number, variantId?: string) => {
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+
+  const handleUpdateQuantity = async (e: React.MouseEvent<HTMLButtonElement>, productId: string, newQuantity: number, variantId?: string) => {
+    // Prevent all default behaviors
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.nativeEvent) {
+      e.nativeEvent.stopImmediatePropagation();
+    }
+    
     if (newQuantity < 1) return;
     
+    // Set updating state to prevent multiple clicks
+    const itemKey = `${productId}_${variantId || 'none'}`;
+    if (updatingItemId === itemKey) return; // Already updating
+    
+    setUpdatingItemId(itemKey);
+    
     try {
+      // Call the update function - it will update the context state
       await updateCartItem(productId, newQuantity, variantId);
     } catch (error) {
-      // Error updating quantity
+      console.error('Failed to update quantity:', error);
+      // Error is already handled by the cart context
+    } finally {
+      // Clear updating state after a short delay to allow UI to update
+      setTimeout(() => {
+        setUpdatingItemId(null);
+      }, 100);
     }
   };
 
@@ -108,10 +135,51 @@ export default function CartPage() {
 
   // Use cart data from context - get local cart items if not authenticated
   const cartItems = isAuthenticated ? (cart?.items || []) : getCartItems();
-  const discountAmount = subtotal * discount;
+  
+  // Calculate threshold-based discount (auto-applied based on subtotal)
+  const getThresholdDiscount = () => {
+    if (subtotal >= THRESHOLD_15_PERCENT) {
+      return { rate: 0.15, label: '15%' };
+    } else if (subtotal >= THRESHOLD_10_PERCENT) {
+      return { rate: 0.10, label: '10%' };
+    }
+    return { rate: 0, label: '' };
+  };
+  
+  const thresholdDiscount = getThresholdDiscount();
+  // Use the higher of coupon discount or threshold discount
+  const effectiveDiscount = Math.max(discount, thresholdDiscount.rate);
+  const discountAmount = subtotal * effectiveDiscount;
   const finalTotal = subtotal - discountAmount;
-  const shipping = finalTotal > 0 ? (finalTotal > 5000 ? 0 : 99) : 0;
+  const shipping = finalTotal > 0 ? (finalTotal >= 1000 ? 0 : 99) : 0;
   const grandTotal = finalTotal + shipping;
+
+  // Calculate threshold messaging for Order Summary
+  const getThresholdMessage = () => {
+    if (subtotal >= THRESHOLD_15_PERCENT) {
+      return {
+        type: 'success' as const,
+        message: '🎉 15% OFF unlocked!',
+        savings: `You're saving ₹${(subtotal * 0.15).toFixed(0)}`,
+      };
+    } else if (subtotal >= THRESHOLD_10_PERCENT) {
+      const amountToNext = THRESHOLD_15_PERCENT - subtotal;
+      return {
+        type: 'warning' as const,
+        message: `Add ₹${amountToNext.toFixed(0)} more for 15% OFF!`,
+        savings: `Currently saving ₹${(subtotal * 0.10).toFixed(0)} (10%)`,
+      };
+    } else {
+      const amountToNext = THRESHOLD_10_PERCENT - subtotal;
+      return {
+        type: 'info' as const,
+        message: `Add ₹${amountToNext.toFixed(0)} more to unlock 10% OFF!`,
+        savings: `You'll save ₹${(THRESHOLD_10_PERCENT * 0.10).toFixed(0)}`,
+      };
+    }
+  };
+
+  const thresholdMessage = getThresholdMessage();
 
   const container = {
     hidden: { opacity: 0 },
@@ -133,7 +201,7 @@ export default function CartPage() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="min-h-screen pt-32 pb-16 px-4">
+        <div className="min-h-screen pt-20 pb-8 px-4">
           <div className="container mx-auto max-w-6xl">
             <div className="flex flex-col items-center justify-center h-64">
               <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
@@ -149,7 +217,7 @@ export default function CartPage() {
   if (error) {
     return (
       <MainLayout>
-        <div className="min-h-screen pt-32 pb-16 px-4">
+        <div className="min-h-screen pt-20 pb-8 px-4">
           <div className="container mx-auto max-w-6xl">
             <div className="flex flex-col items-center justify-center h-64">
               <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
@@ -174,13 +242,13 @@ export default function CartPage() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen pt-32 pb-16 px-4">
+      <div className="min-h-screen pt-20 pb-8 px-4">
         <div className="container mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8 text-center"
+          className="mb-4 text-center"
         >
           <h1 className="text-3xl md:text-4xl font-cormorant text-accent">Shopping Cart</h1>
           <div className="w-24 h-1 bg-accent mx-auto mt-2 rounded-full"></div>
@@ -192,7 +260,8 @@ export default function CartPage() {
         </motion.div>
 
         {cartItems.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Cart Items */}
             <motion.div
               variants={container}
@@ -200,25 +269,29 @@ export default function CartPage() {
               animate="show"
               className="lg:col-span-2"
             >
-              <div className="bg-white rounded-lg shadow-soft overflow-hidden">
-                <div className="p-6">
-                  <h2 className="text-xl font-medium text-primary mb-6">Cart Items</h2>
-                  
-                  <div className="hidden md:grid grid-cols-12 gap-4 text-sm text-gray-500 mb-4 pb-2 border-b">
-                    <div className="col-span-6">Product</div>
-                    <div className="col-span-2 text-center">Price</div>
-                    <div className="col-span-2 text-center">Quantity</div>
-                    <div className="col-span-2 text-right">Total</div>
-                  </div>
-                  
-                  <AnimatePresence>
-                    {cartItems.map((cartItem) => (
-                      <motion.div
-                        key={cartItem._id}
-                        variants={item as any}
-                        exit={{ opacity: 0, height: 0, transition: { duration: 0.3 } }}
-                        className="cart-item border-b last:border-b-0 py-4"
-                      >
+              <div className="bg-white rounded-lg shadow-soft overflow-hidden flex flex-col">
+                <div className="p-6 pb-4 border-b border-gray-200">
+                  <h2 className="text-xl font-medium text-primary">Cart Items</h2>
+                </div>
+                
+                {/* Scrollable Cart Items Container */}
+                <div className="cart-items-scrollable">
+                  <div className="px-6 py-4 pb-6">
+                    <div className="hidden md:grid grid-cols-12 gap-4 text-sm text-gray-500 mb-4 pb-2 border-b">
+                      <div className="col-span-6">Product</div>
+                      <div className="col-span-2 text-center">Price</div>
+                      <div className="col-span-2 text-center">Quantity</div>
+                      <div className="col-span-2 text-right">Total</div>
+                    </div>
+                    
+                    <AnimatePresence>
+                      {cartItems.map((cartItem) => (
+                        <motion.div
+                          key={cartItem._id}
+                          variants={item as any}
+                          exit={{ opacity: 0, height: 0, transition: { duration: 0.3 } }}
+                          className="cart-item border-b last:border-b-0 py-4"
+                        >
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                           {/* Product */}
                           <div className="md:col-span-6 flex items-center space-x-4">
@@ -250,21 +323,47 @@ export default function CartPage() {
                           {/* Quantity */}
                           <div className="md:col-span-2 text-left md:text-center">
                             <div className="md:hidden text-sm text-gray-500 mb-1">Quantity:</div>
-                            <div className="flex items-center md:justify-center">
+                            <div className="flex items-center md:justify-center" onClick={(e) => e.stopPropagation()}>
                               <button
-                                onClick={() => handleUpdateQuantity(cartItem.product._id, cartItem.quantity - 1, cartItem.variant?._id)}
-                                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                                disabled={isLoading}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleUpdateQuantity(e, cartItem.product._id, cartItem.quantity - 1, cartItem.variant?._id);
+                                }}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
+                                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={isLoading || cartItem.quantity <= 1 || updatingItemId === `${cartItem.product._id}_${cartItem.variant?._id || 'none'}`}
                               >
-                                <FiMinus className="w-3 h-3" />
+                                {updatingItemId === `${cartItem.product._id}_${cartItem.variant?._id || 'none'}` && cartItem.quantity > 1 ? (
+                                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <FiMinus className="w-3 h-3" />
+                                )}
                               </button>
                               <span className="w-10 text-center">{cartItem.quantity}</span>
                               <button
-                                onClick={() => handleUpdateQuantity(cartItem.product._id, cartItem.quantity + 1, cartItem.variant?._id)}
-                                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                                disabled={isLoading}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleUpdateQuantity(e, cartItem.product._id, cartItem.quantity + 1, cartItem.variant?._id);
+                                }}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
+                                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={isLoading || updatingItemId === `${cartItem.product._id}_${cartItem.variant?._id || 'none'}`}
                               >
-                                <FiPlus className="w-3 h-3" />
+                                {updatingItemId === `${cartItem.product._id}_${cartItem.variant?._id || 'none'}` ? (
+                                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <FiPlus className="w-3 h-3" />
+                                )}
                               </button>
                             </div>
                           </div>
@@ -307,8 +406,9 @@ export default function CartPage() {
                           </div>
                         </div>
                       </motion.div>
-                    ))}
-                  </AnimatePresence>
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -330,9 +430,14 @@ export default function CartPage() {
                       <span className="font-medium">₹{subtotal.toFixed(2)}</span>
                     </div>
                     
-                    {discount > 0 && (
+                    {effectiveDiscount > 0 && (
                       <div className="flex justify-between text-green-600">
-                        <span>Discount</span>
+                        <span>
+                          Discount 
+                          {thresholdDiscount.rate > 0 && thresholdDiscount.rate >= discount && (
+                            <span className="text-xs ml-1">({thresholdDiscount.label} threshold)</span>
+                          )}
+                        </span>
                         <span>-₹{discountAmount.toFixed(2)}</span>
                       </div>
                     )}
@@ -350,6 +455,53 @@ export default function CartPage() {
                         <span className="text-accent">₹{grandTotal.toFixed(2)}</span>
                       </div>
                     </div>
+                  </div>
+                  
+                  {/* Threshold Discount Banner */}
+                  <div className={`mb-4 p-3 rounded-lg border ${
+                    thresholdMessage.type === 'success' 
+                      ? 'bg-green-50 border-green-200' 
+                      : thresholdMessage.type === 'warning'
+                      ? 'bg-amber-50 border-amber-200'
+                      : 'bg-purple-50 border-purple-200'
+                  }`}>
+                    <p className={`font-semibold text-sm ${
+                      thresholdMessage.type === 'success' 
+                        ? 'text-green-700' 
+                        : thresholdMessage.type === 'warning'
+                        ? 'text-amber-700'
+                        : 'text-purple-700'
+                    }`}>
+                      {thresholdMessage.message}
+                    </p>
+                    <p className={`text-xs mt-0.5 ${
+                      thresholdMessage.type === 'success' 
+                        ? 'text-green-600' 
+                        : thresholdMessage.type === 'warning'
+                        ? 'text-amber-600'
+                        : 'text-purple-600'
+                    }`}>
+                      {thresholdMessage.savings}
+                    </p>
+                    {thresholdMessage.type !== 'success' && (
+                      <div className="mt-2">
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              thresholdMessage.type === 'warning' ? 'bg-amber-500' : 'bg-purple-500'
+                            }`}
+                            style={{ 
+                              width: `${Math.min(
+                                thresholdMessage.type === 'warning'
+                                  ? ((subtotal - THRESHOLD_10_PERCENT) / (THRESHOLD_15_PERCENT - THRESHOLD_10_PERCENT)) * 100
+                                  : (subtotal / THRESHOLD_10_PERCENT) * 100,
+                                100
+                              )}%` 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Coupon Code */}
@@ -374,7 +526,7 @@ export default function CartPage() {
                           Apply
                         </button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Try code: FEFA10 for 10% off</p>
+                      <p className="text-xs text-gray-500 mt-1" hidden={true}>Try code: FEFA10 for 10% off</p>
                     </div>
                   ) : (
                     <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-3 flex justify-between items-center">
@@ -422,6 +574,10 @@ export default function CartPage() {
               </div>
             </motion.div>
           </div>
+          
+          {/* Quick Picks Section - Full Width */}
+          <QuickPicks cartSubtotal={subtotal} />
+        </>
         ) : (
           <motion.div
             initial={{ opacity: 0 }}

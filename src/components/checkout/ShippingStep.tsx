@@ -163,7 +163,7 @@ export default function ShippingStep() {
         <div className="space-y-2 text-sm text-gray-600">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-accent rounded-full"></div>
-            <span>Free shipping on orders over ₹5,000</span>
+            <span>Free shipping on orders over ₹1,000</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-accent rounded-full"></div>

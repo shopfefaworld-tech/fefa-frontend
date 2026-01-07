@@ -588,6 +588,19 @@ export default function ProductDetail() {
     return image;
   };
 
+  // #region agent log
+  useEffect(() => {
+    const headerEl = document.querySelector('header');
+    const productContainer = document.querySelector('.container.mx-auto');
+    if (headerEl && productContainer) {
+      const headerRect = headerEl.getBoundingClientRect();
+      const containerRect = (productContainer as HTMLElement).getBoundingClientRect();
+      const containerStyle = window.getComputedStyle(productContainer as HTMLElement);
+      fetch('http://127.0.0.1:7242/ingest/7eb6d36f-1ef2-474d-b047-b573307ef79f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'product/[slug]/page.tsx:useEffect',message:'Product page spacing check',data:{headerHeight:headerRect.height,containerTop:containerRect.top,containerPaddingTop:containerStyle.paddingTop,containerMarginTop:containerStyle.marginTop,overlap:containerRect.top < headerRect.height,scrollY:window.scrollY},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    }
+  }, [product]);
+  // #endregion
+
   // Loading component
   if (isLoading) {
     return (
@@ -1265,7 +1278,7 @@ export default function ProductDetail() {
               <div>
                 <h3 className="text-lg sm:text-xl font-medium mb-4">Shipping Information</h3>
                 <p className="text-dark-gray mb-4 text-sm sm:text-base leading-relaxed">
-                  We offer free standard shipping on all orders over ₹5000. Standard shipping takes 3-5 business days.
+                  We offer free standard shipping on all orders over ₹1,000. Standard shipping takes 3-5 business days.
                   Express shipping is available for an additional fee and delivers within 1-2 business days.
                 </p>
                 
@@ -1282,7 +1295,12 @@ export default function ProductDetail() {
         {/* Related Products */}
         {!isLoading && (
           <div className="mt-8 sm:mt-12 lg:mt-16">
-            <h2 className="text-2xl sm:text-3xl font-cormorant text-primary mb-6 sm:mb-8">You May Also Like</h2>
+            <h2
+              className="text-3xl sm:text-4xl font-cormorant text-primary mb-6 sm:mb-8 inline-block border-b border-[#E5C975] pb-1"
+              style={{ borderBottomWidth: '1.5px' }}
+            >
+              You May Also Like
+            </h2>
             {relatedProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                 {relatedProducts.map((relatedProduct) => (

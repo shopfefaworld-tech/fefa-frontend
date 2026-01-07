@@ -138,10 +138,64 @@
   animation: quantityChange 0.3s ease-in-out;
 }
 
+/* Scrollable Cart Items Container */
+.cart-items-scrollable {
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #c4b5fd transparent;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.cart-items-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cart-items-scrollable::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+  margin: 4px 0;
+}
+
+.cart-items-scrollable::-webkit-scrollbar-thumb {
+  background: #c4b5fd;
+  border-radius: 3px;
+}
+
+.cart-items-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #a78bfa;
+}
+
+/* Ensure content inside scrollable area displays properly */
+.cart-items-scrollable > div {
+  min-height: min-content;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* Sticky summary on desktop */
 @media (min-width: 1024px) {
   .order-summary {
     position: sticky;
     top: 100px;
+  }
+  
+  .cart-items-scrollable {
+    max-height: calc(100vh - 250px);
+  }
+}
+
+@media (max-width: 1023px) {
+  .cart-items-scrollable {
+    max-height: 500px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cart-items-scrollable {
+    max-height: 400px;
   }
 }

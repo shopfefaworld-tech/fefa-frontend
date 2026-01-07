@@ -36,7 +36,7 @@ export default function ReviewStep() {
   const { cart, subtotal, total, itemCount } = useCart();
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
-  const shipping = subtotal > 5000 ? 0 : 99;
+  const shipping = subtotal >= 1000 ? 0 : 99;
   const discount = 0; // You can implement discount logic here
   const grandTotal = subtotal + shipping - discount;
 

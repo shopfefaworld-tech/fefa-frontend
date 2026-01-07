@@ -1,0 +1,43 @@
+/* Top Banner Styles */
+
+/* Ensure no margin on banner container */
+.top-banner-container,
+.top-banner-container > * {
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.top-banner-marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-width: 0;
+}
+
+.top-banner-marquee-wrapper {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: scroll-marquee 25s linear infinite;
+  will-change: transform;
+}
+
+.top-banner-marquee:hover .top-banner-marquee-wrapper {
+  animation-play-state: paused;
+}
+
+.top-banner-marquee-content {
+  display: inline-block;
+  padding-right: 3rem;
+  flex-shrink: 0;
+}
+
+@keyframes scroll-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

@@ -39,6 +39,7 @@ const navigation = [
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -58,24 +59,46 @@ export default function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      const scrollDifference = currentScrollY - lastScrollY.current;
       
-      // Only track scroll state for styling, don't hide header
+      // Always show header at the top of the page
       if (currentScrollY < 10) {
         setIsScrolled(false);
-      } else {
-        setIsScrolled(true);
+        setIsVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
       }
+      
+      // Track scroll state for styling
+      setIsScrolled(true);
+      
+      // Hide header when scrolling down, show when scrolling up
+      // Only hide if scrolled more than 100px down
+      if (currentScrollY > 100) {
+        if (scrollDifference > 5) {
+          // Scrolling down - hide header
+          setIsVisible(false);
+        } else if (scrollDifference < -5) {
+          // Scrolling up - show header
+          setIsVisible(true);
+        }
+      } else {
+        // Near top - always show
+        setIsVisible(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Load data for suggestions with delay to avoid rate limiting
+  // Load data for suggestions (lazy load - only when needed)
   useEffect(() => {
     const loadSuggestionsData = async () => {
-      // Delay loading to avoid hitting API immediately on page load
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Only load when user starts typing or focuses search
+      if (!searchInput && !showSuggestions) return;
       
       try {
         setIsLoadingSuggestions(true);
@@ -86,14 +109,19 @@ export default function Header() {
         setProducts(productsData);
         setCategories(categoriesData);
       } catch (error) {
-        console.error('Error loading suggestions data:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error loading suggestions data:', error);
+        }
       } finally {
         setIsLoadingSuggestions(false);
       }
     };
 
-    loadSuggestionsData();
-  }, []);
+    // Load on search input or when suggestions should show
+    if (searchInput.length >= 1 || showSuggestions) {
+      loadSuggestionsData();
+    }
+  }, [searchInput, showSuggestions]);
 
   const handleDropdownToggle = (name: string) => {
     setOpenDropdown(openDropdown === name ? null : name);
@@ -142,14 +170,33 @@ export default function Header() {
     setTimeout(() => setShowSuggestions(false), 200);
   };
 
+  // #region agent log
+  useEffect(() => {
+    const headerEl = document.querySelector('header');
+    if (headerEl) {
+      const rect = headerEl.getBoundingClientRect();
+      const computedStyle = window.getComputedStyle(headerEl);
+      fetch('http://127.0.0.1:7242/ingest/7eb6d36f-1ef2-474d-b047-b573307ef79f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Header.tsx:useEffect',message:'Header dimensions measured',data:{height:rect.height,width:rect.width,top:rect.top,zIndex:computedStyle.zIndex,position:computedStyle.position,isScrolled,isVisible},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    }
+  }, [isScrolled, isVisible]);
+  // #endregion
+
   return (
       <header 
-        className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${
+        className={`fixed w-full z-50 transition-all duration-300 border-b ${
           isScrolled 
             ? 'bg-[#470031] shadow-lg py-2 sm:py-3 border-[#470031]' 
             : 'bg-[#470031] py-3 sm:py-4 border-[#470031]'
+        } ${
+          isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
-        style={{ backgroundColor: '#470031' }}
+        style={{ 
+          backgroundColor: '#470031',
+          top: 'var(--top-banner-height, 0px)',
+          margin: 0,
+          marginTop: 0,
+          marginBottom: 0
+        }}
       >
       <div className="container mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between gap-4">
@@ -224,14 +271,19 @@ export default function Header() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       transition={{ duration: 0.3 }}
-                      className="fixed left-0 right-0 top-12 sm:top-[70px] bg-[#F8E4EB] shadow-lg py-4 sm:py-8 z-50"
+                      className={`fixed left-0 right-0 bg-[#F8E4EB] shadow-lg py-3 sm:py-5 z-50 transition-transform duration-300 ${
+                        isVisible ? 'translate-y-0' : '-translate-y-full'
+                      }`}
+                      style={{ 
+                        top: `calc(var(--top-banner-height, 0px) + ${isScrolled ? '60px' : '70px'})`
+                      }}
                       onMouseLeave={() => setOpenDropdown(null)}
                     >
                       <div className="container mx-auto px-4">
-                        <div className={`${item.name === 'GIFT' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-4 sm:gap-6 lg:gap-8`}>
+                        <div className={`${item.name === 'GIFT' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-3 sm:gap-4 lg:gap-5`}>
                           {(item as any).dropdown.categories.map((category: any, index: number) => (
                             <div key={index} className="space-y-4">
-                              <h3 className="text-[#4B006E] text-lg sm:text-xl font-cormorant mb-2 sm:mb-4 border-b border-[#4B006E] pb-1 sm:pb-2">
+                              <h3 className="text-[#4B006E] text-lg sm:text-xl font-cormorant mb-1 sm:mb-2 border-b border-[#4B006E] pb-1 sm:pb-2">
                                 {category.title}
                               </h3>
                               {category.items.length > 0 ? (
@@ -350,7 +402,12 @@ export default function Header() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-           className="lg:hidden fixed top-12 sm:top-16 left-0 right-0 bg-[#470031] border-b border-[#470031] z-30 px-2 sm:px-4 py-2 sm:py-3"
+           className={`lg:hidden fixed left-0 right-0 bg-[#470031] border-b border-[#470031] z-30 px-2 sm:px-4 py-2 sm:py-3 transition-transform duration-300 ${
+             isVisible ? 'translate-y-0' : '-translate-y-full'
+           }`}
+           style={{ 
+             top: `calc(var(--top-banner-height, 0px) + ${isScrolled ? '60px' : '70px'})`
+           }}
         >
             <div className="flex items-center relative">
               <form onSubmit={handleSearch} className="relative w-full">

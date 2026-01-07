@@ -23,7 +23,7 @@ export default function PaymentStep() {
   const [isLoadingRazorpay, setIsLoadingRazorpay] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
-  const shipping = subtotal > 5000 ? 0 : 99;
+  const shipping = subtotal >= 1000 ? 0 : 99;
   const discount = 0;
   const grandTotal = subtotal + shipping - discount;
 

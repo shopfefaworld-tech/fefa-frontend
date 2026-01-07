@@ -23,12 +23,14 @@ import {
   MdLogout as LogOut,
   MdNotifications as Notifications,
   MdSearch as Search,
-  MdAccountCircle as AccountCircle
+  MdAccountCircle as AccountCircle,
+  MdLocalOffer as LocalOffer
 } from 'react-icons/md';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Products', href: '/admin/products', icon: Package },
+  { name: 'Quick Picks', href: '/admin/quick-picks', icon: LocalOffer },
   { name: 'Collections', href: '/admin/collections', icon: Collections },
   { name: 'Categories', href: '/admin/categories', icon: FolderOpen },
   { name: 'Occasions', href: '/admin/occasions', icon: Gift },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   MdAdd as Plus,
   MdSearch as Search,
@@ -33,6 +33,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
@@ -56,15 +57,25 @@ export default function ProductsPage() {
   const [testResults, setTestResults] = useState<Record<string, any>>({});
   const [testing, setTesting] = useState<Record<string, boolean>>({});
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
   }, []);
 
-  // Load products when filters or pagination changes
+  // Load products when filters or pagination changes (using debounced search term)
   useEffect(() => {
     loadProducts();
-  }, [currentPage, itemsPerPage, searchTerm, selectedCategory, selectedStatus]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, selectedCategory, selectedStatus]);
 
   // Load products from API
   const loadProducts = async () => {
@@ -75,7 +86,7 @@ export default function ProductsPage() {
       const result = await adminService.getAllProducts({
         page: currentPage,
         limit: itemsPerPage,
-        search: searchTerm || undefined,
+        search: debouncedSearchTerm || undefined,
         category: selectedCategory === 'All' ? null : selectedCategory,
         status: selectedStatus === 'All' ? null : selectedStatus.toLowerCase()
       });
@@ -439,12 +450,6 @@ export default function ProductsPage() {
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
-                    setCurrentPage(1); // Reset to first page when search changes
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      loadProducts();
-                    }
                   }}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:border-purple-500 text-sm"
                   style={{ '--tw-ring-color': 'var(--primary)' } as React.CSSProperties}

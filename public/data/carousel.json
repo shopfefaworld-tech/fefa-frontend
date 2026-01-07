@@ -1,24 +1,24 @@
 [
   {
     "id": 1,
-    "title": "Elegance in Every Detail",
-    "subtitle": "Discover our handcrafted jewelry collection",
+    "title": "",
+    "subtitle": "",
     "image": "/images/carosel-image1.jpg",
     "buttonText": "Shop Now",
     "buttonLink": "/collections"
   },
   {
     "id": 2,
-    "title": "Premium Quality",
-    "subtitle": "Crafted with the finest materials",
+    "title": "",
+    "subtitle": "",
     "image": "/images/carosel-image2.jpg",
     "buttonText": "Explore Collection",
     "buttonLink": "/collections"
   },
   {
     "id": 3,
-    "title": "Timeless Beauty",
-    "subtitle": "Jewelry that tells your story",
+    "title": "",
+    "subtitle": "",
     "image": "/images/carosel-image3.jpg",
     "buttonText": "View Products",
     "buttonLink": "/collections"

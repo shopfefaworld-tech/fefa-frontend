@@ -55,13 +55,42 @@ class AuthService {
   // Login user with email and password
   async login(email, password) {
     try {
+      // Check if baseURL is accessible
+      if (!this.baseURL) {
+        throw new Error('API URL is not configured. Please check your environment variables.');
+      }
+
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(`${this.baseURL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
+      }).catch((fetchError) => {
+        clearTimeout(timeoutId);
+        
+        // Handle network errors specifically
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Request timed out. Please check your internet connection and try again.');
+        }
+        
+        if (fetchError.name === 'TypeError' && (fetchError.message.includes('fetch') || fetchError.message.includes('Failed to fetch'))) {
+          // Network error - server might be down or CORS issue
+          const errorMsg = `Cannot connect to server at ${this.baseURL}. ` +
+            `Please ensure the backend server is running and accessible. ` +
+            `If running locally, check that the server is started on port 5000.`;
+          throw new Error(errorMsg);
+        }
+        
+        throw fetchError;
       });
+
+      clearTimeout(timeoutId);
 
       // Handle rate limiting (429) before trying to parse JSON
       if (response.status === 429) {
@@ -88,10 +117,15 @@ class AuthService {
       let data;
       
       if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          const text = await response.text();
+          throw new Error(`Server returned invalid JSON: ${text.substring(0, 100)}`);
+        }
       } else {
         const text = await response.text();
-        throw new Error(text || 'Login failed');
+        throw new Error(text || 'Login failed - server returned non-JSON response');
       }
 
       if (!response.ok) {
@@ -101,6 +135,16 @@ class AuthService {
       return data.data;
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Provide user-friendly error messages
+      if (error.message.includes('Cannot connect to server')) {
+        console.error('Backend server connection failed. Check:');
+        console.error('1. Is the backend server running?');
+        console.error('2. Is the API URL correct?', this.baseURL);
+        console.error('3. Are there any CORS issues?');
+        console.error('4. Is the server accessible from this origin?');
+      }
+      
       // Re-throw the error to preserve the original error message and status
       throw error;
     }

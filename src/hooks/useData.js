@@ -19,8 +19,26 @@ export const useData = () => {
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Load all data with retry mechanism
+  // Load all data with retry mechanism and caching
   const loadAllData = useCallback(async (retryCount = 0) => {
+    // Check cache first (5 minute TTL)
+    const cacheKey = 'fefa_data_cache';
+    const cacheTime = 5 * 60 * 1000; // 5 minutes
+    const cached = sessionStorage.getItem(cacheKey);
+    
+    if (cached) {
+      try {
+        const { data: cachedData, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < cacheTime) {
+          setData(cachedData);
+          setLoading(false);
+          return; // Use cached data
+        }
+      } catch (e) {
+        // Invalid cache, continue to fetch
+      }
+    }
+    
     setLoading(true);
     setError(null);
     
@@ -29,12 +47,21 @@ export const useData = () => {
       
       if (result.success) {
         setData(result.data);
+        // Cache the data
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify({
+            data: result.data,
+            timestamp: Date.now()
+          }));
+        } catch (e) {
+          // Cache storage failed, continue
+        }
       } else {
         // If it's a rate limit error and we haven't retried too many times, retry after a delay
-        if (result.error.includes('Rate limit exceeded') && retryCount < 3) {
+        if (result.error?.includes('Rate limit exceeded') && retryCount < 2) {
           setTimeout(() => {
             loadAllData(retryCount + 1);
-          }, (retryCount + 1) * 2000); // Exponential backoff: 2s, 4s, 6s
+          }, (retryCount + 1) * 1000); // Reduced backoff: 1s, 2s
           return;
         }
         

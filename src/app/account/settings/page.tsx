@@ -41,8 +41,19 @@ interface UserData {
     smsNotifications: boolean;
     newsletter: boolean;
   };
+  twoFactorAuth?: {
+    enabled: boolean;
+    verifiedAt?: string;
+    backupCodesRemaining?: number;
+  };
   lastLogin?: string;
   createdAt: string;
+}
+
+interface TwoFactorSetupData {
+  qrCode: string;
+  secret: string;
+  backupCodes: string[];
 }
 
 function SettingsPageContent() {
@@ -53,6 +64,12 @@ function SettingsPageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [userData, setUserData] = useState<UserData | null>(null);
+  
+  // 2FA State
+  const [twoFactorSetup, setTwoFactorSetup] = useState<TwoFactorSetupData | null>(null);
+  const [twoFactorToken, setTwoFactorToken] = useState('');
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
 
   // Set default tab based on URL parameters
   useEffect(() => {
@@ -62,11 +79,11 @@ function SettingsPageContent() {
     }
   }, [searchParams]);
 
-  // Fetch user data from backend when profile tab is active
+  // Fetch user data from backend when profile or addresses tab is active
   useEffect(() => {
     const fetchUserData = async () => {
-      // Only fetch when profile tab is active
-      if (activeTab !== 'profile') return;
+      // Fetch when profile or addresses tab is active
+      if (activeTab !== 'profile' && activeTab !== 'addresses') return;
       if (!isAuthenticated || !user) return;
       
       try {
@@ -258,21 +275,212 @@ function SettingsPageContent() {
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       alert('New passwords do not match');
       return;
     }
-    // Here you would typically update the password
-    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  };
 
-  const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      // Here you would typically delete the account
+    if (passwordForm.newPassword.length < 6) {
+      alert('New password must be at least 6 characters');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('fefa_access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Password changed successfully');
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        alert(data.message || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Password change error:', error);
+      alert('Failed to change password. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      return;
+    }
+
+    // Double confirm
+    const confirmText = prompt('Type "DELETE" to confirm account deletion:');
+    if (confirmText !== 'DELETE') {
+      alert('Account deletion cancelled');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('fefa_access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/users/profile`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Your account has been deleted successfully');
+        // Clear local storage and redirect to home
+        localStorage.removeItem('fefa_access_token');
+        localStorage.removeItem('fefa_refresh_token');
+        localStorage.removeItem('fefa_user');
+        window.location.href = '/';
+      } else {
+        alert(data.message || 'Failed to delete account');
+      }
+    } catch (error) {
+      console.error('Delete account error:', error);
+      alert('Failed to delete account. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 2FA Functions
+  const fetch2FAStatus = async () => {
+    try {
+      const token = localStorage.getItem('fefa_access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/2fa/status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setTwoFactorEnabled(data.data.enabled);
+      }
+    } catch (error) {
+      console.error('Error fetching 2FA status:', error);
+    }
+  };
+
+  const handleSetup2FA = async () => {
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('fefa_access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/2fa/setup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setTwoFactorSetup(data.data);
+        setShowBackupCodes(true);
+      } else {
+        alert(data.message || 'Failed to setup 2FA');
+      }
+    } catch (error) {
+      console.error('2FA setup error:', error);
+      alert('Failed to setup 2FA. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    if (!twoFactorToken || twoFactorToken.length !== 6) {
+      alert('Please enter a valid 6-digit code');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('fefa_access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/2fa/verify-setup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ token: twoFactorToken }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('Two-factor authentication enabled successfully!');
+        setTwoFactorEnabled(true);
+        setTwoFactorSetup(null);
+        setTwoFactorToken('');
+      } else {
+        alert(data.message || 'Invalid verification code');
+      }
+    } catch (error) {
+      console.error('2FA verify error:', error);
+      alert('Failed to verify 2FA. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    const token = prompt('Enter your current 2FA code to disable:');
+    if (!token) return;
+
+    setIsSaving(true);
+    try {
+      const authToken = localStorage.getItem('fefa_access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/2fa/disable`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ token }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('Two-factor authentication has been disabled');
+        setTwoFactorEnabled(false);
+      } else {
+        alert(data.message || 'Failed to disable 2FA');
+      }
+    } catch (error) {
+      console.error('2FA disable error:', error);
+      alert('Failed to disable 2FA. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Fetch 2FA status when security tab is active
+  useEffect(() => {
+    if (activeTab === 'security' && isAuthenticated) {
+      fetch2FAStatus();
+    }
+  }, [activeTab, isAuthenticated]);
 
   // Address management functions
   const handleAddressInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -338,21 +546,27 @@ function SettingsPageContent() {
         throw new Error('No access token found');
       }
 
-      // Prepare address data for backend
+      // Prepare address data for backend (convert empty strings to undefined for optional fields)
       const addressData = {
         type: addressForm.type,
-        firstName: addressForm.firstName,
-        lastName: addressForm.lastName,
-        company: addressForm.company,
-        addressLine1: addressForm.addressLine1,
-        addressLine2: addressForm.addressLine2,
-        city: addressForm.city,
-        state: addressForm.state,
-        postalCode: addressForm.postalCode,
-        country: addressForm.country,
-        phone: addressForm.phone,
+        firstName: addressForm.firstName.trim(),
+        lastName: addressForm.lastName.trim(),
+        company: addressForm.company?.trim() || undefined,
+        addressLine1: addressForm.addressLine1.trim(),
+        addressLine2: addressForm.addressLine2?.trim() || undefined,
+        city: addressForm.city.trim(),
+        state: addressForm.state.trim(),
+        postalCode: addressForm.postalCode.trim(),
+        country: addressForm.country.trim() || 'India',
+        phone: addressForm.phone.trim(),
         isDefault: addressForm.isDefault
       };
+
+      // Validate required fields
+      if (!addressData.firstName || !addressData.lastName || !addressData.addressLine1 || 
+          !addressData.city || !addressData.state || !addressData.postalCode || !addressData.phone) {
+        throw new Error('Please fill in all required fields');
+      }
 
       if (editingAddressId) {
         // Update existing address
@@ -502,12 +716,12 @@ function SettingsPageContent() {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gradient-to-br from-soft-pink-100 to-soft-pink-200 py-4 sm:py-6 md:py-8">
+      <div className="min-h-screen bg-gradient-to-br from-soft-pink-100 to-soft-pink-200 py-3 sm:py-4 md:py-5">
         <div className="container mx-auto px-3 sm:px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
-            <div className="text-center mb-6 sm:mb-8">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-cormorant text-primary mb-2 sm:mb-4">Account Settings</h1>
+            <div className="text-center mb-4 sm:mb-5">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-cormorant text-primary mb-1 sm:mb-2">Account Settings</h1>
               <p className="text-dark-gray text-base sm:text-lg px-4">
                 Manage your account preferences and security settings
               </p>
@@ -679,6 +893,11 @@ function SettingsPageContent() {
                       </p>
                     </div>
 
+                    {isLoading ? (
+                      <div className="loading-container" style={{ textAlign: 'center', padding: '2rem' }}>
+                        <p>Loading addresses...</p>
+                      </div>
+                    ) : (
                     <div className="settings-form">
                       {/* Address List */}
                       <div className="address-list">
@@ -943,6 +1162,7 @@ function SettingsPageContent() {
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 )}
 
@@ -1218,21 +1438,98 @@ function SettingsPageContent() {
                       {/* Two-Factor Authentication */}
                       <div className="security-group">
                         <h3 className="security-title">Two-Factor Authentication</h3>
-                        <div className="security-item">
-                          <div className="security-info">
-                            <h4 className="security-name">Enable 2FA</h4>
-                            <p className="security-description">Add an extra layer of security to your account</p>
+                        
+                        {twoFactorEnabled ? (
+                          <div className="security-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div className="security-info">
+                                <h4 className="security-name" style={{ color: '#22c55e' }}>✓ 2FA Enabled</h4>
+                                <p className="security-description">Your account is protected with two-factor authentication</p>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                onClick={handleDisable2FA}
+                                disabled={isSaving}
+                                style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                              >
+                                Disable 2FA
+                              </Button>
+                            </div>
                           </div>
-                          <label className="toggle-switch">
-                            <input
-                              type="checkbox"
-                              name="twoFactorAuth"
-                              checked={settings.twoFactorAuth}
-                              onChange={handleInputChange}
-                            />
-                            <span className="toggle-slider"></span>
-                          </label>
-                        </div>
+                        ) : twoFactorSetup ? (
+                          <div className="security-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '1.5rem' }}>
+                            <div className="security-info">
+                              <h4 className="security-name">Setup Two-Factor Authentication</h4>
+                              <p className="security-description">Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '1rem', background: '#f9fafb', borderRadius: '0.5rem' }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img 
+                                src={twoFactorSetup.qrCode} 
+                                alt="2FA QR Code" 
+                                style={{ width: '200px', height: '200px', border: '4px solid white', borderRadius: '0.5rem' }}
+                              />
+                              <p style={{ fontSize: '0.75rem', color: '#6b7280', textAlign: 'center' }}>
+                                Can't scan? Enter this code manually:<br/>
+                                <code style={{ background: '#e5e7eb', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontFamily: 'monospace' }}>
+                                  {twoFactorSetup.secret}
+                                </code>
+                              </p>
+                            </div>
+
+                            {showBackupCodes && twoFactorSetup.backupCodes && (
+                              <div style={{ background: '#fef3c7', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #f59e0b' }}>
+                                <h5 style={{ fontWeight: '600', color: '#92400e', marginBottom: '0.5rem' }}>⚠️ Save Your Backup Codes</h5>
+                                <p style={{ fontSize: '0.875rem', color: '#92400e', marginBottom: '0.75rem' }}>
+                                  These codes can be used if you lose access to your authenticator app. Each code can only be used once.
+                                </p>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', background: 'white', padding: '0.75rem', borderRadius: '0.25rem' }}>
+                                  {twoFactorSetup.backupCodes.map((code, i) => (
+                                    <code key={i} style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{code}</code>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                              <input
+                                type="text"
+                                value={twoFactorToken}
+                                onChange={(e) => setTwoFactorToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                placeholder="Enter 6-digit code"
+                                className="form-input"
+                                style={{ flex: 1, maxWidth: '200px' }}
+                                maxLength={6}
+                              />
+                              <Button 
+                                onClick={handleVerify2FA}
+                                disabled={isSaving || twoFactorToken.length !== 6}
+                              >
+                                {isSaving ? 'Verifying...' : 'Verify & Enable'}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                onClick={() => { setTwoFactorSetup(null); setTwoFactorToken(''); }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="security-item">
+                            <div className="security-info">
+                              <h4 className="security-name">Enable 2FA</h4>
+                              <p className="security-description">Add an extra layer of security to your account using an authenticator app</p>
+                            </div>
+                            <Button 
+                              onClick={handleSetup2FA}
+                              disabled={isSaving}
+                            >
+                              {isSaving ? 'Setting up...' : 'Setup 2FA'}
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Login Alerts */}

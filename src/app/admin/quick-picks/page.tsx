@@ -1,0 +1,479 @@
+'use client';
+
+import { useState } from 'react';
+import Image from 'next/image';
+import {
+  MdAdd as Plus,
+  MdEdit as Edit,
+  MdDelete as Trash2,
+  MdRefresh as Refresh,
+  MdToggleOn as ToggleOn,
+  MdToggleOff as ToggleOff,
+  MdClose as X,
+  MdSave as Save,
+  MdLocalOffer as Tag,
+} from 'react-icons/md';
+
+// Mock data for Quick Picks products
+const initialQuickPicks = [
+  { _id: 'qp1', name: 'Pearl Stud Mini', price: 49, comparePrice: 99, image: '/images/product-1.png', isActive: true },
+  { _id: 'qp2', name: 'Silver Nose Pin', price: 79, comparePrice: 149, image: '/images/product-2.png', isActive: true },
+  { _id: 'qp3', name: 'Thread Bracelet', price: 99, comparePrice: 179, image: '/images/product-3.png', isActive: true },
+  { _id: 'qp4', name: 'Crystal Pendant', price: 129, comparePrice: 199, image: '/images/product-4.png', isActive: true },
+  { _id: 'qp5', name: 'Mini Hoop Set', price: 149, comparePrice: 249, image: '/images/product-5.png', isActive: true },
+  { _id: 'qp6', name: 'Charm Anklet', price: 169, comparePrice: 279, image: '/images/product-6.png', isActive: true },
+  { _id: 'qp7', name: 'Beaded Ring', price: 59, comparePrice: 99, image: '/images/product-7.png', isActive: true },
+  { _id: 'qp8', name: 'Hair Clip Set', price: 199, comparePrice: 349, image: '/images/product-8.png', isActive: true },
+];
+
+interface QuickPickProduct {
+  _id: string;
+  name: string;
+  price: number;
+  comparePrice: number;
+  image: string;
+  isActive: boolean;
+}
+
+export default function QuickPicksPage() {
+  const [products, setProducts] = useState<QuickPickProduct[]>(initialQuickPicks);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<QuickPickProduct | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    price: '',
+    comparePrice: '',
+    image: '',
+  });
+
+  // Handle toggle active status
+  const handleToggleActive = (id: string) => {
+    setProducts(prev => prev.map(p => 
+      p._id === id ? { ...p, isActive: !p.isActive } : p
+    ));
+  };
+
+  // Handle delete product
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this Quick Pick?')) {
+      setProducts(prev => prev.filter(p => p._id !== id));
+    }
+  };
+
+  // Handle edit product
+  const handleEdit = (product: QuickPickProduct) => {
+    setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      price: product.price.toString(),
+      comparePrice: product.comparePrice.toString(),
+      image: product.image,
+    });
+    setIsModalOpen(true);
+  };
+
+  // Handle add new product
+  const handleAdd = () => {
+    setEditingProduct(null);
+    setFormData({
+      name: '',
+      price: '',
+      comparePrice: '',
+      image: '/images/product-1.png',
+    });
+    setIsModalOpen(true);
+  };
+
+  // Handle form submit
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const price = parseFloat(formData.price);
+    const comparePrice = parseFloat(formData.comparePrice);
+    
+    if (price > 200) {
+      alert('Quick Pick products must be under ₹200');
+      return;
+    }
+    
+    if (editingProduct) {
+      // Update existing product
+      setProducts(prev => prev.map(p => 
+        p._id === editingProduct._id 
+          ? { ...p, name: formData.name, price, comparePrice, image: formData.image }
+          : p
+      ));
+    } else {
+      // Add new product
+      const newProduct: QuickPickProduct = {
+        _id: `qp${Date.now()}`,
+        name: formData.name,
+        price,
+        comparePrice,
+        image: formData.image,
+        isActive: true,
+      };
+      setProducts(prev => [...prev, newProduct]);
+    }
+    
+    setIsModalOpen(false);
+  };
+
+  // Calculate discount percentage
+  const getDiscountPercent = (price: number, comparePrice: number) => {
+    if (comparePrice > price) {
+      return Math.round(((comparePrice - price) / comparePrice) * 100);
+    }
+    return 0;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="sm:flex sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold script-font" style={{ color: 'var(--primary)' }}>Quick Picks</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--dark-gray)' }}>
+            Manage low-cost products shown in cart to help customers reach discount thresholds
+          </p>
+        </div>
+        <div className="mt-4 sm:mt-0 flex space-x-3">
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            <Refresh className="h-4 w-4 mr-2" />
+            Refresh
+          </button>
+          <button
+            onClick={handleAdd}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-all hover:opacity-90"
+            style={{ backgroundColor: 'var(--primary)' }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Quick Pick
+          </button>
+        </div>
+      </div>
+
+      {/* Info Banner */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Tag className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="text-sm font-medium text-amber-800">Discount Thresholds</h3>
+            <p className="text-sm text-amber-700 mt-1">
+              Quick Picks help customers reach discount thresholds:
+              <span className="font-semibold"> ₹2,000 for 10% OFF</span> and 
+              <span className="font-semibold"> ₹4,000 for 15% OFF</span>. 
+              All products should be under ₹200.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Products Table */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
+            Quick Pick Products ({products.length})
+          </h3>
+        </div>
+        
+        {/* Mobile Card View */}
+        <div className="block lg:hidden">
+          <div className="divide-y divide-gray-200">
+            {products.map((product) => (
+              <div key={product._id} className="p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 h-16 w-16 relative rounded-lg overflow-hidden bg-gray-100">
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                        {product.name}
+                      </h4>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        product.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {product.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-sm font-semibold text-amber-600">₹{product.price}</span>
+                      <span className="text-xs text-gray-400 line-through">₹{product.comparePrice}</span>
+                      <span className="text-xs text-red-500 font-medium">
+                        -{getDiscountPercent(product.price, product.comparePrice)}%
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleActive(product._id)}
+                        className="p-1.5 rounded hover:bg-gray-100"
+                        title={product.isActive ? 'Deactivate' : 'Activate'}
+                      >
+                        {product.isActive ? (
+                          <ToggleOn className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <ToggleOff className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="p-1.5 rounded hover:bg-gray-100"
+                        title="Edit"
+                      >
+                        <Edit className="h-4 w-4 text-gray-600" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product._id)}
+                        className="p-1.5 rounded hover:bg-gray-100"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden lg:block">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Compare Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Discount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {products.map((product) => (
+                <tr key={product._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-12 w-12 relative rounded-lg overflow-hidden bg-gray-100">
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                        />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm font-semibold text-amber-600">₹{product.price}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-gray-400 line-through">₹{product.comparePrice}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      -{getDiscountPercent(product.price, product.comparePrice)}%
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleToggleActive(product._id)}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                        product.isActive 
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                      }`}
+                    >
+                      {product.isActive ? 'Active' : 'Inactive'}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="text-gray-600 hover:text-gray-900 p-1"
+                        title="Edit"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product._id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Empty State */}
+        {products.length === 0 && (
+          <div className="text-center py-12">
+            <Tag className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No Quick Picks</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by adding a Quick Pick product.
+            </p>
+            <div className="mt-6">
+              <button
+                onClick={handleAdd}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white"
+                style={{ backgroundColor: 'var(--primary)' }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Quick Pick
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Add/Edit Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div 
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+              onClick={() => setIsModalOpen(false)}
+            />
+            
+            <div className="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <div className="sm:flex sm:items-start">
+                <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    {editingProduct ? 'Edit Quick Pick' : 'Add Quick Pick'}
+                  </h3>
+                  
+                  <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Product Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                        placeholder="e.g., Pearl Stud Mini"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Price (₹)
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          min="1"
+                          max="200"
+                          value={formData.price}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                          placeholder="49"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Max: ₹200</p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Compare Price (₹)
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          min="1"
+                          value={formData.comparePrice}
+                          onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                          placeholder="99"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Image URL
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.image}
+                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                        placeholder="/images/product-1.png"
+                      />
+                    </div>
+                    
+                    <div className="mt-5 sm:mt-6 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsModalOpen(false)}
+                        className="flex-1 inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 text-sm font-medium text-white focus:outline-none"
+                        style={{ backgroundColor: 'var(--primary)' }}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {editingProduct ? 'Save Changes' : 'Add Product'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

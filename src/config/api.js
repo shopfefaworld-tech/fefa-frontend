@@ -59,7 +59,12 @@ const API_CONFIG = {
     AUTH_LOGIN: '/auth/login',
     AUTH_REGISTER: '/auth/register',
     AUTH_LOGOUT: '/auth/logout',
-    AUTH_REFRESH: '/auth/refresh'
+    AUTH_REFRESH: '/auth/refresh',
+    
+    // Newsletter
+    NEWSLETTER_SUBSCRIBE: '/newsletter/subscribe',
+    NEWSLETTER_UNSUBSCRIBE: '/newsletter/unsubscribe',
+    NEWSLETTER_STATUS: '/newsletter/status'
   },
   
   // Local data paths (fallback)

@@ -67,6 +67,13 @@ export default function SettingsPage() {
     orderNotifications: true,
     customerNotifications: true,
     adminNotifications: true,
+    
+    // Top Banner Settings
+    topBannerText: '',
+    topBannerLink: '',
+    topBannerActive: false,
+    topBannerBackgroundColor: '#DBC078',
+    topBannerTextColor: '#470031',
   });
 
   useEffect(() => {
@@ -307,6 +314,114 @@ export default function SettingsPage() {
             </button>
             <p className="mt-1 text-xs text-gray-500">PNG, JPG up to 2MB</p>
           </div>
+        </div>
+      </div>
+      
+      {/* Top Banner Settings */}
+      <div className="border-t pt-6 mt-6">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">Top Banner / Offer Banner</h3>
+          <p className="mt-1 text-sm text-gray-500">Display promotional messages or offers at the top of your site</p>
+        </div>
+        
+        <div className="mt-6 space-y-4">
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="topBannerActive"
+                checked={settings.topBannerActive}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700">Enable Top Banner</span>
+            </label>
+          </div>
+          
+          {settings.topBannerActive && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Banner Text</label>
+                <input
+                  type="text"
+                  name="topBannerText"
+                  value={settings.topBannerText}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Free Shipping on Orders Over ₹5000!"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="mt-1 text-xs text-gray-500">This text will be displayed in the top banner</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Banner Link (Optional)</label>
+                <input
+                  type="text"
+                  name="topBannerLink"
+                  value={settings.topBannerLink}
+                  onChange={handleInputChange}
+                  placeholder="e.g., /collections/sale or https://example.com"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="mt-1 text-xs text-gray-500">If provided, clicking the banner will navigate to this URL</p>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Background Color</label>
+                  <div className="mt-1 flex items-center space-x-2">
+                    <input
+                      type="color"
+                      name="topBannerBackgroundColor"
+                      value={settings.topBannerBackgroundColor}
+                      onChange={handleInputChange}
+                      className="h-10 w-20 border border-gray-300 rounded-md"
+                    />
+                    <input
+                      type="text"
+                      name="topBannerBackgroundColor"
+                      value={settings.topBannerBackgroundColor}
+                      onChange={handleInputChange}
+                      className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Text Color</label>
+                  <div className="mt-1 flex items-center space-x-2">
+                    <input
+                      type="color"
+                      name="topBannerTextColor"
+                      value={settings.topBannerTextColor}
+                      onChange={handleInputChange}
+                      className="h-10 w-20 border border-gray-300 rounded-md"
+                    />
+                    <input
+                      type="text"
+                      name="topBannerTextColor"
+                      value={settings.topBannerTextColor}
+                      onChange={handleInputChange}
+                      className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Preview */}
+              <div className="mt-4 p-4 border border-gray-200 rounded-md bg-gray-50">
+                <p className="text-xs font-medium text-gray-700 mb-2">Preview:</p>
+                <div
+                  className="w-full py-2 px-4 text-center text-sm font-medium rounded"
+                  style={{
+                    backgroundColor: settings.topBannerBackgroundColor,
+                    color: settings.topBannerTextColor,
+                  }}
+                >
+                  {settings.topBannerText || 'Enter banner text to see preview'}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -48,7 +48,7 @@ export default function ConfirmationStep() {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
 
-  const shipping = subtotal > 5000 ? 0 : 99;
+  const shipping = subtotal >= 1000 ? 0 : 99;
   const discount = 0;
   const grandTotal = (order?.total || subtotal + shipping - discount);
 

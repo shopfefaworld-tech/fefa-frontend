@@ -4,21 +4,10 @@ import React from 'react';
 import { useDataContext } from '@/contexts/DataContext';
 
 const DataLoader = ({ children }) => {
-  const { loading, error } = useDataContext();
+  const { loading, error, data } = useDataContext();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gold mx-auto mb-4"></div>
-          <h2 className="text-2xl font-semibold text-gray-800">Loading FEFA Jewelry...</h2>
-          <p className="text-gray-600 mt-2">Please wait while we load our beautiful collection</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
+  // Show error only if critical data is missing
+  if (error && !data?.products && !data?.categories) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -36,6 +25,8 @@ const DataLoader = ({ children }) => {
     );
   }
 
+  // Don't block - show content immediately, data will load progressively
+  // This provides a much better user experience
   return children;
 };
 

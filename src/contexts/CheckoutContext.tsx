@@ -157,8 +157,14 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
   };
 
   const createOrder = async (): Promise<void> => {
-    if (!cart || !paymentMethod || !shippingAddress) {
-      throw new Error('Cart, payment method, or shipping address not available');
+    if (!paymentMethod || !shippingAddress) {
+      throw new Error('Payment method or shipping address not available');
+    }
+
+    // Check if we have cart items (either from cart context or need to get them)
+    const cartItems = cart?.items || [];
+    if (cartItems.length === 0) {
+      throw new Error('Cart is empty');
     }
 
     setIsProcessing(true);
@@ -178,13 +184,22 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
         phone: shippingAddress.phone,
       };
 
-      // Create order via API
+      // Format cart items as fallback for backend (in case MongoDB cart sync failed)
+      const formattedItems = cartItems.map(item => ({
+        productId: typeof item.product === 'string' ? item.product : item.product._id,
+        variantId: item.variant ? (typeof item.variant === 'string' ? item.variant : item.variant._id) : undefined,
+        quantity: item.quantity,
+        price: item.price,
+      }));
+
+      // Create order via API (include items as fallback)
       const response = await checkoutService.createOrder({
         shippingAddress: formattedShippingAddress,
         billingAddress: formattedShippingAddress, // Using same address for billing
         paymentMethod: {
           type: paymentMethod.type,
         },
+        items: formattedItems, // Fallback items from frontend
       });
 
       if (!response.success || !response.order) {
@@ -194,7 +209,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       // Map API response to Order interface
       const newOrder: Order = {
         id: response.order._id || response.order.orderNumber,
-        items: cart.items.map(item => ({
+        items: cartItems.map(item => ({
           productId: typeof item.product === 'string' ? item.product : item.product._id,
           productName: typeof item.product === 'string' ? '' : item.product.name,
           variantId: item.variant ? (typeof item.variant === 'string' ? item.variant : item.variant._id) : undefined,
@@ -212,7 +227,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
         paymentMethod,
         subtotal: response.order.pricing?.subtotal || subtotal,
         discount: response.order.pricing?.discount || 0,
-        shipping: response.order.pricing?.shipping || (subtotal > 5000 ? 0 : 99),
+        shipping: response.order.pricing?.shipping || (subtotal >= 1000 ? 0 : 99),
         total: response.order.pricing?.total || total,
         status: response.order.status || 'pending',
         createdAt: new Date().toISOString(),

@@ -113,12 +113,9 @@ export default function Home() {
   const safeTrendingLooks = getSafeArray(trending);
   const safeTestimonials = getSafeArray(testimonials);
 
-  // Fetch hero banners from admin (with delay to avoid rate limiting)
+  // Fetch hero banners from admin
   useEffect(() => {
     const loadHeroBanners = async () => {
-      // Delay to stagger API requests
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
       try {
         setLoadingBanners(true);
         const result = await bannerService.getActiveBanners();
@@ -166,11 +163,9 @@ export default function Home() {
     // Banner impressions can be tracked server-side if needed
   }, [currentBannerIndex, heroBanners]);
 
-  // Fetch featured products with delay to avoid rate limiting
+  // Fetch featured products
   useEffect(() => {
     const loadFeaturedProducts = async () => {
-      // Delay to stagger API requests
-      await new Promise(resolve => setTimeout(resolve, 5000));
       
       try {
         setLoadingFeaturedProducts(true);
@@ -538,7 +533,7 @@ export default function Home() {
   const scrollCategories = (direction: 'left' | 'right') => {
     if (!categoriesSliderRef) return;
     
-    const cardWidth = 320; // Approximate card width including gap (larger for categories)
+    const cardWidth = 400; // Approximate card width including gap (larger for categories)
     const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
     const maxScroll = categoriesSliderRef.scrollWidth - categoriesSliderRef.clientWidth;
     
@@ -556,7 +551,7 @@ export default function Home() {
   const scrollCollections = (direction: 'left' | 'right') => {
     if (!collectionsSliderRef) return;
     
-    const cardWidth = 320; // Approximate card width including gap (same as categories)
+    const cardWidth = 400; // Approximate card width including gap (same as categories)
     const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
     const maxScroll = collectionsSliderRef.scrollWidth - collectionsSliderRef.clientWidth;
     
@@ -574,7 +569,7 @@ export default function Home() {
   const scrollOccasions = (direction: 'left' | 'right') => {
     if (!occasionsSliderRef) return;
     
-    const cardWidth = 320; // Approximate card width including gap (same as categories)
+    const cardWidth = 400; // Approximate card width including gap (same as categories)
     const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
     const maxScroll = occasionsSliderRef.scrollWidth - occasionsSliderRef.clientWidth;
     
@@ -604,7 +599,7 @@ export default function Home() {
       {loadingBanners ? (
         <section 
           id="brand-banner"
-          className="relative py-0 overflow-hidden flex items-center justify-center h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[65vh] mt-8 sm:mt-12 md:mt-16"
+          className="relative py-0 overflow-hidden flex items-center justify-center h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh] mt-4 sm:mt-6 md:mt-8"
           style={{ 
             background: 'linear-gradient(135deg, #470031 0%, #470031 50%, #470031 100%)'
           }}
@@ -616,7 +611,7 @@ export default function Home() {
       ) : (
         <section 
           id="brand-banner"
-          className="relative py-0 overflow-hidden flex items-center justify-center h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[65vh] mt-8 sm:mt-12 md:mt-16"
+          className="relative py-0 overflow-hidden flex items-center justify-center h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh] mt-4 sm:mt-6 md:mt-8"
           style={{ 
             background: 'linear-gradient(135deg, #470031 0%, #470031 50%, #470031 100%)'
           }}
@@ -628,7 +623,7 @@ export default function Home() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="flex items-center justify-center"
             >
-              <div className="relative w-[95vw] h-[95vw] max-w-[600px] max-h-[600px] xs:w-[90vw] xs:h-[90vw] xs:max-w-[650px] xs:max-h-[650px] sm:w-[85vw] sm:h-[85vw] sm:max-w-[700px] sm:max-h-[700px] md:w-[70vw] md:h-[70vw] md:max-w-[600px] md:max-h-[600px] lg:w-[50vw] lg:h-[50vw] lg:max-w-[600px] lg:max-h-[600px]">
+              <div className="relative w-[95vw] h-[95vw] max-w-[650px] max-h-[650px] xs:w-[90vw] xs:h-[90vw] xs:max-w-[700px] xs:max-h-[700px] sm:w-[85vw] sm:h-[85vw] sm:max-w-[750px] sm:max-h-[750px] md:w-[70vw] md:h-[70vw] md:max-w-[700px] md:max-h-[700px] lg:w-[55vw] lg:h-[55vw] lg:max-w-[750px] lg:max-h-[750px]">
                 <Image
                   src="/images/fefa_logo_transparent_4k.png"
                   alt="FEFA Logo"
@@ -680,7 +675,7 @@ export default function Home() {
       )}
 
       {/* Jewelry Categories Section */}
-      <section id="categories-section" className="pb-8 pt-12 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
+      <section id="categories-section" className="pb-4 pt-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
         <div className="container mx-auto px-4">
           {fieldErrors.categories ? (
             <ErrorDisplay 
@@ -730,7 +725,7 @@ export default function Home() {
               <div 
                 ref={setCategoriesSliderRef}
                 id="category-container"
-                className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-8 sm:px-10 md:px-12 lg:px-16"
+                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-4 sm:px-6 md:px-8 lg:px-10"
                 style={{ 
                   scrollbarWidth: 'none', 
                   msOverflowStyle: 'none',
@@ -752,7 +747,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     viewport={{ once: true }}
-                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-40 xs:w-44 sm:w-48 md:w-52 lg:w-60 xl:w-80 flex flex-col"
+                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96 flex flex-col"
                   >
                     <Link href={`/collections?category=${category.slug}`} className="block flex flex-col h-full">
                       <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
@@ -762,17 +757,17 @@ export default function Home() {
                           alt={category.name}
                           fill
                           className="object-cover"
-                          sizes="(max-width: 475px) 160px, (max-width: 640px) 176px, (max-width: 768px) 192px, (max-width: 1024px) 208px, (max-width: 1280px) 240px, 320px"
+                          sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
                         />
                       </div>
                       {/* Content below image */}
-                      <div className="p-3 xs:p-4 sm:p-4 md:p-5 lg:p-6 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
+                      <div className="p-2 xs:p-3 sm:p-3 md:p-4 lg:p-4 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
                         <motion.h3 
                           initial={{ opacity: 0, y: 20 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.6, delay: 0.3 }}
                           viewport={{ once: true }}
-                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-1 xs:mb-1 sm:mb-2 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
+                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
                         >
                           {category.name}
                         </motion.h3>
@@ -804,7 +799,7 @@ export default function Home() {
               <section 
                 key={banner._id || index}
                 id="hero-banner"
-                className={`relative py-0 overflow-hidden ${isActive ? 'block' : 'hidden'} h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[65vh]`}
+                className={`relative py-0 overflow-hidden ${isActive ? 'block' : 'hidden'} h-[70vh] sm:h-[75vh] md:h-[80vh] lg:h-[85vh] xl:h-[90vh]`}
               >
                 {/* Background Image */}
                 <div className="absolute inset-0 w-full h-full">
@@ -899,16 +894,16 @@ export default function Home() {
       )}
 
       {/* Features Section */}
-      <section className="pt-12 pb-8 bg-white dark:bg-[#0a0a0a] overflow-hidden transition-colors duration-300">
+      <section className="pt-6 pb-4 bg-white dark:bg-[#0a0a0a] overflow-hidden transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-6"
+            className="text-center mb-4"
           >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-4">WHY CHOOSE US</h2>
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2">WHY CHOOSE US</h2>
             <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
               Discover what makes our jewelry special
             </p>
@@ -918,7 +913,7 @@ export default function Home() {
           <div className="w-full flex justify-center lg:overflow-hidden">
             <div 
               id="features-container"
-              className="flex gap-4 xs:gap-5 sm:gap-6 md:gap-6 lg:gap-8 overflow-x-auto scrollbar-hide pb-4 cursor-grab active:cursor-grabbing lg:justify-center"
+              className="flex gap-2 xs:gap-3 sm:gap-4 md:gap-4 lg:gap-5 overflow-x-auto scrollbar-hide pb-2 cursor-grab active:cursor-grabbing lg:justify-center"
               style={{ 
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
@@ -940,10 +935,10 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="relative bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-purple-100 dark:border-purple-800/30 rounded-xl xs:rounded-2xl p-3 xs:p-4 sm:p-4 md:p-5 text-center flex-shrink-0 w-36 xs:w-40 sm:w-44 md:w-48 lg:w-52"
+                className="relative bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-purple-100 dark:border-purple-800/30 rounded-xl xs:rounded-2xl p-2 xs:p-3 sm:p-3 md:p-4 text-center flex-shrink-0 w-36 xs:w-40 sm:w-44 md:w-48 lg:w-52"
               >
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-primary via-purple-600 to-pink-500 rounded-full flex items-center justify-center mb-2 xs:mb-2.5 sm:mb-3 shadow-lg">
+                  <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-primary via-purple-600 to-pink-500 rounded-full flex items-center justify-center mb-1 xs:mb-1.5 sm:mb-2 shadow-lg">
                     <svg className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
                       <path d={feature.icon}/>
                     </svg>
@@ -960,16 +955,16 @@ export default function Home() {
       </section>
 
       {/* Our Collections Section */}
-      <section className="pb-8 pt-12 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
+      <section className="pb-4 pt-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-8 xs:mb-10 sm:mb-12"
+            className="text-center mb-4 xs:mb-5 sm:mb-6"
           >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-3 xs:mb-4">OUR COLLECTIONS</h2>
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2 xs:mb-3">OUR COLLECTIONS</h2>
             <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
               Discover our carefully curated collections of premium handcrafted jewelry
             </p>
@@ -1035,7 +1030,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     viewport={{ once: true }}
-                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-40 xs:w-44 sm:w-48 md:w-52 lg:w-60 xl:w-80 flex flex-col"
+                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96 flex flex-col"
                   >
                     <Link href={`/collections`} className="block flex flex-col h-full">
                       <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
@@ -1046,7 +1041,7 @@ export default function Home() {
                             alt={collection.name}
                             fill
                             className="object-cover"
-                            sizes="(max-width: 475px) 160px, (max-width: 640px) 176px, (max-width: 768px) 192px, (max-width: 1024px) 208px, (max-width: 1280px) 240px, 320px"
+                            sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
                           />
                         ) : (
                           <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50">
@@ -1060,13 +1055,13 @@ export default function Home() {
                         )}
                       </div>
                       {/* Content below image */}
-                      <div className="p-3 xs:p-4 sm:p-4 md:p-5 lg:p-6 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
+                      <div className="p-2 xs:p-3 sm:p-3 md:p-4 lg:p-4 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
                         <motion.h3 
                           initial={{ opacity: 0, y: 20 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.6, delay: 0.3 }}
                           viewport={{ once: true }}
-                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-1 xs:mb-1 sm:mb-2 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
+                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
                         >
                           {collection.name}
                         </motion.h3>
@@ -1096,16 +1091,16 @@ export default function Home() {
       </section>
 
       {/* Our Occasions Section */}
-      <section className="pb-8 pt-12 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
+      <section className="pb-4 pt-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-8 xs:mb-10 sm:mb-12"
+            className="text-center mb-4 xs:mb-5 sm:mb-6"
           >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-3 xs:mb-4">OCCASIONS</h2>
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2 xs:mb-3">OCCASIONS</h2>
             <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
               Find the perfect jewelry for every special moment in your life
             </p>
@@ -1171,7 +1166,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     viewport={{ once: true }}
-                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-40 xs:w-44 sm:w-48 md:w-52 lg:w-60 xl:w-80 flex flex-col"
+                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96 flex flex-col"
                   >
                     <Link href={`/collections?occasion=${occasion.value}`} className="block flex flex-col h-full">
                       <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
@@ -1182,7 +1177,7 @@ export default function Home() {
                             alt={occasion.name}
                             fill
                             className="object-cover"
-                            sizes="(max-width: 475px) 160px, (max-width: 640px) 176px, (max-width: 768px) 192px, (max-width: 1024px) 208px, (max-width: 1280px) 240px, 320px"
+                            sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
                             onError={() => {
                               // Track failed image to avoid retrying
                               setFailedImages(prev => new Set(prev).add(occasion.image));
@@ -1201,13 +1196,13 @@ export default function Home() {
                         )}
                       </div>
                       {/* Content below image */}
-                      <div className="p-3 xs:p-4 sm:p-4 md:p-5 lg:p-6 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
+                      <div className="p-2 xs:p-3 sm:p-3 md:p-4 lg:p-4 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
                         <motion.h3 
                           initial={{ opacity: 0, y: 20 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.6, delay: 0.3 }}
                           viewport={{ once: true }}
-                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-1 xs:mb-1 sm:mb-2 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
+                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
                         >
                           {occasion.name}
                         </motion.h3>
@@ -1237,16 +1232,16 @@ export default function Home() {
       </section>
 
       {/* Featured Products Section */}
-      <section className="pt-8 pb-8 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
+      <section className="pt-4 pb-4 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-8 xs:mb-10 sm:mb-12"
+            className="text-center mb-4 xs:mb-5 sm:mb-6"
           >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-3 xs:mb-4">FEATURED PRODUCTS</h2>
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-2 xs:mb-3">FEATURED PRODUCTS</h2>
             <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
               Discover our most popular jewelry pieces, handcrafted with love and attention to detail
             </p>
@@ -1254,7 +1249,7 @@ export default function Home() {
           
           {/* Featured Products Slider */}
           {loadingFeaturedProducts ? (
-            <div className="flex justify-center items-center py-12">
+            <div className="flex justify-center items-center py-6">
               <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : featuredProducts.length > 0 ? (
@@ -1294,7 +1289,7 @@ export default function Home() {
               <div 
                 ref={setFeaturedProductsSliderRef}
                 id="featured-products-slider"
-                className="flex gap-4 sm:gap-5 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-8 sm:px-10 md:px-12 lg:px-16"
+                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-4 sm:px-6 md:px-8 lg:px-10"
                 style={{ 
                   scrollbarWidth: 'none', 
                   msOverflowStyle: 'none',
@@ -1339,7 +1334,7 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-12">
+            <div className="text-center py-6">
               <p className="text-dark-gray text-lg">No featured products available at the moment.</p>
             </div>
           )}
@@ -1361,27 +1356,27 @@ export default function Home() {
           
 
       {/* Trending Looks Section */}
-      <section className="pt-8 pb-8 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
+      <section className="pt-4 pb-4 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
         <div className="container mx-auto px-4 max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-8 xs:mb-10 sm:mb-12"
+            className="text-center mb-4 xs:mb-5 sm:mb-6"
           >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-3 xs:mb-4">TRENDING LOOKS</h2>
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-2 xs:mb-3">TRENDING LOOKS</h2>
           </motion.div>
           
           {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 xs:gap-6 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 xs:gap-4 lg:gap-5 items-center">
             {/* Phone Card */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
-              className="flex justify-center order-1 lg:order-1 mb-6 lg:mb-0"
+              className="flex justify-center order-1 lg:order-1 mb-4 lg:mb-0"
             >
               <div className="relative scale-75 xs:scale-80 sm:scale-90 md:scale-95 lg:scale-100">
                 <PhoneCard />
@@ -1465,14 +1460,14 @@ export default function Home() {
       </section>
 
       {/* Customer Love Section */}
-      <section className="pt-8 pb-8 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
+      <section className="pt-4 pb-4 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-8 xs:mb-10 sm:mb-12"
+            className="text-center mb-4 xs:mb-5 sm:mb-6"
           >
             <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-3 xs:mb-4">CUSTOMER LOVE</h2>
             <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
@@ -1588,10 +1583,22 @@ export default function Home() {
               
               setIsSubscribing(true);
               try {
-                // TODO: Implement newsletter subscription API call
-                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-                alert('Thank you for subscribing!');
-                setEmail('');
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/newsletter/subscribe`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ email: email.trim(), source: 'footer' }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                  alert(data.message || 'Thank you for subscribing!');
+                  setEmail('');
+                } else {
+                  alert(data.message || 'Failed to subscribe. Please try again.');
+                }
               } catch (error) {
                 alert('Something went wrong. Please try again.');
               } finally {

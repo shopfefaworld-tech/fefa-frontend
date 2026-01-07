@@ -1276,10 +1276,8 @@ class AdminService {
         };
       }
 
-      // Try to create user via register endpoint with admin privileges
-      // Note: This assumes the backend supports admin user creation
-      // If backend doesn't support this, you may need to implement a POST /api/users endpoint
-      const response = await fetch(`${this.baseURL}/auth/register-email`, {
+      // Create user via dedicated admin endpoint
+      const response = await fetch(`${this.baseURL}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1291,7 +1289,8 @@ class AdminService {
           firstName: userData.firstName,
           lastName: userData.lastName,
           phone: userData.phone,
-          role: userData.role || 'user'
+          role: userData.role || 'customer',
+          profileImage: userData.profileImage
         })
       });
 
@@ -1311,24 +1310,15 @@ class AdminService {
           };
         }
         
-        throw new Error(data.message || data.error || 'Failed to create user');
-      }
-
-      // If user was created, optionally update role and status if needed
-      if (data.data && data.data.id) {
-        const userId = data.data.id;
-        
-        // Update role and status if different from default
-        if (userData.role !== 'user' || userData.isActive === false) {
-          const updateResult = await this.updateUser(userId, {
-            role: userData.role,
-            isActive: userData.isActive !== false
-          });
-          
-          if (!updateResult.success) {
-            console.warn('User created but failed to update role/status:', updateResult.error);
-          }
+        // Handle forbidden (not admin)
+        if (response.status === 403) {
+          return {
+            success: false,
+            error: 'You do not have permission to create users.'
+          };
         }
+        
+        throw new Error(data.message || data.error || 'Failed to create user');
       }
 
       return {

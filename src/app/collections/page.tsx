@@ -1089,7 +1089,7 @@ function CollectionsContent() {
     return (
       <div className="collections-page">
         <MainLayout>
-          <div className="flex items-center justify-center min-h-screen pt-32 sm:pt-36 md:pt-40 lg:pt-44">
+          <div className="flex items-center justify-center min-h-screen pt-20 sm:pt-24 md:pt-28 lg:pt-32">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-primary">Loading collections...</p>
@@ -1104,8 +1104,8 @@ function CollectionsContent() {
     <div className="collections-page">
     <MainLayout>
       {/* Collections Banner - positioned below fixed header */}
-      <div className="pt-32 sm:pt-36 md:pt-40 lg:pt-44">
-      <section className="collections-header pb-16">
+      <div className="pt-20 sm:pt-24 md:pt-28 lg:pt-32">
+      <section className="collections-header pb-8">
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1114,10 +1114,10 @@ function CollectionsContent() {
         >
           {searchTerm ? (
             <>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-2">
                 Search Results
               </h1>
-              <p className="text-primary dark:text-gray-300 max-w-xl mx-auto text-sm md:text-base mb-4">
+              <p className="text-primary dark:text-gray-300 max-w-xl mx-auto text-sm md:text-base mb-2">
                 Showing results for "{searchTerm}"
               </p>
               <button
@@ -1132,7 +1132,7 @@ function CollectionsContent() {
             </>
           ) : (
             <>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-4">Our Collections</h1>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-2">Our Collections</h1>
               <p className="text-primary dark:text-gray-300 max-w-xl mx-auto text-sm md:text-base">
                 Discover our exquisite range of handcrafted jewelry pieces designed to celebrate your unique style
               </p>
@@ -1144,13 +1144,13 @@ function CollectionsContent() {
 
       {/* Occasion Selection View - Show when no category selected, no occasion selected, no search, and filters haven't been applied */}
       {!selectedOccasion && !searchTerm && !isLoading && selectedCategories.includes('all') && !filtersApplied && (
-        <section className="py-12 md:py-16">
+        <section className="py-6 md:py-8">
           <div className="container mx-auto px-4">
             {/* Featured Occasions Hero Section */}
-            <div className="mb-12">
+            <div className="mb-6">
               {/* Featured Occasions Grid (3-4 main occasions) */}
               <div className="flex justify-center mb-12">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 max-w-7xl w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 max-w-7xl w-full">
                 {occasions
                   .filter(occ => occ.value !== 'all')
                   .slice(0, 4)
@@ -1174,7 +1174,7 @@ function CollectionsContent() {
                         
                         {/* Content overlay - centered */}
                         <div className="relative z-10 text-center p-4 md:p-6 flex flex-col items-center justify-center h-full">
-                          <h3 className="text-xl sm:text-2xl md:text-3xl font-cormorant text-primary mb-2 md:mb-3 group-hover:text-accent transition-colors">
+                          <h3 className="text-xl sm:text-2xl md:text-3xl font-cormorant text-primary mb-1 md:mb-2 group-hover:text-accent transition-colors">
                             {occasion.name}
                           </h3>
                           <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium">
@@ -1193,14 +1193,14 @@ function CollectionsContent() {
               </div>
 
               {/* "Explore More Occasions" Section */}
-              <div className="mb-8">
-                <h3 className="text-xl md:text-2xl font-cormorant text-primary text-center mb-6">
+              <div className="mb-4">
+                <h3 className="text-xl md:text-2xl font-cormorant text-primary text-center mb-3">
                   Explore More Occasions
                 </h3>
                 
                 {/* Horizontal Scrollable Strip */}
                 <div className="relative flex justify-center">
-                  <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth max-w-full">
+                  <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide scroll-smooth max-w-full">
                     {occasions
                       .filter(occ => occ.value !== 'all')
                       .slice(4)
@@ -1251,9 +1251,9 @@ function CollectionsContent() {
       )}
 
       {/* Filters and Products */}
-      <section className={`py-8 md:py-12 ${((selectedCategories.length > 0 && !selectedCategories.includes('all')) || selectedOccasion || searchTerm || filtersApplied) ? '' : 'hidden'}`}>
+        <section className={`py-4 md:py-6 ${((selectedCategories.length > 0 && !selectedCategories.includes('all')) || selectedOccasion || searchTerm || filtersApplied) ? '' : 'hidden'}`}>
         <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-4">
       {/* Mobile Filter Toggle */}
             <div className="lg:hidden">
               <button
@@ -1298,7 +1298,7 @@ function CollectionsContent() {
                 </button>
               </div>
               
-              <div className="mb-6">
+              <div className="mb-4">
                 <div className="category-dropdown">
                   <button
                     onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
@@ -1348,7 +1348,7 @@ function CollectionsContent() {
                 </div>
               </div>
               
-              <div className="mb-6">
+              <div className="mb-4">
                 <div className="occasion-dropdown">
                   <button
                     onClick={() => setIsOccasionDropdownOpen(!isOccasionDropdownOpen)}
