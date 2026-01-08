@@ -69,16 +69,40 @@ h1, h2, h3, .script-font {
   transform: translateY(-4px);
 }
 
-/* Hero Banner - Universal 16:9 System */
+/* Hero Banner - Fixed dimensions for consistent image placement */
 .hero-banner {
-  width: 100vw;
-  height: 60vh;
-  min-height: 520px;
-  max-height: 900px;
+  width: 100%;
+  height: auto;
+  position: relative;
+  display: block;
+}
+
+.hero-banner > div {
+  width: 100%;
+  height: auto;
+  position: relative;
+}
+
+.hero-banner img {
+  width: 100%;
+  height: auto;
+  min-height: 250px;
+  max-height: 400px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 @media (min-width: 768px) {
-  .hero-banner {
-    height: 75vh;
+  .hero-banner img {
+    min-height: 350px;
+    max-height: 500px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-banner img {
+    min-height: 400px;
+    max-height: 600px;
   }
 }

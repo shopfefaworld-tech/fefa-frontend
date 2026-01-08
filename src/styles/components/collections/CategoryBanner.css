@@ -1,0 +1,46 @@
+/* Category Banner - Fixed dimensions similar to Voylla */
+.category-banner {
+  width: 100%;
+  height: auto;
+  position: relative;
+  display: block;
+}
+
+.category-banner > div {
+  width: 100%;
+  height: auto;
+  position: relative;
+}
+
+/* Mobile - Smaller banner height */
+.category-banner img {
+  width: 100%;
+  height: auto;
+  min-height: 250px;
+  max-height: 400px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  .category-banner img {
+    min-height: 350px;
+    max-height: 500px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .category-banner img {
+    min-height: 400px;
+    max-height: 600px;
+  }
+}
+
+/* Ensure container doesn't add extra spacing */
+.category-banner > div > div {
+  margin: 0;
+  padding: 0;
+}

@@ -611,14 +611,6 @@ export default function Home() {
     });
   };
 
-  // Scroll to categories section
-  const scrollToCategories = () => {
-    const categoriesSection = document.getElementById('categories-section');
-    if (categoriesSection) {
-      categoriesSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
       <DataLoader>
       <MainLayout>
@@ -639,56 +631,34 @@ export default function Home() {
       ) : (
         <section 
           id="brand-banner"
-          className="hero-banner relative py-0 overflow-hidden mt-4 sm:mt-6 md:mt-8"
+          className="hero-banner relative py-0 overflow-hidden mt-4 sm:mt-6 md:mt-8 w-full"
         >
-          <div className="absolute inset-0 w-full h-full z-0">
+          {/* Desktop Banner (Laptop and up) */}
+          <div className="hidden lg:block w-full">
             <Image
               src="/Fefa-shop-banner.png"
               alt="FEFA Shop Banner"
-              fill
-              className="object-cover"
-              style={{ objectPosition: 'left center' }}
+              width={1920}
+              height={600}
+              className="w-full"
               priority
               sizes="100vw"
               unoptimized
             />
           </div>
-          
-          {/* Scroll Down Indicator */}
-          <motion.button
-            onClick={scrollToCategories}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-[#DBC078] hover:text-[#F5E6B8] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#DBC078] focus:ring-offset-2 focus:ring-offset-[#470031] rounded-full p-2"
-            aria-label="Scroll to categories"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1 }}
-          >
-            <span className="text-xs sm:text-sm font-medium tracking-wider uppercase">Scroll</span>
-            <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="flex flex-col items-center"
-            >
-              <svg
-                className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
-            </motion.div>
-          </motion.button>
+          {/* Mobile Banner (Below Laptop) */}
+          <div className="block lg:hidden w-full">
+            <Image
+              src="/fefa-shop-banner-biglogo.png"
+              alt="FEFA Shop Banner"
+              width={1920}
+              height={600}
+              className="w-full"
+              priority
+              sizes="100vw"
+              unoptimized
+            />
+          </div>
         </section>
       )}
 
@@ -817,63 +787,58 @@ export default function Home() {
               <section 
                 key={banner._id || index}
                 id="hero-banner"
-                className={`relative py-0 overflow-hidden ${isActive ? 'block' : 'hidden'} h-[70vh] sm:h-[75vh] md:h-[80vh] lg:h-[85vh] xl:h-[90vh]`}
+                className={`hero-banner relative py-0 overflow-hidden w-full ${isActive ? 'block' : 'hidden'}`}
               >
-                {/* Background Image */}
-                <div className="absolute inset-0 w-full h-full">
+                <div className="relative w-full">
                   <Image
                     src={banner.image}
                     alt={banner.title || 'Hero Banner'}
-                    fill
-                    className="object-cover"
+                    width={1920}
+                    height={600}
+                    className="w-full"
                     priority={index === 0}
                     sizes="100vw"
                   />
-                  {/* Subtle overlay for depth - removed bright white overlay */}
-                </div>
-
-                {/* Content Overlay - Text removed */}
-                <div className="container mx-auto px-4 relative z-10 flex items-center h-full">
-                </div>
-
-                {/* Navigation Buttons */}
-                {heroBanners.length > 1 && (
-                  <>
-                    {/* Previous Button */}
-                    <button
-                      onClick={goToPreviousBanner}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
-                      aria-label="Previous banner"
-                    >
-                      <FiChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
-                    </button>
-
-                    {/* Next Button */}
-                    <button
-                      onClick={goToNextBanner}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
-                      aria-label="Next banner"
-                    >
-                      <FiChevronRight className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
-                    </button>
-                  </>
-                )}
-
-                {/* Banner Indicators */}
-                {heroBanners.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-                    {heroBanners.map((_, idx) => (
+                  
+                  {/* Navigation Buttons */}
+                  {heroBanners.length > 1 && (
+                    <>
+                      {/* Previous Button */}
                       <button
-                        key={idx}
-                        onClick={() => setCurrentBannerIndex(idx)}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          idx === currentBannerIndex ? 'bg-[#DBC078] w-8' : 'bg-white/50'
-                        }`}
-                        aria-label={`Go to banner ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
+                        onClick={goToPreviousBanner}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                        aria-label="Previous banner"
+                      >
+                        <FiChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
+                      </button>
+
+                      {/* Next Button */}
+                      <button
+                        onClick={goToNextBanner}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                        aria-label="Next banner"
+                      >
+                        <FiChevronRight className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Banner Indicators */}
+                  {heroBanners.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                      {heroBanners.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentBannerIndex(idx)}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            idx === currentBannerIndex ? 'bg-[#DBC078] w-8' : 'bg-white/50'
+                          }`}
+                          aria-label={`Go to banner ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </section>
             );
           })}

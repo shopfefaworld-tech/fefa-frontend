@@ -1116,41 +1116,32 @@ function CollectionsContent() {
     <MainLayout>
       {/* Collections Banner - positioned below fixed header */}
       <div className="pt-20 sm:pt-24 md:pt-28 lg:pt-32">
-      <section className="collections-header pb-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-          className="container mx-auto px-4 text-center"
-        >
-          {searchTerm ? (
-            <>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-2">
-                Search Results
-              </h1>
-              <p className="text-primary max-w-xl mx-auto text-sm md:text-base mb-2">
-                Showing results for "{searchTerm}"
-              </p>
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  clearSearch();
-                }}
-                className="text-primary hover:text-accent underline transition-colors"
-              >
-                Clear search
-              </button>
-            </>
-          ) : (
-            <>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-2">Our Collections</h1>
-              <p className="text-primary max-w-xl mx-auto text-sm md:text-base">
-                Discover our exquisite range of handcrafted jewelry pieces designed to celebrate your unique style
-              </p>
-            </>
-          )}
-        </motion.div>
-      </section>
+      {searchTerm && (
+        <section className="collections-header pb-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="container mx-auto px-4 text-center"
+          >
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-2">
+              Search Results
+            </h1>
+            <p className="text-primary max-w-xl mx-auto text-sm md:text-base mb-2">
+              Showing results for "{searchTerm}"
+            </p>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                clearSearch();
+              }}
+              className="text-primary hover:text-accent underline transition-colors"
+            >
+              Clear search
+            </button>
+          </motion.div>
+        </section>
+      )}
       </div>
 
       {/* Category/Collection/Occasion Banner - Show when a filter is selected */}
