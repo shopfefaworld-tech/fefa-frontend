@@ -7,7 +7,6 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import MainLayout from '@/components/layout/MainLayout';
 import Button from '@/components/ui/Button';
 import ProductCard from '@/components/product/ProductCard';
-import PhoneCard from '@/components/ui/PhoneCard';
 import Link from 'next/link';
 import Image from 'next/image';
 import DataLoader from '@/components/DataLoader';
@@ -88,6 +87,11 @@ export default function Home() {
   const [heroBanners, setHeroBanners] = useState<any[]>([]);
   const [loadingBanners, setLoadingBanners] = useState(true);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
+  const [loadingTrendingProducts, setLoadingTrendingProducts] = useState(true);
+  const [trendingProductsSliderRef, setTrendingProductsSliderRef] = useState<HTMLDivElement | null>(null);
+  const [canScrollTrendingLeft, setCanScrollTrendingLeft] = useState(false);
+  const [canScrollTrendingRight, setCanScrollTrendingRight] = useState(true);
   
   // Get data from context
   const { 
@@ -197,6 +201,58 @@ export default function Home() {
     };
 
     loadFeaturedProducts();
+  }, []);
+
+  // Fetch trending/best seller products
+  useEffect(() => {
+    const loadTrendingProducts = async () => {
+      try {
+        setLoadingTrendingProducts(true);
+        // Try to fetch best sellers or trending products
+        // First try best sellers, then fallback to featured products
+        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        
+        // Try fetching products sorted by popularity/sales
+        try {
+          const response = await fetch(`${baseURL}/products?sortBy=soldCount&sortOrder=desc&limit=20`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              const products = Array.isArray(data.data) 
+                ? data.data.filter((product: Product) => product.isActive !== false)
+                : [];
+              setTrendingProducts(products);
+              setLoadingTrendingProducts(false);
+              return;
+            }
+          }
+        } catch (error) {
+          // Fallback to featured products if best sellers endpoint fails
+        }
+        
+        // Fallback: use featured products
+        const result = await dataService.getFeaturedProducts(20);
+        if (result.success && result.data) {
+          const products = Array.isArray(result.data) 
+            ? result.data.filter((product: Product) => product.isActive !== false)
+            : [];
+          setTrendingProducts(products);
+        } else {
+          setTrendingProducts([]);
+        }
+      } catch (error) {
+        setTrendingProducts([]);
+      } finally {
+        setLoadingTrendingProducts(false);
+      }
+    };
+
+    // Delay to stagger API requests
+    const timer = setTimeout(() => {
+      loadTrendingProducts();
+    }, 2000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Load collections data (with delay to avoid rate limiting)
@@ -388,6 +444,33 @@ export default function Home() {
       window.removeEventListener('resize', handleResize);
     };
   }, [occasionsSliderRef]);
+
+  // Update scroll state for trending products carousel
+  useEffect(() => {
+    if (!trendingProductsSliderRef) return;
+    
+    const updateScrollState = () => {
+      const scrollLeft = trendingProductsSliderRef.scrollLeft;
+      const maxScroll = trendingProductsSliderRef.scrollWidth - trendingProductsSliderRef.clientWidth;
+      
+      setCanScrollTrendingLeft(scrollLeft > 10);
+      setCanScrollTrendingRight(scrollLeft < maxScroll - 10);
+    };
+    
+    trendingProductsSliderRef.addEventListener('scroll', updateScrollState);
+    updateScrollState(); // Initial check
+    
+    // Also check on resize
+    const handleResize = () => {
+      updateScrollState();
+    };
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      trendingProductsSliderRef.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [trendingProductsSliderRef]);
 
   // Handle authentication redirect for admin users only
   useEffect(() => {
@@ -611,6 +694,24 @@ export default function Home() {
     });
   };
 
+  // Trending products slider navigation
+  const scrollTrendingProducts = (direction: 'left' | 'right') => {
+    if (!trendingProductsSliderRef) return;
+    
+    const cardWidth = 280; // Approximate card width including gap
+    const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
+    const maxScroll = trendingProductsSliderRef.scrollWidth - trendingProductsSliderRef.clientWidth;
+    
+    const newScroll = direction === 'left' 
+      ? Math.max(0, trendingProductsSliderRef.scrollLeft - scrollAmount)
+      : Math.min(maxScroll, trendingProductsSliderRef.scrollLeft + scrollAmount);
+    
+    trendingProductsSliderRef.scrollTo({
+      left: newScroll,
+      behavior: 'smooth'
+    });
+  };
+
   return (
       <DataLoader>
       <MainLayout>
@@ -780,69 +881,74 @@ export default function Home() {
 
       {/* Hero Banner Section - Admin Managed (After Categories) */}
       {!loadingBanners && heroBanners.length > 0 && (
-        <>
-          {heroBanners.map((banner: any, index: number) => {
-            const isActive = index === currentBannerIndex;
-            return (
-              <section 
-                key={banner._id || index}
-                id="hero-banner"
-                className={`hero-banner relative py-0 overflow-hidden w-full ${isActive ? 'block' : 'hidden'}`}
-              >
-                <div className="relative w-full">
-                  <Image
-                    src={banner.image}
-                    alt={banner.title || 'Hero Banner'}
-                    width={1920}
-                    height={600}
-                    className="w-full"
-                    priority={index === 0}
-                    sizes="100vw"
+        <section 
+          id="hero-banner"
+          className="hero-banner relative py-0 overflow-hidden w-full"
+        >
+          <div className="relative w-full">
+            {/* Single carousel container with all banners */}
+            <div className="relative w-full" style={{ position: 'relative', height: 'auto' }}>
+              {heroBanners.map((banner: any, index: number) => {
+                const isActive = index === currentBannerIndex;
+                return (
+                  <div
+                    key={banner._id || index}
+                    className={`w-full ${isActive ? 'block' : 'hidden'}`}
+                  >
+                    <Image
+                      src={banner.image}
+                      alt={banner.title || 'Hero Banner'}
+                      width={1920}
+                      height={600}
+                      className="w-full"
+                      priority={index === 0}
+                      sizes="100vw"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Navigation Buttons - Single set for the entire carousel */}
+            {heroBanners.length > 1 && (
+              <>
+                {/* Previous Button */}
+                <button
+                  onClick={goToPreviousBanner}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                  aria-label="Previous banner"
+                >
+                  <FiChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
+                </button>
+
+                {/* Next Button */}
+                <button
+                  onClick={goToNextBanner}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                  aria-label="Next banner"
+                >
+                  <FiChevronRight className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
+                </button>
+              </>
+            )}
+
+            {/* Banner Indicators - Single set for the entire carousel */}
+            {heroBanners.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                {heroBanners.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentBannerIndex(idx)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      idx === currentBannerIndex ? 'bg-[#DBC078] w-8' : 'bg-white/50'
+                    }`}
+                    aria-label={`Go to banner ${idx + 1}`}
                   />
-                  
-                  {/* Navigation Buttons */}
-                  {heroBanners.length > 1 && (
-                    <>
-                      {/* Previous Button */}
-                      <button
-                        onClick={goToPreviousBanner}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
-                        aria-label="Previous banner"
-                      >
-                        <FiChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
-                      </button>
-
-                      {/* Next Button */}
-                      <button
-                        onClick={goToNextBanner}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
-                        aria-label="Next banner"
-                      >
-                        <FiChevronRight className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
-                      </button>
-                    </>
-                  )}
-
-                  {/* Banner Indicators */}
-                  {heroBanners.length > 1 && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-                      {heroBanners.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentBannerIndex(idx)}
-                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                            idx === currentBannerIndex ? 'bg-[#DBC078] w-8' : 'bg-white/50'
-                          }`}
-                          aria-label={`Go to banner ${idx + 1}`}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </section>
-            );
-          })}
-        </>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Features Section */}
@@ -1307,10 +1413,10 @@ export default function Home() {
       </section>
           
 
-      {/* Trending Looks Section */}
+      {/* Trending Looks / Best Sellers Section */}
       <section className="pt-4 pb-4 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <motion.div
+        <div className="container mx-auto px-4">
+          <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -1318,96 +1424,115 @@ export default function Home() {
             className="text-center mb-4 xs:mb-5 sm:mb-6"
           >
             <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-2 xs:mb-3">TRENDING LOOKS</h2>
+            <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
+              Discover our most popular and trending jewelry pieces
+            </p>
           </motion.div>
           
-          {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 xs:gap-4 lg:gap-5 items-center">
-            {/* Phone Card */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="flex justify-center order-1 lg:order-1 mb-4 lg:mb-0"
-            >
-              <div className="relative scale-75 xs:scale-80 sm:scale-90 md:scale-95 lg:scale-100">
-                <PhoneCard />
-                {/* Decorative elements around phone */}
-                <div className="absolute -top-2 xs:-top-3 sm:-top-4 -right-2 xs:-right-3 sm:-right-4 w-4 h-4 xs:w-6 xs:h-6 sm:w-8 sm:h-8 bg-amber-400 rounded-full opacity-60 animate-pulse"></div>
-                <div className="absolute -bottom-3 xs:-bottom-4 sm:-bottom-6 -left-3 xs:-left-4 sm:-left-6 w-3 h-3 xs:w-4 xs:h-4 sm:w-6 sm:h-6 bg-rose-400 rounded-full opacity-40 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-                <div className="absolute top-1/2 -left-4 xs:-left-6 sm:-left-8 w-2 h-2 xs:w-3 xs:h-3 sm:w-4 sm:h-4 bg-purple-400 rounded-full opacity-50 animate-pulse" style={{ animationDelay: '1s' }}></div>
-              </div>
-            </motion.div>
-            
-            {/* Trending Looks Content */}
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="space-y-4 xs:space-y-5 sm:space-y-6 order-2 lg:order-2 flex flex-col justify-center"
-            >
-              <div>
-                <h3 className="text-2xl xs:text-3xl sm:text-3xl md:text-4xl !font-cormorant text-primary mb-3 xs:mb-4">
-                  Discover What's Hot
-                </h3>
-                <p className="text-dark-gray text-sm xs:text-base sm:text-lg leading-relaxed mb-4 xs:mb-5 sm:mb-6">
-                  Stay ahead of the fashion curve with our trending jewelry styles. 
-                  From elegant statement pieces to delicate everyday wear, discover 
-                  the looks that are making waves in the fashion world.
-                </p>
-              </div>
+          {/* Trending Products Slider */}
+          {loadingTrendingProducts ? (
+            <div className="flex justify-center items-center py-6">
+              <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : trendingProducts.length > 0 ? (
+            <div className="relative group">
+              {/* Navigation Arrows - Fade out when at start/end */}
+              <button
+                onClick={() => scrollTrendingProducts('left')}
+                disabled={!canScrollTrendingLeft}
+                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                  !canScrollTrendingLeft 
+                    ? 'opacity-0 pointer-events-none' 
+                    : 'opacity-70 hover:opacity-100 hover:scale-110'
+                } flex items-center justify-center`}
+                aria-label="Previous products"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
               
-              <div className="space-y-3 xs:space-y-4">
-                <div className="flex items-start space-x-3 xs:space-x-4">
-                  <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 xs:mt-1">
-                    <svg className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-base xs:text-lg sm:text-xl font-semibold text-primary mb-1 xs:mb-2">Statement Earrings</h4>
-                    <p className="text-dark-gray text-sm xs:text-base">Bold, eye-catching pieces that command attention</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3 xs:space-x-4">
-                  <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 xs:mt-1">
-                    <svg className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-base xs:text-lg sm:text-xl font-semibold text-primary mb-1 xs:mb-2">Layered Necklaces</h4>
-                    <p className="text-dark-gray text-sm xs:text-base">Mix and match different lengths for a modern look</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3 xs:space-x-4">
-                  <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 xs:mt-1">
-                    <svg className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-base xs:text-lg sm:text-xl font-semibold text-primary mb-1 xs:mb-2">Minimalist Rings</h4>
-                    <p className="text-dark-gray text-sm xs:text-base">Clean, simple designs that speak volumes</p>
-                  </div>
-                </div>
+              <button
+                onClick={() => scrollTrendingProducts('right')}
+                disabled={!canScrollTrendingRight}
+                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                  !canScrollTrendingRight 
+                    ? 'opacity-0 pointer-events-none' 
+                    : 'opacity-70 hover:opacity-100 hover:scale-110'
+                } flex items-center justify-center`}
+                aria-label="Next products"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Trending Products Slider Container */}
+              <div 
+                ref={setTrendingProductsSliderRef}
+                id="trending-products-slider"
+                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
+                style={{ 
+                  scrollbarWidth: 'none', 
+                  msOverflowStyle: 'none',
+                  scrollBehavior: 'smooth',
+                  touchAction: 'pan-x'
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {trendingProducts.map((product, index) => {
+                  const discountPercentage = product.comparePrice 
+                    ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
+                    : 0;
+                  
+                  return (
+                    <div 
+                      key={product._id || index} 
+                      className="flex-shrink-0 w-[200px] xs:w-[220px] sm:w-[240px] md:w-[260px] lg:w-[280px] h-full"
+                    >
+                      <ProductCard
+                        _id={product._id}
+                        name={product.name}
+                        price={product.price}
+                        comparePrice={product.comparePrice}
+                        images={product.images || []}
+                        slug={product.slug}
+                        category={product.category}
+                        isFeatured={product.isFeatured}
+                        isActive={product.isActive}
+                        discountPercentage={discountPercentage}
+                        stockStatus={product.inventory?.quantity > 0 ? 'in-stock' : 'out-of-stock'}
+                        ratings={product.ratings}
+                      />
+                    </div>
+                  );
+                })}
               </div>
-              
-              <div className="pt-2 xs:pt-3 sm:pt-4">
-                <Button 
-                  href="/collections" 
-                  variant="outline" 
-                  size="sm"
-                  className="border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-white text-xs xs:text-sm px-3 xs:px-4 py-2 xs:py-2.5"
-                >
-                  Explore Trending Styles
-                </Button>
-              </div>
-            </motion.div>
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-dark-gray text-lg">No trending products available at the moment.</p>
+            </div>
+          )}
+          
+          {/* View All Products Button */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            viewport={{ once: true }}
+            className="text-center mt-12"
+          >
+            <Button href="/collections" variant="outline" className="border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-white">
+              View All Products
+            </Button>
+          </motion.div>
         </div>
       </section>
 
