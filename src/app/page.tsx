@@ -1,8 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import MainLayout from '@/components/layout/MainLayout';
 import Button from '@/components/ui/Button';
 import ProductCard from '@/components/product/ProductCard';
@@ -58,7 +59,9 @@ export default function Home() {
   const { isAuthenticated, isLoading: authLoading, user, isAdmin } = useAuth();
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
+  const [startY, setStartY] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const scrollDirectionRef = useRef<'horizontal' | 'vertical' | null>(null);
   const [retrying, setRetrying] = useState({ categories: false });
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loadingFeaturedProducts, setLoadingFeaturedProducts] = useState(true);
@@ -156,6 +159,15 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, [heroBanners.length]);
+
+  // Navigation functions for hero banner
+  const goToNextBanner = () => {
+    setCurrentBannerIndex((prev) => (prev + 1) % heroBanners.length);
+  };
+
+  const goToPreviousBanner = () => {
+    setCurrentBannerIndex((prev) => (prev - 1 + heroBanners.length) % heroBanners.length);
+  };
 
   // Track banner impressions when they become visible (simplified - disabled to avoid rate limiting)
   useEffect(() => {
@@ -483,7 +495,7 @@ export default function Home() {
     slider.scrollLeft = scrollLeft - walk;
   };
 
-  // Touch events - horizontal only
+  // Touch events - support both horizontal and vertical scrolling
   const handleTouchStart = (e: React.TouchEvent) => {
     const target = e.target as HTMLElement;
     const slider = target.closest('[id$="-slider"]') as HTMLElement;
@@ -491,24 +503,40 @@ export default function Home() {
     
     setIsDragging(true);
     setStartX(e.touches[0].pageX - slider.offsetLeft);
+    setStartY(e.touches[0].pageY);
     setScrollLeft(slider.scrollLeft);
+    scrollDirectionRef.current = null; // Reset scroll direction
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    e.preventDefault(); // Prevent vertical scrolling
     
     const target = e.target as HTMLElement;
     const slider = target.closest('[id$="-slider"]') as HTMLElement;
     if (!slider) return;
     
-    const x = e.touches[0].pageX - slider.offsetLeft;
-    const walk = (x - startX) * 2;
-    slider.scrollLeft = scrollLeft - walk;
+    const currentX = e.touches[0].pageX - slider.offsetLeft;
+    const currentY = e.touches[0].pageY;
+    const deltaX = Math.abs(currentX - startX);
+    const deltaY = Math.abs(currentY - startY);
+    
+    // Determine scroll direction on first significant movement
+    if (!scrollDirectionRef.current && (deltaX > 5 || deltaY > 5)) {
+      scrollDirectionRef.current = deltaX > deltaY ? 'horizontal' : 'vertical';
+    }
+    
+    // Only prevent default and handle horizontal scroll if direction is horizontal
+    if (scrollDirectionRef.current === 'horizontal') {
+      e.preventDefault();
+      const walk = (currentX - startX) * 2;
+      slider.scrollLeft = scrollLeft - walk;
+    }
+    // If vertical, let the browser handle the scroll naturally
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
+    scrollDirectionRef.current = null;
   };
 
   // Featured products slider navigation
@@ -611,29 +639,19 @@ export default function Home() {
       ) : (
         <section 
           id="brand-banner"
-          className="relative py-0 overflow-hidden flex items-center justify-center h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh] mt-4 sm:mt-6 md:mt-8"
-          style={{ 
-            background: 'linear-gradient(135deg, #470031 0%, #470031 50%, #470031 100%)'
-          }}
+          className="hero-banner relative py-0 overflow-hidden mt-4 sm:mt-6 md:mt-8"
         >
-          <div className="container mx-auto px-4 relative z-10 flex items-center justify-center h-full">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="flex items-center justify-center"
-            >
-              <div className="relative w-[95vw] h-[95vw] max-w-[650px] max-h-[650px] xs:w-[90vw] xs:h-[90vw] xs:max-w-[700px] xs:max-h-[700px] sm:w-[85vw] sm:h-[85vw] sm:max-w-[750px] sm:max-h-[750px] md:w-[70vw] md:h-[70vw] md:max-w-[700px] md:max-h-[700px] lg:w-[55vw] lg:h-[55vw] lg:max-w-[750px] lg:max-h-[750px]">
-                <Image
-                  src="/images/fefa_logo_transparent_4k.png"
-                  alt="FEFA Logo"
-                  fill
-                  className="object-contain drop-shadow-2xl"
-                  priority
-                  sizes="(max-width: 475px) 95vw, (max-width: 640px) 90vw, (max-width: 768px) 85vw, (max-width: 1024px) 70vw, (max-width: 1280px) 50vw, 50vw"
-                />
-              </div>
-            </motion.div>
+          <div className="absolute inset-0 w-full h-full z-0">
+            <Image
+              src="/Fefa-shop-banner.png"
+              alt="FEFA Shop Banner"
+              fill
+              className="object-cover"
+              style={{ objectPosition: 'left center' }}
+              priority
+              sizes="100vw"
+              unoptimized
+            />
           </div>
           
           {/* Scroll Down Indicator */}
@@ -675,7 +693,7 @@ export default function Home() {
       )}
 
       {/* Jewelry Categories Section */}
-      <section id="categories-section" className="pb-4 pt-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
+      <section id="categories-section" className="pb-4 pt-6 bg-white transition-colors duration-300">
         <div className="container mx-auto px-4">
           {fieldErrors.categories ? (
             <ErrorDisplay 
@@ -694,7 +712,7 @@ export default function Home() {
               <button
                 onClick={() => scrollCategories('left')}
                 disabled={!canScrollCategoriesLeft}
-                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
                   !canScrollCategoriesLeft 
                     ? 'opacity-0 pointer-events-none' 
                     : 'opacity-70 hover:opacity-100 hover:scale-110'
@@ -709,7 +727,7 @@ export default function Home() {
               <button
                 onClick={() => scrollCategories('right')}
                 disabled={!canScrollCategoriesRight}
-                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
                   !canScrollCategoriesRight 
                     ? 'opacity-0 pointer-events-none' 
                     : 'opacity-70 hover:opacity-100 hover:scale-110'
@@ -725,7 +743,7 @@ export default function Home() {
               <div 
                 ref={setCategoriesSliderRef}
                 id="category-container"
-                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-4 sm:px-6 md:px-8 lg:px-10"
+                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
                 style={{ 
                   scrollbarWidth: 'none', 
                   msOverflowStyle: 'none',
@@ -767,7 +785,7 @@ export default function Home() {
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.6, delay: 0.3 }}
                           viewport={{ once: true }}
-                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
+                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900"
                         >
                           {category.name}
                         </motion.h3>
@@ -776,7 +794,7 @@ export default function Home() {
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.6, delay: 0.4 }}
                           viewport={{ once: true }}
-                          className="text-gray-600 dark:text-gray-300 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
+                          className="text-gray-600 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
                         >
                           Explore {category.name.toLowerCase()}
                         </motion.p>
@@ -811,66 +829,35 @@ export default function Home() {
                     priority={index === 0}
                     sizes="100vw"
                   />
-                  {/* Overlay for better text readability */}
-                  <div className="absolute inset-0 bg-black/30" />
+                  {/* Subtle overlay for depth - removed bright white overlay */}
                 </div>
 
-                {/* Content Overlay */}
+                {/* Content Overlay - Text removed */}
                 <div className="container mx-auto px-4 relative z-10 flex items-center h-full">
-                  <motion.div
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="text-white max-w-2xl"
-                  >
-                    {banner.title && (
-                      <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif mb-4 sm:mb-6 text-[#DBC078] drop-shadow-lg leading-tight"
-                        style={{ fontFamily: 'serif' }}
-                      >
-                        {banner.title}
-                      </motion.h1>
-                    )}
-                    {banner.subtitle && (
-                      <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 text-white/90 drop-shadow-md"
-                      >
-                        {banner.subtitle}
-                      </motion.p>
-                    )}
-                    {banner.buttonText && banner.buttonLink && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.6 }}
-                      >
-                        <Link href={banner.buttonLink}>
-                          <button
-                            onClick={async () => {
-                              // Track banner click
-                              if (banner._id) {
-                                try {
-                                  await bannerService.trackClick(banner._id);
-                                } catch (error) {
-                                  console.error('Failed to track banner click:', error);
-                                }
-                              }
-                            }}
-                            className="bg-[#FFA500] hover:bg-[#FF8C00] text-white font-semibold px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-base sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-                          >
-                            {banner.buttonText}
-                          </button>
-                        </Link>
-                      </motion.div>
-                    )}
-                  </motion.div>
                 </div>
+
+                {/* Navigation Buttons */}
+                {heroBanners.length > 1 && (
+                  <>
+                    {/* Previous Button */}
+                    <button
+                      onClick={goToPreviousBanner}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                      aria-label="Previous banner"
+                    >
+                      <FiChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
+                    </button>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={goToNextBanner}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                      aria-label="Next banner"
+                    >
+                      <FiChevronRight className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
+                    </button>
+                  </>
+                )}
 
                 {/* Banner Indicators */}
                 {heroBanners.length > 1 && (
@@ -894,7 +881,7 @@ export default function Home() {
       )}
 
       {/* Features Section */}
-      <section className="pt-6 pb-4 bg-white dark:bg-[#0a0a0a] overflow-hidden transition-colors duration-300">
+      <section className="pt-6 pb-4 bg-white overflow-hidden transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -935,7 +922,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="relative bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-purple-100 dark:border-purple-800/30 rounded-xl xs:rounded-2xl p-2 xs:p-3 sm:p-3 md:p-4 text-center flex-shrink-0 w-36 xs:w-40 sm:w-44 md:w-48 lg:w-52"
+                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-2 xs:p-3 sm:p-3 md:p-4 text-center flex-shrink-0 w-36 xs:w-40 sm:w-44 md:w-48 lg:w-52"
               >
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-primary via-purple-600 to-pink-500 rounded-full flex items-center justify-center mb-1 xs:mb-1.5 sm:mb-2 shadow-lg">
@@ -943,7 +930,7 @@ export default function Home() {
                       <path d={feature.icon}/>
                     </svg>
                   </div>
-                  <h3 className="text-primary dark:text-purple-300 font-bold text-base xs:text-base sm:text-lg md:text-lg leading-tight">
+                  <h3 className="text-primary font-bold text-base xs:text-base sm:text-lg md:text-lg leading-tight">
                     {feature.title}
                   </h3>
                 </div>
@@ -955,7 +942,7 @@ export default function Home() {
       </section>
 
       {/* Our Collections Section */}
-      <section className="pb-4 pt-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
+      <section className="pb-4 pt-6 bg-white transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -976,7 +963,7 @@ export default function Home() {
             <button
               onClick={() => scrollCollections('left')}
               disabled={!canScrollCollectionsLeft}
-              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
                 !canScrollCollectionsLeft 
                   ? 'opacity-0 pointer-events-none' 
                   : 'opacity-70 hover:opacity-100 hover:scale-110'
@@ -991,7 +978,7 @@ export default function Home() {
             <button
               onClick={() => scrollCollections('right')}
               disabled={!canScrollCollectionsRight}
-              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
                 !canScrollCollectionsRight 
                   ? 'opacity-0 pointer-events-none' 
                   : 'opacity-70 hover:opacity-100 hover:scale-110'
@@ -1007,7 +994,7 @@ export default function Home() {
             <div 
               ref={setCollectionsSliderRef}
               id="collections-slider"
-              className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-8 sm:px-10 md:px-12 lg:px-16"
+              className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
               style={{ 
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
@@ -1061,7 +1048,7 @@ export default function Home() {
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.6, delay: 0.3 }}
                           viewport={{ once: true }}
-                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
+                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900"
                         >
                           {collection.name}
                         </motion.h3>
@@ -1071,7 +1058,7 @@ export default function Home() {
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: 0.4 }}
                             viewport={{ once: true }}
-                            className="text-gray-600 dark:text-gray-300 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
+                            className="text-gray-600 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
                           >
                             {collection.description}
                           </motion.p>
@@ -1091,7 +1078,7 @@ export default function Home() {
       </section>
 
       {/* Our Occasions Section */}
-      <section className="pb-4 pt-6 bg-white dark:bg-[#0a0a0a] transition-colors duration-300">
+      <section className="pb-4 pt-6 bg-white transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -1112,7 +1099,7 @@ export default function Home() {
             <button
               onClick={() => scrollOccasions('left')}
               disabled={!canScrollOccasionsLeft}
-              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
                 !canScrollOccasionsLeft 
                   ? 'opacity-0 pointer-events-none' 
                   : 'opacity-70 hover:opacity-100 hover:scale-110'
@@ -1127,7 +1114,7 @@ export default function Home() {
             <button
               onClick={() => scrollOccasions('right')}
               disabled={!canScrollOccasionsRight}
-              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
                 !canScrollOccasionsRight 
                   ? 'opacity-0 pointer-events-none' 
                   : 'opacity-70 hover:opacity-100 hover:scale-110'
@@ -1143,7 +1130,7 @@ export default function Home() {
             <div 
               ref={setOccasionsSliderRef}
               id="occasions-slider"
-              className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-8 sm:px-10 md:px-12 lg:px-16"
+              className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
               style={{ 
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
@@ -1202,7 +1189,7 @@ export default function Home() {
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.6, delay: 0.3 }}
                           viewport={{ once: true }}
-                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900 dark:text-white"
+                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900"
                         >
                           {occasion.name}
                         </motion.h3>
@@ -1211,7 +1198,7 @@ export default function Home() {
                           whileInView={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.6, delay: 0.4 }}
                           viewport={{ once: true }}
-                          className="text-gray-600 dark:text-gray-300 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
+                          className="text-gray-600 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
                         >
                           {occasionCounts[occasion.value] !== undefined 
                             ? `(${occasionCounts[occasion.value]} items)`
@@ -1258,7 +1245,7 @@ export default function Home() {
               <button
                 onClick={() => scrollFeaturedProducts('left')}
                 disabled={!canScrollLeft}
-                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
                   !canScrollLeft 
                     ? 'opacity-0 pointer-events-none' 
                     : 'opacity-70 hover:opacity-100 hover:scale-110'
@@ -1273,7 +1260,7 @@ export default function Home() {
               <button
                 onClick={() => scrollFeaturedProducts('right')}
                 disabled={!canScrollRight}
-                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
                   !canScrollRight 
                     ? 'opacity-0 pointer-events-none' 
                     : 'opacity-70 hover:opacity-100 hover:scale-110'
@@ -1289,7 +1276,7 @@ export default function Home() {
               <div 
                 ref={setFeaturedProductsSliderRef}
                 id="featured-products-slider"
-                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-4 sm:px-6 md:px-8 lg:px-10"
+                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
                 style={{ 
                   scrollbarWidth: 'none', 
                   msOverflowStyle: 'none',
@@ -1488,7 +1475,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-[#1F2937] p-3 xs:p-4 sm:p-5 rounded-xl xs:rounded-2xl shadow-lg dark:shadow-gray-900/50 hover:shadow-xl dark:hover:shadow-gray-900/70 transition-all duration-300 hover:scale-105 flex-shrink-0 w-64 xs:w-72 sm:w-80"
+                className="bg-white p-3 xs:p-4 sm:p-5 rounded-xl xs:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex-shrink-0 w-64 xs:w-72 sm:w-80"
               >
                 <div className="flex items-center mb-2 xs:mb-3">
                   <div className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs xs:text-sm sm:text-base">
@@ -1522,7 +1509,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-[#1F2937] p-6 rounded-2xl shadow-lg dark:shadow-gray-900/50 hover:shadow-xl dark:hover:shadow-gray-900/70 transition-all duration-300 hover:scale-105"
+                className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">

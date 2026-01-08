@@ -32,7 +32,7 @@
 }
 
 .theme-toggle-track.dark {
-  background-color: #6B1A7A;
+  background-color: #A78BFA;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -72,7 +72,7 @@
 }
 
 .theme-toggle-button:hover .theme-toggle-track.dark {
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(230, 197, 71, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(252, 211, 77, 0.2);
 }
 
 .theme-toggle-button:hover .theme-toggle-thumb {

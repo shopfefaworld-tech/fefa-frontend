@@ -135,7 +135,6 @@ function SettingsPageContent() {
     // Preferences
     currency: 'INR',
     language: 'en',
-    theme: 'light',
     timezone: 'Asia/Kolkata'
   });
 
@@ -1628,20 +1627,6 @@ function SettingsPageContent() {
                             <option value="hi">Hindi</option>
                             <option value="es">Spanish</option>
                             <option value="fr">French</option>
-                          </select>
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label">Theme</label>
-                          <select
-                            name="theme"
-                            value={settings.theme}
-                            onChange={handleInputChange}
-                            className="form-select"
-                          >
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                            <option value="auto">Auto</option>
                           </select>
                         </div>
 

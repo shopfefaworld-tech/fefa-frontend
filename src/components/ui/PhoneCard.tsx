@@ -70,12 +70,12 @@ const StyledWrapper = styled.div`
   .card {
     width: 280px;
     height: 520px;
-    background: black;
+    background: #f3f4f6;
     border-radius: 45px;
-    border: 3px solid rgb(40, 40, 40);
+    border: 3px solid #e5e7eb;
     padding: 10px;
     position: relative;
-    box-shadow: 4px 8px 25px rgba(0, 0, 0, 0.6);
+    box-shadow: 4px 8px 25px rgba(0, 0, 0, 0.1);
     
     @media (max-width: 768px) {
       width: 220px;
@@ -158,7 +158,7 @@ const StyledWrapper = styled.div`
     transform: translate(50%, 0%);
     width: 35%;
     height: 18px;
-    background-color: black;
+    background-color: #f3f4f6;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
   }
@@ -171,7 +171,7 @@ const StyledWrapper = styled.div`
     width: 40%;
     height: 2px;
     border-radius: 2px;
-    background-color: rgb(20, 20, 20);
+    background-color: #d1d5db;
   }
 
   .camera {
@@ -205,7 +205,7 @@ const StyledWrapper = styled.div`
     height: 45px;
     top: 30%;
     right: -4px;
-    background-image: linear-gradient(to right, #111111, #222222, #333333, #464646, #595959);
+    background-image: linear-gradient(to right, #e5e7eb, #d1d5db, #9ca3af, #6b7280, #4b5563);
   }
 
   .btn2, .btn3 {

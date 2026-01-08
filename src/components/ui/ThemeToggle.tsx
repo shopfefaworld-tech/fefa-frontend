@@ -37,7 +37,7 @@ export default function ThemeToggle() {
       <motion.div
         className={`theme-toggle-track ${isDark ? 'dark' : ''}`}
         animate={{
-          backgroundColor: isDark ? '#6B1A7A' : '#E5E7EB',
+          backgroundColor: isDark ? '#A78BFA' : '#E5E7EB',
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
       >
@@ -45,7 +45,7 @@ export default function ThemeToggle() {
           className="theme-toggle-thumb"
           animate={{
             x: isDark ? 24 : 2,
-            backgroundColor: isDark ? '#E6C547' : '#FFFFFF',
+            backgroundColor: isDark ? '#FCD34D' : '#FFFFFF',
           }}
           transition={{
             type: 'spring',

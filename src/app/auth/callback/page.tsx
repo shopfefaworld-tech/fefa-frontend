@@ -69,12 +69,12 @@ function AuthCallbackContent() {
   }, [handleEmailOTPCallback, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0a0a0a] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="bg-white dark:bg-[#1F2937] rounded-lg shadow-lg p-8 max-w-md w-full text-center"
+        className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center"
       >
         {status === 'verifying' && (
           <>
@@ -83,10 +83,10 @@ function AuthCallbackContent() {
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"
             />
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
               Verifying your email...
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600">
               Please wait while we verify your email address.
             </p>
           </>
@@ -98,16 +98,16 @@ function AuthCallbackContent() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
             >
-              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </motion.div>
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
               Email verified successfully!
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-600 mb-4">
               Redirecting you to the home page...
             </p>
           </>
@@ -119,19 +119,19 @@ function AuthCallbackContent() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
             >
-              <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </motion.div>
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
               Verification failed
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-600 mb-4">
               {errorMessage}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
+            <p className="text-sm text-gray-500">
               Redirecting you to the home page...
             </p>
           </>
@@ -144,10 +144,10 @@ function AuthCallbackContent() {
 export default function AuthCallbackPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0a0a0a] p-4">
-        <div className="bg-white dark:bg-[#1F2937] rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
             Loading...
           </h2>
         </div>

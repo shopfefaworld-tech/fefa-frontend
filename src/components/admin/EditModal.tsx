@@ -700,7 +700,7 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
                             opacity: '1'
                           }}
                         />
-                        <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none" />
+                        <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none" />
                       </div>
                     )}
                     <button
@@ -718,7 +718,7 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
                       <button
                         type="button"
                         onClick={() => setPrimaryImage(index)}
-                        className="absolute bottom-1 left-1 bg-gray-600 text-white text-xs px-2 py-0.5 rounded hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute bottom-1 left-1 bg-primary text-white text-xs px-2 py-0.5 rounded hover:bg-primary/90 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         Set Primary
                       </button>
@@ -759,7 +759,7 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
                           opacity: '1'
                         }}
                       />
-                      <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none" />
+                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none" />
                     </div>
                     <button
                       type="button"

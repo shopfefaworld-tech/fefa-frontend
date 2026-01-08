@@ -190,6 +190,7 @@ export default function LoginPage() {
                   onChange={handleInputChange}
                   className={`form-input ${errors.email ? 'input-error' : ''}`}
                   placeholder="Enter your email"
+                  autoComplete="off"
                   required
                 />
               </motion.div>

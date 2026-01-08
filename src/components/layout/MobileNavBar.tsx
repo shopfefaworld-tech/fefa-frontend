@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useLoginModal } from '@/contexts/LoginModalContext';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 
 // Mobile navigation icons mapping
 const mobileNavIcons = [
@@ -48,7 +47,7 @@ export default function MobileNavBar() {
 
   return (
     <div className="lg:hidden fixed bottom-3 sm:bottom-4 md:bottom-5 left-1/2 transform -translate-x-1/2 z-50">
-      <div className="bg-white dark:bg-[#1F2937] rounded-2xl sm:rounded-3xl md:rounded-[1.75rem] px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 flex items-center justify-center space-x-1 sm:space-x-2 md:space-x-3 shadow-lg border border-gray-200 dark:border-gray-700 min-w-[280px] sm:min-w-[350px] md:min-w-[420px] max-w-[95vw]">
+      <div className="bg-white rounded-2xl sm:rounded-3xl md:rounded-[1.75rem] px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 flex items-center justify-center space-x-1 sm:space-x-2 md:space-x-3 shadow-lg border border-gray-200 min-w-[280px] sm:min-w-[350px] md:min-w-[420px] max-w-[95vw]">
         {/* Navigation Icons */}
         {mobileNavIcons.map((item) => {
           const IconComponent = item.icon;
@@ -56,7 +55,7 @@ export default function MobileNavBar() {
             <div key={item.name} className="relative">
               <Link
                 href={item.href}
-                className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-primary dark:text-[#E6C547] hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
                 onMouseEnter={() => setHoveredIcon(item.name)}
                 onMouseLeave={() => setHoveredIcon(null)}
                 onClick={() => item.hasDropdown && handleDropdownToggle(item.name)}
@@ -70,7 +69,7 @@ export default function MobileNavBar() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
+                  className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
                 >
                   {item.name}
                 </motion.div>
@@ -82,7 +81,7 @@ export default function MobileNavBar() {
                   initial={{ opacity: 0, y: 100 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 100 }}
-                  className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center"
+                  className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm z-50 flex items-end justify-center"
                   onClick={() => setOpenDropdown(null)}
                 >
                   <motion.div
@@ -138,7 +137,7 @@ export default function MobileNavBar() {
         <div className="relative">
           <Link 
             href="/wishlist" 
-            className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-primary dark:text-[#E6C547] hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-600 relative"
+            className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 relative"
             onMouseEnter={() => setHoveredIcon('WISHLIST')}
             onMouseLeave={() => setHoveredIcon(null)}
           >
@@ -156,7 +155,7 @@ export default function MobileNavBar() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
+              className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
             >
               WISHLIST
             </motion.div>
@@ -167,7 +166,7 @@ export default function MobileNavBar() {
         <div className="relative">
           <Link 
             href="/cart" 
-            className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-primary dark:text-[#E6C547] hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-600 relative"
+            className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 relative"
             onMouseEnter={() => setHoveredIcon('CART')}
             onMouseLeave={() => setHoveredIcon(null)}
           >
@@ -185,16 +184,11 @@ export default function MobileNavBar() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
+              className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
             >
               CART
             </motion.div>
           )}
-        </div>
-
-        {/* Theme Toggle - Mobile */}
-        <div className="flex items-center">
-          <ThemeToggle />
         </div>
 
         {/* User Profile Icon with Dropdown */}
@@ -205,7 +199,7 @@ export default function MobileNavBar() {
             </button>
           ) : isAuthenticated ? (
             <button
-              className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-primary dark:text-[#E6C547] hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
               onMouseEnter={() => setHoveredIcon('PROFILE')}
               onMouseLeave={() => setHoveredIcon(null)}
               onClick={() => handleDropdownToggle('PROFILE')}
@@ -215,7 +209,7 @@ export default function MobileNavBar() {
           ) : (
             <button 
               onClick={() => openLoginModal()}
-              className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-primary dark:text-[#E6C547] hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
               onMouseEnter={() => setHoveredIcon('PROFILE')}
               onMouseLeave={() => setHoveredIcon(null)}
             >
@@ -229,7 +223,7 @@ export default function MobileNavBar() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
+              className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
             >
               PROFILE
             </motion.div>
@@ -241,7 +235,7 @@ export default function MobileNavBar() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-white dark:bg-[#1F2937] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
+              className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
             >
               <div className="p-3">
                 <div className="flex items-center space-x-3 py-2 mb-3">
@@ -249,13 +243,13 @@ export default function MobileNavBar() {
                     <FiUser className="w-4 h-4 text-pink-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-[#4B006E] dark:text-[#E6C547]">Chilla</p>
+                    <p className="text-sm font-medium text-[#4B006E]">Chilla</p>
                   </div>
                 </div>
                 <div className="border-t border-gray-100 pt-2">
                   <Link
                     href="/account/settings?tab=profile"
-                    className="flex items-center space-x-3 py-2 text-sm text-[#4B006E] dark:text-[#E6C547] hover:text-[#D4AF37] dark:hover:text-[#E6C547]/80 transition-colors"
+                    className="flex items-center space-x-3 py-2 text-sm text-[#4B006E] hover:text-[#D4AF37] transition-colors"
                     onClick={() => setOpenDropdown(null)}
                   >
                     <FiUser className="w-4 h-4" />
@@ -263,7 +257,7 @@ export default function MobileNavBar() {
                   </Link>
                   <Link
                     href="/account/orders"
-                    className="flex items-center space-x-3 py-2 text-sm text-[#4B006E] dark:text-[#E6C547] hover:text-[#D4AF37] dark:hover:text-[#E6C547]/80 transition-colors"
+                    className="flex items-center space-x-3 py-2 text-sm text-[#4B006E] hover:text-[#D4AF37] transition-colors"
                     onClick={() => setOpenDropdown(null)}
                   >
                     <FiShoppingBag className="w-4 h-4" />
@@ -271,7 +265,7 @@ export default function MobileNavBar() {
                   </Link>
                   <Link
                     href="/account/settings"
-                    className="flex items-center space-x-3 py-2 text-sm text-[#4B006E] dark:text-[#E6C547] hover:text-[#D4AF37] dark:hover:text-[#E6C547]/80 transition-colors"
+                    className="flex items-center space-x-3 py-2 text-sm text-[#4B006E] hover:text-[#D4AF37] transition-colors"
                     onClick={() => setOpenDropdown(null)}
                   >
                     <FiSettings className="w-4 h-4" />

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import './admin.css';
 import { 
@@ -59,7 +58,6 @@ export default function AdminLayout({
   const [isLogoutInProgress, setIsLogoutInProgress] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { theme } = useTheme();
   const { user, isAuthenticated, isAdmin, isLoading, logout } = useAuth();
 
   // Load sidebar state from localStorage
@@ -324,10 +322,10 @@ export default function AdminLayout({
                 </span>
               </div>
               <div className="ml-3">
-                <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                <p className={`text-sm font-medium text-gray-900`}>
                   {user ? `${user.firstName} ${user.lastName}` : 'Admin User'}
                 </p>
-                <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{user?.email}</p>
+                <p className={`text-xs text-gray-500`}>{user?.email}</p>
               </div>
             </div>
             <button 
@@ -431,10 +429,10 @@ export default function AdminLayout({
                     </span>
                   </div>
                   <div className="ml-3 flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                    <p className={`text-sm font-medium truncate text-gray-900`}>
                       {user ? `${user.firstName} ${user.lastName}` : 'Admin User'}
                     </p>
-                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{user?.email}</p>
+                    <p className={`text-xs truncate text-gray-500`}>{user?.email}</p>
                   </div>
                 </div>
                 <button 
@@ -569,7 +567,7 @@ export default function AdminLayout({
             <div className="relative admin-user-menu" data-user-menu>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className={`admin-user-button flex items-center gap-x-2 sm:gap-x-3 rounded-lg px-3 py-2 transition-all duration-300 transform hover:scale-105 active:scale-95 border border-transparent ${theme === 'dark' ? 'text-gray-200 hover:bg-gray-700 hover:border-gray-600' : 'text-gray-700 hover:bg-gray-50 hover:border-gray-200'}`}
+                className={`admin-user-button flex items-center gap-x-2 sm:gap-x-3 rounded-lg px-3 py-2 transition-all duration-300 transform hover:scale-105 active:scale-95 border border-transparent text-gray-700 hover:bg-gray-50 hover:border-gray-200`}
               >
                 <div className="admin-user-avatar h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center ring-2 ring-gray-100 transition-transform duration-200 hover:scale-110" style={{ backgroundColor: 'var(--accent)' }}>
                   <span className="text-sm font-medium text-white">
@@ -577,10 +575,10 @@ export default function AdminLayout({
                   </span>
                 </div>
                 <div className="hidden sm:block text-left">
-                  <span className={`text-sm font-medium block ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <span className={`text-sm font-medium block text-gray-900`}>
                     {user ? `${user.firstName} ${user.lastName}` : 'Admin User'}
                   </span>
-                  <span className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
+                  <span className={`text-xs text-gray-500`}>
                     {user?.email || 'admin@fefajewelry.com'}
                   </span>
                 </div>
@@ -591,12 +589,12 @@ export default function AdminLayout({
 
               {/* User dropdown menu */}
               {showUserMenu && (
-                <div className={`admin-user-dropdown absolute right-0 mt-2 w-48 rounded-lg shadow-xl py-1 z-50 border animate-dropdownSlideIn ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                  <div className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                <div className={`admin-user-dropdown absolute right-0 mt-2 w-48 rounded-lg shadow-xl py-1 z-50 border animate-dropdownSlideIn bg-white border-gray-200`}>
+                  <div className={`px-4 py-2 border-b border-gray-200`}>
+                    <p className={`text-sm font-medium text-gray-900`}>
                       {user ? `${user.firstName} ${user.lastName}` : 'Admin User'}
                     </p>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{user?.email}</p>
+                    <p className={`text-xs text-gray-500`}>{user?.email}</p>
                   </div>
                   <button
                     onClick={() => {
@@ -604,7 +602,7 @@ export default function AdminLayout({
                       handleLogout();
                     }}
                     disabled={isLoggingOut}
-                    className={`flex w-full items-center px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${theme === 'dark' ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                    className={`flex w-full items-center px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 hover:bg-gray-100`}
                   >
                     {isLoggingOut ? (
                       <div className="mr-3 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />

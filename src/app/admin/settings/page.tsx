@@ -277,8 +277,6 @@ export default function SettingsPage() {
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="auto">Auto</option>
           </select>
         </div>
         <div>

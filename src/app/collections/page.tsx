@@ -15,6 +15,7 @@ import {
 } from '@/utils/dataLoader';
 import { Product, CollectionCategory, CollectionOccasion } from '@/types/data';
 import '@/styles/components/collections/Collections.css';
+import CategoryBanner from '@/components/collections/CategoryBanner';
 
 // Import product images for fallback
 import product1 from '@/assets/images/product-1.png';
@@ -114,6 +115,7 @@ function CollectionsContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<CollectionCategory[]>([]);
   const [occasions, setOccasions] = useState<CollectionOccasion[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreProducts, setHasMoreProducts] = useState(true);
@@ -212,9 +214,10 @@ function CollectionsContent() {
         setIsLoading(true);
         const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
         
-        const [categoriesData, occasionsResponse] = await Promise.all([
+        const [categoriesData, occasionsResponse, collectionsResponse] = await Promise.all([
           loadCollectionsCategoriesData(),
-          fetch(`${baseURL}/occasions?sortBy=sortOrder&sortOrder=asc`)
+          fetch(`${baseURL}/occasions?sortBy=sortOrder&sortOrder=asc`),
+          fetch(`${baseURL}/collections?sortBy=sortOrder&sortOrder=asc`).catch(() => null)
         ]);
 
         setCategories(categoriesData);
@@ -231,6 +234,14 @@ function CollectionsContent() {
         } else {
           console.error('Failed to load occasions:', occasionsResponse.status);
           setOccasions([]);
+        }
+        
+        // Load collections from API
+        if (collectionsResponse && collectionsResponse.ok) {
+          const collectionsData = await collectionsResponse.json();
+          if (collectionsData.success && collectionsData.data) {
+            setCollections(collectionsData.data || []);
+          }
         }
         
         // Load products with current filters
@@ -1117,7 +1128,7 @@ function CollectionsContent() {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-2">
                 Search Results
               </h1>
-              <p className="text-primary dark:text-gray-300 max-w-xl mx-auto text-sm md:text-base mb-2">
+              <p className="text-primary max-w-xl mx-auto text-sm md:text-base mb-2">
                 Showing results for "{searchTerm}"
               </p>
               <button
@@ -1125,7 +1136,7 @@ function CollectionsContent() {
                   setSearchTerm('');
                   clearSearch();
                 }}
-                className="text-primary dark:text-gray-300 hover:text-accent underline transition-colors"
+                className="text-primary hover:text-accent underline transition-colors"
               >
                 Clear search
               </button>
@@ -1133,7 +1144,7 @@ function CollectionsContent() {
           ) : (
             <>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-cormorant text-accent mb-2">Our Collections</h1>
-              <p className="text-primary dark:text-gray-300 max-w-xl mx-auto text-sm md:text-base">
+              <p className="text-primary max-w-xl mx-auto text-sm md:text-base">
                 Discover our exquisite range of handcrafted jewelry pieces designed to celebrate your unique style
               </p>
             </>
@@ -1141,6 +1152,74 @@ function CollectionsContent() {
         </motion.div>
       </section>
       </div>
+
+      {/* Category/Collection/Occasion Banner - Show when a filter is selected */}
+      {(() => {
+        // Determine which banner to show - priority: occasion > category > collection
+        let bannerData: { type: 'category' | 'collection' | 'occasion', name: string, description?: string, imageUrl?: string } | null = null;
+
+        // Check for collection parameter in URL (if collections are accessed via URL)
+        const collectionParam = searchParams.get('collection');
+        
+        // Check for occasion first (higher priority)
+        if (selectedOccasion && selectedOccasions.length > 0 && !selectedOccasions.includes('all')) {
+          const firstOccasion = occasions.find(occ => occ.value === selectedOccasion);
+          if (firstOccasion) {
+            bannerData = {
+              type: 'occasion',
+              name: firstOccasion.name,
+              imageUrl: firstOccasion.image
+            };
+          }
+        }
+        // Check for collection if no occasion
+        else if (collectionParam && collections.length > 0) {
+          const selectedCollection = collections.find((col: any) => 
+            col.slug === collectionParam || 
+            col._id === collectionParam ||
+            col.name?.toLowerCase().replace(/\s+/g, '-') === collectionParam.toLowerCase()
+          );
+          if (selectedCollection) {
+            bannerData = {
+              type: 'collection',
+              name: selectedCollection.name,
+              description: selectedCollection.description,
+              imageUrl: selectedCollection.image
+            };
+          } else {
+            // Fallback: use collection param as name
+            bannerData = {
+              type: 'collection',
+              name: collectionParam.charAt(0).toUpperCase() + collectionParam.slice(1).replace(/-/g, ' ')
+            };
+          }
+        }
+        // Check for category if no occasion or collection
+        else if (selectedCategories.length > 0 && !selectedCategories.includes('all')) {
+          const firstCategorySlug = selectedCategories[0];
+          const firstCategory = categories.find(cat => cat.value === firstCategorySlug || (cat as any).slug === firstCategorySlug);
+          if (firstCategory) {
+            bannerData = {
+              type: 'category',
+              name: firstCategory.name,
+              imageUrl: (firstCategory as any).image
+            };
+          }
+        }
+
+        // Show banner if we have data and not searching
+        if (bannerData && !searchTerm) {
+          return (
+            <CategoryBanner
+              type={bannerData.type}
+              name={bannerData.name}
+              description={bannerData.description}
+              imageUrl={bannerData.imageUrl}
+            />
+          );
+        }
+        return null;
+      })()}
 
       {/* Occasion Selection View - Show when no category selected, no occasion selected, no search, and filters haven't been applied */}
       {!selectedOccasion && !searchTerm && !isLoading && selectedCategories.includes('all') && !filtersApplied && (

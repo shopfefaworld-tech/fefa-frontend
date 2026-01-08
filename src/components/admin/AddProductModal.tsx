@@ -436,7 +436,7 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
                           opacity: '1'
                         }}
                       />
-                      <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none" />
+                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none" />
                     </div>
                     <button
                       type="button"

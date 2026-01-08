@@ -54,7 +54,7 @@ export default function RootLayout({
         className={`${poppins.variable} ${dancingScript.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="fefa-theme">
+        <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false} storageKey="fefa-theme">
           <DataProvider>
             <AuthProvider>
               <LoginModalProvider>

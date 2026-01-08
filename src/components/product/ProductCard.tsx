@@ -272,14 +272,14 @@ export default function ProductCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="group relative bg-white dark:bg-[#1F2937] rounded-xl shadow-lg dark:shadow-gray-900/50 hover:shadow-xl dark:hover:shadow-gray-900/70 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 h-full flex flex-col"
+      className="group relative bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full flex flex-col"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* Product Image */}
       <div 
         ref={imageContainerRef}
-        className="block relative overflow-hidden rounded-t-xl bg-soft-pink-100 dark:bg-[#2D1A2F] aspect-square cursor-pointer flex-shrink-0"
+        className="block relative overflow-hidden rounded-t-xl bg-soft-pink-100 aspect-square cursor-pointer flex-shrink-0"
         onClick={handleProductClick}
       >
         <div className="w-full h-full relative overflow-hidden">
@@ -297,11 +297,11 @@ export default function ProductCard({
               />
             </>
           ) : (
-            <div className="w-full h-full bg-soft-pink-100 dark:bg-[#2D1A2F] flex items-center justify-center">
+            <div className="w-full h-full bg-soft-pink-100 flex items-center justify-center">
               <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-2 bg-gray-200 rounded-full flex items-center justify-center">
                   <svg 
-                    className="w-8 h-8 text-gray-400 dark:text-gray-500" 
+                    className="w-8 h-8 text-gray-400" 
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
@@ -314,7 +314,7 @@ export default function ProductCard({
                     />
                   </svg>
                 </div>
-                <span className="text-primary dark:text-[#E6C547] font-playfair text-sm">No Image</span>
+                <span className="text-primary font-playfair text-sm">No Image</span>
               </div>
             </div>
           )}
@@ -340,8 +340,8 @@ export default function ProductCard({
             } : {}}
             className={`p-2 sm:p-3 rounded-full shadow-lg transition-all duration-200 ${
               isInWishlist 
-                ? 'bg-accent dark:bg-[#E6C547] text-white shadow-accent/25' 
-                : 'bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm hover:bg-accent dark:hover:bg-[#E6C547] hover:text-white hover:shadow-accent/25'
+                ? 'bg-accent text-white shadow-accent/25' 
+                : 'bg-white/90 backdrop-blur-sm hover:bg-accent hover:text-white hover:shadow-accent/25'
             }`}
             aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
             suppressHydrationWarning
@@ -362,7 +362,7 @@ export default function ProductCard({
           <motion.button 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm p-2 sm:p-3 rounded-full shadow-lg hover:bg-accent dark:hover:bg-[#E6C547] hover:text-white hover:shadow-accent/25 transition-all duration-200"
+            className="bg-white/90 backdrop-blur-sm p-2 sm:p-3 rounded-full shadow-lg hover:bg-accent hover:text-white hover:shadow-accent/25 transition-all duration-200"
             aria-label="Quick view"
             suppressHydrationWarning
           >
@@ -378,7 +378,7 @@ export default function ProductCard({
               animate={{ 
                 opacity: 1, 
                 y: 0, 
-                scale: 1,
+                scale: 1, 
                 x: '-50%',
               }}
               exit={{ 
@@ -392,7 +392,7 @@ export default function ProductCard({
                 stiffness: 300,
                 damping: 25,
               }}
-              className="absolute bottom-2 sm:bottom-3 left-1/2 transform -translate-x-1/2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm py-2 sm:py-3 px-3 sm:px-4 rounded-lg shadow-xl text-center text-xs sm:text-sm font-medium border border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100 z-50"
+              className="absolute bottom-2 sm:bottom-3 left-1/2 transform -translate-x-1/2 bg-white/95 backdrop-blur-sm py-2 sm:py-3 px-3 sm:px-4 rounded-lg shadow-xl text-center text-xs sm:text-sm font-medium border border-gray-100 text-gray-900 z-50"
             >
               <motion.div
                 initial={{ scale: 0 }}
@@ -419,15 +419,15 @@ export default function ProductCard({
       {/* Product Info */}
       <div className="p-3 sm:p-4 text-center flex flex-col flex-grow">
         <h3 
-          className="!font-cormorant font-medium text-primary dark:text-[#E6C547] text-sm sm:text-lg mb-2 line-clamp-2 cursor-pointer hover:text-accent dark:hover:text-[#E6C547]/80 transition-colors min-h-[2.5rem] sm:min-h-[3rem] flex items-center justify-center"
+          className="!font-cormorant font-medium text-primary text-sm sm:text-lg mb-2 line-clamp-2 cursor-pointer hover:text-accent transition-colors min-h-[2.5rem] sm:min-h-[3rem] flex items-center justify-center"
           onClick={handleProductClick}
         >
           {name}
         </h3>
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-3 sm:mb-4">
-          <span className="font-semibold text-accent dark:text-[#E6C547] text-base sm:text-xl">₹{price.toFixed(2)}</span>
+          <span className="font-semibold text-accent text-base sm:text-xl">₹{price.toFixed(2)}</span>
           {(comparePrice || originalPrice) && (
-            <span className="text-gray-400 dark:text-gray-500 line-through text-xs sm:text-sm">
+            <span className="text-gray-400 line-through text-xs sm:text-sm">
               ₹{((comparePrice || originalPrice) as number).toFixed(2)}
             </span>
           )}
@@ -449,12 +449,12 @@ export default function ProductCard({
           } : {}}
           className={`add-to-cart-button w-full mt-auto py-2 sm:py-3 px-3 sm:px-4 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
             isAddedToCart 
-              ? 'bg-green-500 dark:bg-green-600 text-white' 
+              ? 'bg-green-500 text-white' 
               : stockStatus === 'out-of-stock' || !isActive
-              ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : isAddingToCart
-              ? 'bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed'
-              : 'bg-primary dark:bg-[#6B1A7A] text-white hover:bg-accent dark:hover:bg-[#E6C547]'
+              ? 'bg-gray-400 text-white cursor-not-allowed'
+              : 'bg-primary text-white hover:bg-accent'
           }`}
         >
           {isAddedToCart ? (

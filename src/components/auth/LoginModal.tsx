@@ -345,7 +345,7 @@ export default function LoginModal({ isOpen, onClose, redirectTo }: LoginModalPr
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-white/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
       
@@ -560,6 +560,7 @@ export default function LoginModal({ isOpen, onClose, redirectTo }: LoginModalPr
                     whileFocus={{ scale: 1.01 }}
                         className={`w-full pl-9 sm:pl-8 pr-3 py-2.5 sm:py-2 text-sm sm:text-xs bg-gray-50 border ${errors.phoneOrEmail ? 'border-red-500' : 'border-gray-300'} rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200`}
                         placeholder={usePassword ? "Enter your email" : "Enter phone number or email"}
+                        autoComplete="off"
                     required
                   />
                 </div>

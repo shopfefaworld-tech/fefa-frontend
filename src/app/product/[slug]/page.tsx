@@ -551,20 +551,47 @@ export default function ProductDetail() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [product?.images, goToPreviousImage, goToNextImage]);
 
-  // Swipe gesture handlers for carousel
+  // Swipe gesture handlers for carousel - support both horizontal and vertical scrolling
   const minSwipeDistance = 50;
+  const touchStartYRef = useRef<number | null>(null);
+  const scrollDirectionRef = useRef<'horizontal' | 'vertical' | null>(null);
 
   const onTouchStartCarousel = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
+    touchStartYRef.current = e.targetTouches[0].clientY;
+    scrollDirectionRef.current = null;
   };
 
   const onTouchMoveCarousel = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    if (!touchStart || touchStartYRef.current === null) return;
+    
+    const currentX = e.targetTouches[0].clientX;
+    const currentY = e.targetTouches[0].clientY;
+    const deltaX = Math.abs(currentX - touchStart);
+    const deltaY = Math.abs(currentY - touchStartYRef.current);
+    
+    // Determine scroll direction on first significant movement
+    if (!scrollDirectionRef.current && (deltaX > 5 || deltaY > 5)) {
+      scrollDirectionRef.current = deltaX > deltaY ? 'horizontal' : 'vertical';
+    }
+    
+    // Only track X movement for horizontal swipes
+    if (scrollDirectionRef.current === 'horizontal') {
+      setTouchEnd(currentX);
+    }
+    // If vertical, let the browser handle the scroll naturally
   };
 
   const onTouchEndCarousel = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd || scrollDirectionRef.current !== 'horizontal') {
+      setTouchStart(null);
+      setTouchEnd(null);
+      touchStartYRef.current = null;
+      scrollDirectionRef.current = null;
+      return;
+    }
+    
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -575,6 +602,11 @@ export default function ProductDetail() {
     if (isRightSwipe) {
       goToPreviousImage();
     }
+    
+    setTouchStart(null);
+    setTouchEnd(null);
+    touchStartYRef.current = null;
+    scrollDirectionRef.current = null;
   };
 
   // Helper function to get image URL
@@ -588,18 +620,6 @@ export default function ProductDetail() {
     return image;
   };
 
-  // #region agent log
-  useEffect(() => {
-    const headerEl = document.querySelector('header');
-    const productContainer = document.querySelector('.container.mx-auto');
-    if (headerEl && productContainer) {
-      const headerRect = headerEl.getBoundingClientRect();
-      const containerRect = (productContainer as HTMLElement).getBoundingClientRect();
-      const containerStyle = window.getComputedStyle(productContainer as HTMLElement);
-      fetch('http://127.0.0.1:7242/ingest/7eb6d36f-1ef2-474d-b047-b573307ef79f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'product/[slug]/page.tsx:useEffect',message:'Product page spacing check',data:{headerHeight:headerRect.height,containerTop:containerRect.top,containerPaddingTop:containerStyle.paddingTop,containerMarginTop:containerStyle.marginTop,overlap:containerRect.top < headerRect.height,scrollY:window.scrollY},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    }
-  }, [product]);
-  // #endregion
 
   // Loading component
   if (isLoading) {
@@ -699,7 +719,7 @@ export default function ProductDetail() {
                   
                   {/* Carousel Indicators */}
                   {product.images.length > 1 && (
-                    <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-2.5 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                    <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-2.5 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
                       {product.images.map((_, index) => (
                         <button
                           key={index}

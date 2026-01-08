@@ -13,7 +13,6 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { useLoginModal } from '@/contexts/LoginModalContext';
 import UserDropdown from '@/components/auth/UserDropdown';
 import SearchSuggestions from '@/components/ui/SearchSuggestions';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 import { loadCollectionsProductsData, loadCollectionsCategoriesData } from '@/utils/dataLoader';
 import { Product, CollectionCategory } from '@/types/data';
 import '@/styles/components/layout/Header.css';
@@ -170,16 +169,6 @@ export default function Header() {
     setTimeout(() => setShowSuggestions(false), 200);
   };
 
-  // #region agent log
-  useEffect(() => {
-    const headerEl = document.querySelector('header');
-    if (headerEl) {
-      const rect = headerEl.getBoundingClientRect();
-      const computedStyle = window.getComputedStyle(headerEl);
-      fetch('http://127.0.0.1:7242/ingest/7eb6d36f-1ef2-474d-b047-b573307ef79f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Header.tsx:useEffect',message:'Header dimensions measured',data:{height:rect.height,width:rect.width,top:rect.top,zIndex:computedStyle.zIndex,position:computedStyle.position,isScrolled,isVisible},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    }
-  }, [isScrolled, isVisible]);
-  // #endregion
 
   return (
       <header 
@@ -332,23 +321,18 @@ export default function Header() {
                  />
               </form>
               
-              <SearchSuggestions
-                searchTerm={searchInput}
-                products={products}
-                categories={categories}
-                onSuggestionClick={handleSuggestionClick}
-                onSearchAll={handleSearchAll}
-                onClose={() => setShowSuggestions(false)}
-                isVisible={showSuggestions && !isLoadingSuggestions}
-              />
-            </div>
-            
-            {/* Theme Toggle */}
-            <div className="flex items-center">
-              <ThemeToggle />
-            </div>
-            
-            {/* User Icons */}
+            <SearchSuggestions
+              searchTerm={searchInput}
+              products={products}
+              categories={categories}
+              onSuggestionClick={handleSuggestionClick}
+              onSearchAll={handleSearchAll}
+              onClose={() => setShowSuggestions(false)}
+              isVisible={showSuggestions && !isLoadingSuggestions}
+            />
+          </div>
+          
+          {/* User Icons */}
           <div className="flex items-center gap-3 xl:gap-4">
              <Link href="/wishlist" className="p-2 text-[#DBC078] hover:text-[#cfb570] transition-colors relative">
                <FiHeart className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -378,13 +362,13 @@ export default function Header() {
                 <div className="flex items-center space-x-2">
                   <Link 
                     href="/auth/login" 
-                    className="px-4 py-2 text-sm font-medium text-primary dark:text-[#E6C547] hover:text-accent dark:hover:text-[#E6C547]/80 transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-primary hover:text-accent transition-colors"
                   >
                     Sign In
                   </Link>
                   <Link 
                     href="/auth/register" 
-                    className="px-4 py-2 text-sm font-medium bg-primary dark:bg-[#6B1A7A] text-white rounded-lg hover:bg-primary/90 dark:hover:bg-[#6B1A7A]/90 transition-colors"
+                    className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     Sign Up
                   </Link>

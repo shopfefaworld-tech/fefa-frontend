@@ -17,7 +17,8 @@ import {
   MdSecurity as Shield,
   MdVerifiedUser as ShieldCheck,
   MdRefresh as Refresh,
-  MdError as ErrorIcon
+  MdError as ErrorIcon,
+  MdFileDownload as Download
 } from 'react-icons/md';
 import adminService from '../../../services/adminService';
 import ViewModal from '../../../components/admin/ViewModal';
@@ -231,6 +232,108 @@ export default function UsersPage() {
     return sortOrder === 'asc' ? '↑' : '↓';
   };
 
+  // Export users to CSV
+  const handleExportUsers = () => {
+    try {
+      // Prepare CSV headers
+      const headers = [
+        'ID',
+        'First Name',
+        'Last Name',
+        'Email',
+        'Phone',
+        'Role',
+        'Status',
+        'Order Count',
+        'Total Spent (₹)',
+        'Last Login',
+        'Created At'
+      ];
+
+      // Prepare CSV rows
+      const rows = filteredUsers.map(user => {
+        // Handle date formatting - check if it's already a formatted string or a date
+        let lastLoginStr = 'Never';
+        if (user.lastLogin && user.lastLogin !== 'Never') {
+          try {
+            const lastLoginDate = new Date(user.lastLogin);
+            if (!isNaN(lastLoginDate.getTime())) {
+              lastLoginStr = lastLoginDate.toLocaleString();
+            } else {
+              lastLoginStr = user.lastLogin; // Use as-is if already formatted
+            }
+          } catch {
+            lastLoginStr = user.lastLogin || 'Never';
+          }
+        }
+
+        let createdAtStr = '';
+        if (user.createdAt) {
+          try {
+            const createdAtDate = new Date(user.createdAt);
+            if (!isNaN(createdAtDate.getTime())) {
+              createdAtStr = createdAtDate.toLocaleString();
+            } else {
+              createdAtStr = user.createdAt; // Use as-is if already formatted
+            }
+          } catch {
+            createdAtStr = user.createdAt || '';
+          }
+        }
+
+        return [
+          user.id || '',
+          user.firstName || '',
+          user.lastName || '',
+          user.email || '',
+          user.phone || '',
+          user.role === 'super_admin' ? 'Super Admin' : 
+          user.role === 'admin' ? 'Admin' : 
+          user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '',
+          user.isActive ? 'Active' : 'Inactive',
+          user.orderCount || 0,
+          user.totalSpent || 0,
+          lastLoginStr,
+          createdAtStr
+        ];
+      });
+
+      // Convert to CSV format
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => 
+          row.map(cell => {
+            // Escape commas and quotes in cell values
+            const cellValue = String(cell || '');
+            if (cellValue.includes(',') || cellValue.includes('"') || cellValue.includes('\n')) {
+              return `"${cellValue.replace(/"/g, '""')}"`;
+            }
+            return cellValue;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      alert('Failed to export users. Please try again.');
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -305,6 +408,14 @@ export default function UsersPage() {
           >
             <Refresh className="h-4 w-4 mr-2" />
             Refresh
+          </button>
+          <button
+            onClick={handleExportUsers}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            title="Export users to CSV"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
           </button>
           <button
             onClick={() => setAddModalOpen(true)}

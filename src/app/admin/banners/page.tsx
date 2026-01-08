@@ -370,7 +370,7 @@ export default function BannersPage() {
                   </span>
                 </div>
                 <div className="absolute top-2 left-2">
-                  <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium bg-black bg-opacity-50 text-white">
+                  <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium bg-primary/80 text-white">
                     {banner.position || 'general'}
                   </span>
                 </div>

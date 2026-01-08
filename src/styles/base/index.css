@@ -29,36 +29,16 @@
   --font-cormorant: 'Cormorant Garamond', serif;
 }
 
-/* Dark mode support - using class-based approach */
-.dark {
-  --background: #0a0a0a; /* Very dark background */
-  --foreground: #F9FAFB; /* Light text for dark mode */
-  --primary: #6B1A7A; /* Lighter deep purple for dark mode */
-  --accent: #E6C547; /* Lighter gold for dark mode */
-  --soft-pink-100: #1F2937; /* Dark gray for cards/sections */
-  --soft-pink-200: #374151; /* Slightly lighter for hover states */
-  --white: #f8f9fa; /* Slightly off-white for dark mode */
-  --dark-gray: #e5e7eb; /* Lighter gray for dark mode text */
-}
-
-/* Fallback for prefers-color-scheme if class is not set */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary: #6B1A7A; /* Lighter deep purple for dark mode */
-    --accent: #E6C547; /* Lighter gold for dark mode */
-    --soft-pink-100: #2D1A2F; /* Darker version of soft pink for dark mode */
-    --soft-pink-200: #3D2638; /* Darker version of soft pink for dark mode */
-    --white: #f8f9fa; /* Slightly off-white for dark mode */
-    --dark-gray: #e5e7eb; /* Lighter gray for dark mode text */
-  }
+html {
+  background: var(--background);
+  color: var(--foreground);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  min-height: 100vh;
 }
 
 h1, h2, h3, .script-font {
@@ -87,4 +67,18 @@ h1, h2, h3, .script-font {
 
 .hover-lift:hover {
   transform: translateY(-4px);
+}
+
+/* Hero Banner - Universal 16:9 System */
+.hero-banner {
+  width: 100vw;
+  height: 60vh;
+  min-height: 520px;
+  max-height: 900px;
+}
+
+@media (min-width: 768px) {
+  .hero-banner {
+    height: 75vh;
+  }
 }

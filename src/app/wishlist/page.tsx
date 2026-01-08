@@ -251,7 +251,7 @@ export default function WishlistPage() {
                         )}
                       </Link>
                       
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+                      <div className="absolute inset-0 bg-white bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
                       
                       <div className="absolute top-3 right-3 flex flex-col gap-2">
                         <button
