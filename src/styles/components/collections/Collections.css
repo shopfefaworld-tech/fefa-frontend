@@ -47,6 +47,8 @@
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+  touch-action: pan-x pan-y; /* Allow both horizontal and vertical scrolling on mobile */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .scrollbar-hide::-webkit-scrollbar {

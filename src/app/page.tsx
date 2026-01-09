@@ -828,18 +828,18 @@ export default function Home() {
                 style={{ 
                   scrollbarWidth: 'none', 
                   msOverflowStyle: 'none',
-                  scrollBehavior: 'smooth',
-                  touchAction: 'pan-x'
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseLeave={handleMouseLeave}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                {safeJewelryCategories.map((category: Category, index: number) => (
+                scrollBehavior: 'smooth',
+                touchAction: 'auto'
+              }}
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {safeJewelryCategories.map((category: Category, index: number) => (
                   <motion.div
                     key={category.slug}
                     initial={{ opacity: 0, y: 30 }}
@@ -987,7 +987,7 @@ export default function Home() {
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
                 scrollBehavior: 'smooth',
-                touchAction: 'pan-x'
+                touchAction: 'auto'
               }}
               onMouseDown={handleMouseDown}
               onMouseLeave={handleMouseLeave}
@@ -1081,7 +1081,7 @@ export default function Home() {
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
                 scrollBehavior: 'smooth',
-                touchAction: 'pan-x'
+                touchAction: 'auto'
               }}
               onMouseDown={handleMouseDown}
               onMouseLeave={handleMouseLeave}
@@ -1217,7 +1217,7 @@ export default function Home() {
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
                 scrollBehavior: 'smooth',
-                touchAction: 'pan-x'
+                touchAction: 'auto'
               }}
               onMouseDown={handleMouseDown}
               onMouseLeave={handleMouseLeave}
@@ -1359,21 +1359,21 @@ export default function Home() {
                 ref={setFeaturedProductsSliderRef}
                 id="featured-products-slider"
                 className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
-                style={{ 
-                  scrollbarWidth: 'none', 
-                  msOverflowStyle: 'none',
-                  scrollBehavior: 'smooth',
-                  touchAction: 'pan-x'
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseLeave={handleMouseLeave}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                {featuredProducts.map((product, index) => {
+              style={{ 
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none',
+                scrollBehavior: 'smooth',
+                touchAction: 'auto'
+              }}
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {featuredProducts.map((product, index) => {
                   const discountPercentage = product.comparePrice 
                     ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
                     : 0;
@@ -1483,21 +1483,21 @@ export default function Home() {
                 ref={setTrendingProductsSliderRef}
                 id="trending-products-slider"
                 className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
-                style={{ 
-                  scrollbarWidth: 'none', 
-                  msOverflowStyle: 'none',
-                  scrollBehavior: 'smooth',
-                  touchAction: 'pan-x'
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseLeave={handleMouseLeave}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                {trendingProducts.map((product, index) => {
+              style={{ 
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none',
+                scrollBehavior: 'smooth',
+                touchAction: 'auto'
+              }}
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {trendingProducts.map((product, index) => {
                   const discountPercentage = product.comparePrice 
                     ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
                     : 0;

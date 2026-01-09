@@ -106,3 +106,39 @@ h1, h2, h3, .script-font {
     max-height: 600px;
   }
 }
+
+/* ================================================
+   MOBILE SCROLLING FIX - Touch Action Properties
+   ================================================
+   Ensures horizontal sliders don't block vertical page scrolling on mobile.
+   The touch-action property tells the browser how to handle touch gestures.
+   Using 'auto' or 'pan-x pan-y' allows both horizontal and vertical scrolling.
+*/
+
+/* Global fix for all horizontal scrolling containers */
+[id$="-slider"],
+[id$="-container"],
+[class*="carousel"],
+[class*="slider"] {
+  touch-action: pan-x pan-y !important; /* Allow both directions */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Ensure scrollbar-hide elements don't block scrolling */
+.scrollbar-hide {
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for overflow containers */
+[style*="overflow-x: auto"],
+[style*="overflow-x:auto"] {
+  touch-action: pan-x pan-y !important;
+}
+
+/* Ensure child elements don't interfere with parent scrolling */
+.overflow-x-auto,
+.overflow-y-auto {
+  touch-action: auto;
+  -webkit-overflow-scrolling: touch;
+}

@@ -53,13 +53,14 @@
   gap: 1rem;
   padding: 0.5rem 1.5rem;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
   -ms-overflow-style: none;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  touch-action: pan-x pan-y; /* Allow both horizontal and vertical scrolling */
 }
 
 .quick-picks-carousel::-webkit-scrollbar {
