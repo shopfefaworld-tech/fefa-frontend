@@ -85,7 +85,7 @@ export default function CategoryBanner({
   if (loading) {
     return (
       <section className="category-banner relative py-0 overflow-hidden w-full">
-        <div className="relative w-full h-[300px] md:h-[400px] lg:h-[500px] bg-gray-100 animate-pulse" />
+        <div className="relative w-full h-[300px] md:h-[400px] bg-gray-100 animate-pulse" />
       </section>
     );
   }
@@ -117,18 +117,18 @@ export default function CategoryBanner({
 
   return (
     <section className="category-banner relative py-0 overflow-hidden w-full">
-      <div className="relative w-full h-full">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         {/* Banner Image - Full Width */}
-        <div className="relative w-full">
+        <div className="relative w-full overflow-hidden rounded-lg" style={{ maxHeight: '450px' }}>
           <Image
             src={bannerImage}
             alt={adminBanner?.title || name}
             width={1920}
-            height={600}
-            className="w-full h-auto object-cover"
+            height={450}
+            className="w-full h-full object-cover"
             priority
-            sizes="100vw"
-            style={{ maxHeight: '600px', objectFit: 'cover' }}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
+            style={{ maxHeight: '450px', objectFit: 'cover' }}
             onError={handleImageError}
           />
           

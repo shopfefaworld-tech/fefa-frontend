@@ -1304,17 +1304,6 @@ function CollectionsContent() {
           {/* Category/Occasion Header */}
           {((selectedCategories.length > 0 && !selectedCategories.includes('all')) || selectedOccasion) && !searchTerm && (
             <div className="container mx-auto px-4 mb-6">
-              {selectedOccasion && (
-                <button
-                  onClick={() => handleOccasionCardClick('all')}
-                  className="flex items-center gap-2 text-primary hover:text-accent transition-colors mb-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Back to Occasions
-                </button>
-              )}
               <h2 className="text-2xl md:text-3xl font-cormorant text-primary mt-4">
                 {selectedOccasion 
                   ? occasions.find(occ => occ.value === selectedOccasion)?.name || 'Products'

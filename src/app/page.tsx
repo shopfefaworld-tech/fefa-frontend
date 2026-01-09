@@ -846,7 +846,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     viewport={{ once: true }}
-                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96 flex flex-col"
+                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-56 xs:w-60 sm:w-64 md:w-72 lg:w-80 xl:w-[28rem] flex flex-col"
                   >
                     <Link href={`/collections?category=${category.slug}`} className="block flex flex-col h-full">
                       <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
@@ -856,7 +856,7 @@ export default function Home() {
                           alt={category.name}
                           fill
                           className="object-cover"
-                          sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
+                          sizes="(max-width: 475px) 224px, (max-width: 640px) 240px, (max-width: 768px) 256px, (max-width: 1024px) 288px, (max-width: 1280px) 320px, 448px"
                           priority={index < 3}
                         />
                       </div>
@@ -871,15 +871,6 @@ export default function Home() {
                         >
                           {category.name}
                         </motion.h3>
-                        <motion.p 
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.6, delay: 0.4 }}
-                          viewport={{ once: true }}
-                          className="text-gray-600 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
-                        >
-                          Explore {category.name.toLowerCase()}
-                        </motion.p>
                       </div>
                     </Link>
                   </motion.div>
@@ -896,9 +887,9 @@ export default function Home() {
           id="hero-banner"
           className="hero-banner relative py-0 overflow-hidden w-full"
         >
-          <div className="relative w-full">
+          <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             {/* Single carousel container with all banners */}
-            <div className="relative w-full" style={{ position: 'relative', height: 'auto' }}>
+            <div className="relative w-full overflow-hidden rounded-lg" style={{ position: 'relative', maxHeight: '450px' }}>
               {heroBanners.map((banner: any, index: number) => {
                 const isActive = index === currentBannerIndex;
                 return (
@@ -910,10 +901,11 @@ export default function Home() {
                       src={banner.image}
                       alt={banner.title || 'Hero Banner'}
                       width={1920}
-                      height={600}
-                      className="w-full"
+                      height={450}
+                      className="w-full h-full object-cover"
+                      style={{ maxHeight: '450px', objectFit: 'cover' }}
                       priority={index === 0}
-                      sizes="100vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
                     />
                   </div>
                 );
@@ -926,7 +918,7 @@ export default function Home() {
                 {/* Previous Button */}
                 <button
                   onClick={goToPreviousBanner}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
                   aria-label="Previous banner"
                 >
                   <FiChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
@@ -935,7 +927,7 @@ export default function Home() {
                 {/* Next Button */}
                 <button
                   onClick={goToNextBanner}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 group"
                   aria-label="Next banner"
                 >
                   <FiChevronRight className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:text-[#DBC078] transition-colors" />
@@ -1134,17 +1126,6 @@ export default function Home() {
                         >
                           {collection.name}
                         </motion.h3>
-                        {collection.description && (
-                          <motion.p 
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.4 }}
-                            viewport={{ once: true }}
-                            className="text-gray-600 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
-                          >
-                            {collection.description}
-                          </motion.p>
-                        )}
                       </div>
                     </Link>
                   </motion.div>
@@ -1275,17 +1256,6 @@ export default function Home() {
                         >
                           {occasion.name}
                         </motion.h3>
-                        <motion.p 
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.6, delay: 0.4 }}
-                          viewport={{ once: true }}
-                          className="text-gray-600 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-sm xl:text-base font-light text-center"
-                        >
-                          {occasionCounts[occasion.value] !== undefined 
-                            ? `(${occasionCounts[occasion.value]} items)`
-                            : 'Loading...'}
-                        </motion.p>
                       </div>
                     </Link>
                   </motion.div>
