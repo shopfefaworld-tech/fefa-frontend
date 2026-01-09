@@ -1147,7 +1147,7 @@ function CollectionsContent() {
       {/* Category/Collection/Occasion Banner - Show when a filter is selected */}
       {(() => {
         // Determine which banner to show - priority: occasion > category > collection
-        let bannerData: { type: 'category' | 'collection' | 'occasion', name: string, description?: string, imageUrl?: string } | null = null;
+        let bannerData: { type: 'category' | 'collection' | 'occasion', name: string, slug?: string, description?: string, imageUrl?: string } | null = null;
 
         // Check for collection parameter in URL (if collections are accessed via URL)
         const collectionParam = searchParams.get('collection');
@@ -1159,6 +1159,7 @@ function CollectionsContent() {
             bannerData = {
               type: 'occasion',
               name: firstOccasion.name,
+              slug: firstOccasion.value, // Occasion uses 'value' as slug
               imageUrl: firstOccasion.image
             };
           }
@@ -1174,14 +1175,16 @@ function CollectionsContent() {
             bannerData = {
               type: 'collection',
               name: selectedCollection.name,
+              slug: selectedCollection.slug,
               description: selectedCollection.description,
               imageUrl: selectedCollection.image
             };
           } else {
-            // Fallback: use collection param as name
+            // Fallback: use collection param as name and slug
             bannerData = {
               type: 'collection',
-              name: collectionParam.charAt(0).toUpperCase() + collectionParam.slice(1).replace(/-/g, ' ')
+              name: collectionParam.charAt(0).toUpperCase() + collectionParam.slice(1).replace(/-/g, ' '),
+              slug: collectionParam.toLowerCase()
             };
           }
         }
@@ -1193,6 +1196,7 @@ function CollectionsContent() {
             bannerData = {
               type: 'category',
               name: firstCategory.name,
+              slug: (firstCategory as any).slug || firstCategorySlug,
               imageUrl: (firstCategory as any).image
             };
           }
@@ -1204,6 +1208,7 @@ function CollectionsContent() {
             <CategoryBanner
               type={bannerData.type}
               name={bannerData.name}
+              slug={bannerData.slug}
               description={bannerData.description}
               imageUrl={bannerData.imageUrl}
             />

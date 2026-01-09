@@ -2,6 +2,13 @@
 
 .product-card {
   position: relative;
+  touch-action: pan-y; /* Allow vertical scrolling on mobile */
+}
+
+/* Ensure product cards allow vertical scrolling even when inside horizontal sliders */
+[id$="-slider"] .product-card,
+[id$="-slider"] [class*="ProductCard"] {
+  touch-action: pan-y !important;
 }
 
 .product-image-container {
@@ -130,6 +137,7 @@
 /* Card enhancements */
 .product-card-wrapper {
   transition: all 0.3s ease;
+  touch-action: pan-y; /* Allow vertical scrolling on mobile */
 }
 
 .product-card-wrapper:hover {

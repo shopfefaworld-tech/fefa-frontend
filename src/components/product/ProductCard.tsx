@@ -273,6 +273,7 @@ export default function ProductCard({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
       className="group relative bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full flex flex-col"
+      style={{ touchAction: 'pan-y' }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

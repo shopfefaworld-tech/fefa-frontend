@@ -23,6 +23,7 @@ import EditModal from '../../../components/admin/EditModal';
 
 const positions = ['All', 'hero', 'featured', 'sidebar', 'footer'];
 const statuses = ['All', 'Active', 'Inactive', 'Scheduled', 'Expired'];
+const targetTypes = ['All', 'homepage', 'category', 'collection', 'occasion'];
 
 export default function BannersPage() {
   const [banners, setBanners] = useState<any[]>([]);
@@ -31,6 +32,7 @@ export default function BannersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPosition, setSelectedPosition] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [selectedTargetType, setSelectedTargetType] = useState('All');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
@@ -166,10 +168,36 @@ export default function BannersPage() {
       searchTerm,
       position: selectedPosition,
       status: selectedStatus
+    }).filter((banner: any) => {
+      // Additional filter for target type
+      if (selectedTargetType === 'All') return true;
+      return banner.targetType === selectedTargetType;
     }),
     sortBy,
     sortOrder
   );
+
+  // Helper to get target type display label
+  const getTargetTypeLabel = (targetType: string) => {
+    switch (targetType) {
+      case 'homepage': return 'Homepage';
+      case 'category': return 'Category';
+      case 'collection': return 'Collection';
+      case 'occasion': return 'Occasion';
+      default: return 'Homepage';
+    }
+  };
+
+  // Helper to get target type badge color
+  const getTargetTypeBadgeColor = (targetType: string) => {
+    switch (targetType) {
+      case 'homepage': return 'bg-blue-100 text-blue-800';
+      case 'category': return 'bg-purple-100 text-purple-800';
+      case 'collection': return 'bg-pink-100 text-pink-800';
+      case 'occasion': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -280,7 +308,7 @@ export default function BannersPage() {
             </div>
 
             {/* Filter Options */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* Position Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -313,6 +341,24 @@ export default function BannersPage() {
                 </select>
               </div>
 
+              {/* Target Type Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Display On
+                </label>
+                <select
+                  value={selectedTargetType}
+                  onChange={(e) => setSelectedTargetType(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  {targetTypes.map(targetType => (
+                    <option key={targetType} value={targetType}>
+                      {targetType === 'All' ? 'All Pages' : getTargetTypeLabel(targetType)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Sort Options */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -337,6 +383,7 @@ export default function BannersPage() {
                     setSearchTerm('');
                     setSelectedPosition('All');
                     setSelectedStatus('All');
+                    setSelectedTargetType('All');
                     setSortBy('createdAt');
                     setSortOrder('desc');
                   }}
@@ -369,9 +416,13 @@ export default function BannersPage() {
                     {status}
                   </span>
                 </div>
-                <div className="absolute top-2 left-2">
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
                   <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium bg-primary/80 text-white">
-                    {banner.position || 'general'}
+                    {banner.position || 'hero'}
+                  </span>
+                  <span className={`inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium ${getTargetTypeBadgeColor(banner.targetType || 'homepage')}`}>
+                    {getTargetTypeLabel(banner.targetType || 'homepage')}
+                    {banner.targetName && `: ${banner.targetName}`}
                   </span>
                 </div>
               </div>

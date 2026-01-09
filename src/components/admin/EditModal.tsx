@@ -80,7 +80,12 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
         buttonText: data.buttonText || '',
         buttonLink: data.buttonLink || '',
         startDate: data.startDate ? new Date(data.startDate).toISOString().split('T')[0] : '',
-        endDate: data.endDate ? new Date(data.endDate).toISOString().split('T')[0] : ''
+        endDate: data.endDate ? new Date(data.endDate).toISOString().split('T')[0] : '',
+        // Banner target fields
+        targetType: data.targetType || 'homepage',
+        targetId: data.targetId || '',
+        targetSlug: data.targetSlug || '',
+        targetName: data.targetName || ''
       };
       setFormData(editData);
       
@@ -178,10 +183,16 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
   }, [data, type]);
 
   useEffect(() => {
-    if (isOpen && type === 'product') {
+    if (isOpen && (type === 'product' || type === 'banner')) {
       loadCategories();
       loadOccasions();
-      loadCollections(selectedOccasions);
+      // For banners, load all collections directly from API
+      // For products, load collections filtered by occasions
+      if (type === 'banner') {
+        loadAllCollections();
+      } else {
+        loadCollections(selectedOccasions);
+      }
     }
   }, [isOpen, type]);
 
@@ -208,6 +219,19 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
 
   const loadOccasions = async () => {
     try {
+      // First try to load from occasions API (for admin/banner forms)
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const occasionsResponse = await fetch(`${baseURL}/occasions?sortBy=sortOrder&sortOrder=asc`);
+      
+      if (occasionsResponse.ok) {
+        const occasionsData = await occasionsResponse.json();
+        if (occasionsData.success && occasionsData.data) {
+          setOccasions(occasionsData.data);
+          return;
+        }
+      }
+      
+      // Fallback to adminService
       const result = await adminService.getOccasions();
       if (result.success) {
         setOccasions(result.data);
@@ -236,6 +260,33 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
     }
   };
 
+  // Load all collections directly from API (for banners)
+  const loadAllCollections = async () => {
+    try {
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const collectionsResponse = await fetch(`${baseURL}/collections?sortBy=sortOrder&sortOrder=asc`);
+      
+      if (collectionsResponse.ok) {
+        const collectionsData = await collectionsResponse.json();
+        if (collectionsData.success && collectionsData.data) {
+          setCollections(collectionsData.data);
+          return;
+        }
+      }
+      
+      // Fallback to adminService
+      const result = await adminService.getCollections([]);
+      if (result.success) {
+        setCollections(result.data);
+      } else {
+        setCollections([]);
+      }
+    } catch (err) {
+      console.error('Error loading all collections:', err);
+      setCollections([]);
+    }
+  };
+
   const handleOccasionChange = (occasionValue: string) => {
     setSelectedOccasions(prev => {
       const newOccasions = prev.includes(occasionValue)
@@ -253,6 +304,63 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
         return [...prev, collectionId];
       }
     });
+  };
+
+  // Banner target types
+  const bannerTargetTypes = [
+    { value: 'homepage', label: 'Homepage (Hero Carousel)' },
+    { value: 'category', label: 'Category Page' },
+    { value: 'collection', label: 'Collection Page' },
+    { value: 'occasion', label: 'Occasion Page' }
+  ];
+
+  // Get the list of entities based on banner target type
+  const getBannerTargetEntities = () => {
+    switch (formData.targetType) {
+      case 'category':
+        return categories.map(cat => ({ id: cat._id, slug: cat.slug, name: cat.name }));
+      case 'collection':
+        return collections.map(col => ({ id: col._id, slug: col.slug, name: col.name }));
+      case 'occasion':
+        return occasions.map((occ: any) => ({ id: occ._id, slug: occ.value, name: occ.name }));
+      default:
+        return [];
+    }
+  };
+
+  // Handle banner target entity selection
+  const handleBannerTargetEntityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedValue = e.target.value;
+    const entities = getBannerTargetEntities();
+    const selectedEntity = entities.find(ent => ent.id === selectedValue);
+    
+    if (selectedEntity) {
+      setFormData((prev: any) => ({
+        ...prev,
+        targetId: selectedEntity.id,
+        targetSlug: selectedEntity.slug,
+        targetName: selectedEntity.name
+      }));
+    } else {
+      setFormData((prev: any) => ({
+        ...prev,
+        targetId: '',
+        targetSlug: '',
+        targetName: ''
+      }));
+    }
+  };
+
+  // Handle banner target type change
+  const handleBannerTargetTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newType = e.target.value;
+    setFormData((prev: any) => ({
+      ...prev,
+      targetType: newType,
+      targetId: '',
+      targetSlug: '',
+      targetName: ''
+    }));
   };
 
   // Generate slug from name
@@ -483,6 +591,13 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
       formDataToSend.append('sortOrder', (formData.sortOrder || 0).toString());
       if (formData.startDate) formDataToSend.append('startDate', formData.startDate);
       if (formData.endDate) formDataToSend.append('endDate', formData.endDate);
+      // Add target page fields
+      formDataToSend.append('targetType', formData.targetType || 'homepage');
+      if (formData.targetType !== 'homepage') {
+        if (formData.targetId) formDataToSend.append('targetId', formData.targetId);
+        if (formData.targetSlug) formDataToSend.append('targetSlug', formData.targetSlug);
+        if (formData.targetName) formDataToSend.append('targetName', formData.targetName);
+      }
       formDataToSend.append('image', formData.imageFile);
       
       onSave(formDataToSend);
@@ -1364,6 +1479,58 @@ export default function EditModal({ isOpen, onClose, data, onSave, type, loading
             <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
           </div>
         </div>
+      </div>
+
+      {/* Target Page Selection */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Display On *
+          </label>
+          <select
+            name="targetType"
+            value={formData.targetType || 'homepage'}
+            onChange={handleBannerTargetTypeChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {bannerTargetTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            {formData.targetType === 'homepage' 
+              ? 'Banner will show in the homepage hero carousel'
+              : `Banner will show on the selected ${formData.targetType} page`}
+          </p>
+        </div>
+
+        {formData.targetType && formData.targetType !== 'homepage' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select {formData.targetType.charAt(0).toUpperCase() + formData.targetType.slice(1)} *
+            </label>
+            <select
+              name="targetEntity"
+              value={formData.targetId || ''}
+              onChange={handleBannerTargetEntityChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select a {formData.targetType}</option>
+              {getBannerTargetEntities().map((entity) => (
+                <option key={entity.id} value={entity.id}>
+                  {entity.name}
+                </option>
+              ))}
+            </select>
+            {formData.targetName && (
+              <p className="mt-1 text-xs text-green-600">
+                Currently set to: {formData.targetName}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Basic Information */}

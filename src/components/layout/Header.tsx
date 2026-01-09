@@ -189,19 +189,66 @@ export default function Header() {
       >
       <div className="container mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between gap-4">
-          {/* Mobile search button */}
-          <div className="lg:hidden flex-shrink-0">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-[#DBC078] focus:outline-none"
-              suppressHydrationWarning
-            >
-              <FiSearch className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-            </button>
-          </div>
+          {/* Mobile Layout - Logo first, then search input, then search icon */}
+          <form onSubmit={handleSearch} className="lg:hidden flex items-center flex-1 gap-3 sm:gap-4">
+            {/* Logo */}
+            <div className="flex-shrink-0 flex items-center">
+              <Link href="/" className="flex items-center h-full">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="relative h-full flex items-center"
+                >
+                  <Image
+                    src="/images/fefa_logo_transparent_4k.png"
+                    alt="FEFA Logo"
+                    width={200}
+                    height={100}
+                    className="h-full max-h-12 sm:max-h-16 md:max-h-20 w-auto object-contain"
+                    priority
+                  />
+                </motion.div>
+              </Link>
+            </div>
 
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
+            {/* Search input with gold underline - functional search */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchInput}
+                onChange={handleSearchInputChange}
+                onFocus={handleSearchFocus}
+                onBlur={handleSearchBlur}
+                className="w-full bg-transparent text-[#DBC078] placeholder-[#dcc996] text-sm sm:text-base focus:outline-none border-b border-[#DBC078] focus:border-[#cfb570] pb-1 sm:pb-1.5"
+                suppressHydrationWarning
+              />
+              <SearchSuggestions
+                searchTerm={searchInput}
+                products={products}
+                categories={categories}
+                onSuggestionClick={handleSuggestionClick}
+                onSearchAll={handleSearchAll}
+                onClose={() => setShowSuggestions(false)}
+                isVisible={showSuggestions && !isLoadingSuggestions}
+              />
+            </div>
+
+            {/* Mobile search icon - submit search */}
+            <div className="flex-shrink-0">
+              <button
+                type="submit"
+                className="p-2 text-[#DBC078] focus:outline-none hover:text-[#cfb570] transition-colors"
+                suppressHydrationWarning
+              >
+                <FiSearch className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              </button>
+            </div>
+          </form>
+
+          {/* Desktop Logo - unchanged */}
+          <div className="hidden lg:flex flex-shrink-0 items-center">
             <Link href="/" className="flex items-center h-full">
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -214,7 +261,7 @@ export default function Header() {
                   alt="FEFA Logo"
                   width={200}
                   height={100}
-                  className="h-full max-h-12 sm:max-h-16 md:max-h-20 lg:max-h-24 w-auto object-contain"
+                  className="h-full max-h-24 w-auto object-contain"
                   priority
                 />
               </motion.div>
@@ -380,46 +427,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Search Bar - Fixed at top when menu is open */}
-      {isMobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-           className={`lg:hidden fixed left-0 right-0 bg-[#470031] border-b border-[#470031] z-30 px-2 sm:px-4 py-2 sm:py-3 transition-transform duration-300 ${
-             isVisible ? 'translate-y-0' : '-translate-y-full'
-           }`}
-           style={{ 
-             top: `calc(var(--top-banner-height, 0px) + ${isScrolled ? '60px' : '70px'})`
-           }}
-        >
-            <div className="flex items-center relative">
-              <form onSubmit={handleSearch} className="relative w-full">
-                 <FiSearch className="w-3 h-3 sm:w-4 sm:h-4 text-[#DBC078] absolute left-3 top-1/2 transform -translate-y-1/2" />
-                 <input
-                   type="text"
-                   placeholder="Search"
-                   value={searchInput}
-                   onChange={handleSearchInputChange}
-                   onFocus={handleSearchFocus}
-                   onBlur={handleSearchBlur}
-                   className="w-full pl-10 pr-4 py-2 text-sm border-b border-[#DBC078] focus:outline-none focus:border-[#cfb570] bg-transparent text-[#DBC078] placeholder-[#dcc996]"
-                   suppressHydrationWarning
-                 />
-              </form>
-              
-              <SearchSuggestions
-                searchTerm={searchInput}
-                products={products}
-                categories={categories}
-                onSuggestionClick={handleSuggestionClick}
-                onSearchAll={handleSearchAll}
-                onClose={() => setShowSuggestions(false)}
-                isVisible={showSuggestions && !isLoadingSuggestions}
-              />
-          </div>
-        </motion.div>
-      )}
     </header>
   );
 }

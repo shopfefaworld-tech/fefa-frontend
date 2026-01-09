@@ -49,6 +49,12 @@ export default function RootLayout({
         <link rel="icon" href="/logo1.png" type="image/png" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/logo1.png" />
+        {/* DNS Prefetch for faster image loading from CDN */}
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        {/* Preload critical brand banner images */}
+        <link rel="preload" href="/Fefa-shop-banner.png" as="image" />
+        <link rel="preload" href="/fefa-shop-banner-biglogo.png" as="image" />
       </head>
       <body
         className={`${poppins.variable} ${dancingScript.variable} antialiased`}

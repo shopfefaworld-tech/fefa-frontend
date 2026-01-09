@@ -1,16 +1,16 @@
 /* Quick Picks Wrapper - Full Width */
 .quick-picks-wrapper {
   margin-top: 2rem;
-  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #ede9fe 100%);
+  background: linear-gradient(135deg, #470031 0%, #5a003d 50%, #470031 100%);
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid #e9d5ff;
+  border: 1px solid #5a003d;
 }
 
 /* Header Bar */
 .quick-picks-header-bar {
   padding: 1rem 1.5rem;
-  background: linear-gradient(90deg, #7c3aed 0%, #8b5cf6 100%);
+  background: #470031;
 }
 
 .quick-picks-header-content {
@@ -47,52 +47,51 @@
   padding: 1.25rem 0;
 }
 
-.quick-picks-carousel-gradient {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 60px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.quick-picks-carousel-gradient.left {
-  left: 0;
-  background: linear-gradient(to right, #faf5ff 0%, transparent 100%);
-}
-
-.quick-picks-carousel-gradient.right {
-  right: 0;
-  background: linear-gradient(to left, #ede9fe 0%, transparent 100%);
-}
-
 /* Carousel */
 .quick-picks-carousel {
   display: flex;
   gap: 1rem;
   padding: 0.5rem 1.5rem;
   overflow-x: auto;
-  scroll-behavior: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
   -ms-overflow-style: none;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .quick-picks-carousel::-webkit-scrollbar {
-  display: none;
+  height: 6px;
+}
+
+.quick-picks-carousel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.quick-picks-carousel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.quick-picks-carousel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .quick-picks-carousel-item {
   flex-shrink: 0;
+  scroll-snap-align: start;
 }
 
 /* Quick Pick Card - Redesigned */
 .quick-pick-card {
-  width: 115px;
+  width: 200px;
   background: white;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.1);
-  border: 1px solid #f3e8ff;
+  box-shadow: 0 2px 12px rgba(71, 0, 49, 0.1);
+  border: 1px solid #e5d5e5;
   display: flex;
   flex-direction: column;
   transition: all 0.3s ease;
@@ -101,8 +100,8 @@
 
 .quick-pick-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.2);
-  border-color: #c4b5fd;
+  box-shadow: 0 8px 24px rgba(71, 0, 49, 0.2);
+  border-color: #DBC078;
 }
 
 /* Discount Badge */
@@ -125,7 +124,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  background: linear-gradient(135deg, #f8f5f9 0%, #f0e8f0 100%);
   overflow: hidden;
 }
 
@@ -169,7 +168,7 @@
 .quick-pick-current-price {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #7c3aed;
+  color: #470031;
 }
 
 .quick-pick-compare-price {
@@ -186,7 +185,7 @@
   justify-content: center;
   gap: 0.25rem;
   padding: 0.5rem;
-  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  background: #470031;
   color: white;
   border: none;
   font-size: 0.6875rem;
@@ -196,7 +195,7 @@
 }
 
 .quick-pick-add-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
+  background: #5a003d;
 }
 
 .quick-pick-add-btn:disabled {
@@ -224,6 +223,12 @@
 }
 
 /* Responsive */
+@media (min-width: 475px) {
+  .quick-pick-card {
+    width: 220px;
+  }
+}
+
 @media (min-width: 640px) {
   .quick-picks-header-bar {
     padding: 1.25rem 2rem;
@@ -234,7 +239,7 @@
   }
 
   .quick-pick-card {
-    width: 125px;
+    width: 240px;
   }
 
   .quick-pick-name {
@@ -251,14 +256,14 @@
 }
 
 @media (min-width: 768px) {
-  .quick-picks-carousel-gradient {
-    width: 80px;
+  .quick-pick-card {
+    width: 260px;
   }
 }
 
 @media (min-width: 1024px) {
   .quick-pick-card {
-    width: 130px;
+    width: 280px;
   }
   
   .quick-picks-carousel {

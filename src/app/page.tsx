@@ -596,7 +596,17 @@ export default function Home() {
     
     const target = e.target as HTMLElement;
     const slider = target.closest('[id$="-slider"]') as HTMLElement;
-    if (!slider) return;
+    if (!slider) {
+      setIsDragging(false);
+      return;
+    }
+    
+    // Check if the touch is on a product card or other interactive element
+    const productCard = target.closest('.product-card, [class*="ProductCard"]');
+    if (productCard && productCard !== slider) {
+      // Don't interfere with product card interactions
+      return;
+    }
     
     const currentX = e.touches[0].pageX - slider.offsetLeft;
     const currentY = e.touches[0].pageY;
@@ -614,7 +624,7 @@ export default function Home() {
       const walk = (currentX - startX) * 2;
       slider.scrollLeft = scrollLeft - walk;
     }
-    // If vertical, let the browser handle the scroll naturally
+    // If vertical, let the browser handle the scroll naturally - don't prevent default
   };
 
   const handleTouchEnd = () => {
@@ -847,6 +857,7 @@ export default function Home() {
                           fill
                           className="object-cover"
                           sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
+                          priority={index < 3}
                         />
                       </div>
                       {/* Content below image */}

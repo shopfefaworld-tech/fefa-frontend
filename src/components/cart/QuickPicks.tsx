@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { FiGift } from 'react-icons/fi';
 import QuickPickCard from './QuickPickCard';
@@ -23,71 +23,8 @@ interface QuickPicksProps {
 }
 
 export default function QuickPicks({ cartSubtotal }: QuickPicksProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isPaused, setIsPaused] = useState(false);
-  
-  // Filter active products and duplicate for infinite scroll
+  // Filter active products
   const activeProducts = quickPicksProducts.filter(p => p.isActive);
-  // Triple the products for seamless infinite scroll
-  const duplicatedProducts = [...activeProducts, ...activeProducts, ...activeProducts];
-
-  // Auto-scroll effect - scrolls from right to left
-  useEffect(() => {
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer || activeProducts.length === 0) return;
-
-    let animationId: number | null = null;
-    const scrollSpeed = 0.5; // pixels per frame
-    // Calculate single set width: (card width + gap) * number of products
-    const cardWidth = 130; // matches CSS
-    const gap = 16; // matches CSS gap-4 (1rem = 16px)
-    const singleSetWidth = (cardWidth + gap) * activeProducts.length;
-    
-    // Initialize scroll position after layout
-    const initializeScroll = () => {
-      // Start from the right - position at the start of the 3rd set (index 2)
-      // This shows content starting from the right side
-      const startPosition = singleSetWidth * 2;
-      scrollContainer.scrollLeft = startPosition;
-      return startPosition;
-    };
-
-    // Wait for next frame to ensure layout is ready
-    requestAnimationFrame(() => {
-      let scrollPosition = initializeScroll();
-
-      const animate = () => {
-        const container = scrollRef.current;
-        if (!container) {
-          if (animationId) cancelAnimationFrame(animationId);
-          return;
-        }
-
-        if (!isPaused) {
-          // Scroll left (decrease position) - content moves from right to left
-          scrollPosition -= scrollSpeed;
-          
-          // Reset to right when we've scrolled past the start of 2nd set
-          if (scrollPosition <= singleSetWidth) {
-            scrollPosition = singleSetWidth * 2; // Reset to start of 3rd set
-            container.scrollLeft = scrollPosition;
-          } else {
-            container.scrollLeft = scrollPosition;
-          }
-        }
-        
-        animationId = requestAnimationFrame(animate);
-      };
-
-      animationId = requestAnimationFrame(animate);
-    });
-
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-  }, [isPaused, activeProducts.length]);
 
   return (
     <motion.div
@@ -109,20 +46,12 @@ export default function QuickPicks({ cartSubtotal }: QuickPicksProps) {
         </div>
       </div>
 
-      {/* Infinite Carousel */}
-      <div 
-        className="quick-picks-carousel-container"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
-        <div className="quick-picks-carousel-gradient left" />
-        <div 
-          ref={scrollRef}
-          className="quick-picks-carousel"
-        >
-          {duplicatedProducts.map((product, index) => (
+      {/* Simple Scrollable Carousel */}
+      <div className="quick-picks-carousel-container">
+        <div className="quick-picks-carousel">
+          {activeProducts.map((product) => (
             <div
-              key={`${product._id}-${index}`}
+              key={product._id}
               className="quick-picks-carousel-item"
             >
               <QuickPickCard
@@ -135,7 +64,6 @@ export default function QuickPicks({ cartSubtotal }: QuickPicksProps) {
             </div>
           ))}
         </div>
-        <div className="quick-picks-carousel-gradient right" />
       </div>
     </motion.div>
   );

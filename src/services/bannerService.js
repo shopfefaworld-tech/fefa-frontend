@@ -154,6 +154,78 @@ class BannerService {
     }
   }
 
+  // Get banners by target type and slug (for category/collection/occasion pages)
+  async getBannersByTarget(targetType, targetSlug = null) {
+    try {
+      if (!this.baseURL) {
+        console.warn('[BannerService] API URL not configured');
+        return {
+          success: false,
+          error: 'API URL not configured',
+          data: []
+        };
+      }
+
+      let url = `${this.baseURL}/banners/by-target?type=${encodeURIComponent(targetType)}`;
+      if (targetSlug) {
+        url += `&slug=${encodeURIComponent(targetSlug)}`;
+      }
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (e) {}
+          
+          return {
+            success: false,
+            error: errorMessage,
+            data: []
+          };
+        }
+
+        const data = await response.json();
+
+        return {
+          success: true,
+          data: data.data || []
+        };
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          return {
+            success: false,
+            error: 'Request timeout',
+            data: []
+          };
+        }
+        
+        throw fetchError;
+      }
+    } catch (error) {
+      console.error('[BannerService] Get banners by target error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch banners',
+        data: []
+      };
+    }
+  }
+
   // Create new banner
   async createBanner(bannerData) {
     try {
