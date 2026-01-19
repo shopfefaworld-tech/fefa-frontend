@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
   MdAdd as Plus,
@@ -14,18 +14,6 @@ import {
   MdLocalOffer as Tag,
 } from 'react-icons/md';
 
-// Mock data for Quick Picks products
-const initialQuickPicks = [
-  { _id: 'qp1', name: 'Pearl Stud Mini', price: 49, comparePrice: 99, image: '/images/product-1.png', isActive: true },
-  { _id: 'qp2', name: 'Silver Nose Pin', price: 79, comparePrice: 149, image: '/images/product-2.png', isActive: true },
-  { _id: 'qp3', name: 'Thread Bracelet', price: 99, comparePrice: 179, image: '/images/product-3.png', isActive: true },
-  { _id: 'qp4', name: 'Crystal Pendant', price: 129, comparePrice: 199, image: '/images/product-4.png', isActive: true },
-  { _id: 'qp5', name: 'Mini Hoop Set', price: 149, comparePrice: 249, image: '/images/product-5.png', isActive: true },
-  { _id: 'qp6', name: 'Charm Anklet', price: 169, comparePrice: 279, image: '/images/product-6.png', isActive: true },
-  { _id: 'qp7', name: 'Beaded Ring', price: 59, comparePrice: 99, image: '/images/product-7.png', isActive: true },
-  { _id: 'qp8', name: 'Hair Clip Set', price: 199, comparePrice: 349, image: '/images/product-8.png', isActive: true },
-];
-
 interface QuickPickProduct {
   _id: string;
   name: string;
@@ -36,7 +24,7 @@ interface QuickPickProduct {
 }
 
 export default function QuickPicksPage() {
-  const [products, setProducts] = useState<QuickPickProduct[]>(initialQuickPicks);
+  const [products, setProducts] = useState<QuickPickProduct[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<QuickPickProduct | null>(null);
   const [formData, setFormData] = useState({
@@ -45,18 +33,63 @@ export default function QuickPicksPage() {
     comparePrice: '',
     image: '',
   });
+  const [loading, setLoading] = useState(false);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('fefa_access_token') || '' : ''}`,
+  });
+
+  const fetchQuickPicks = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${apiUrl}/quick-picks/all`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setProducts(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch quick picks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQuickPicks();
+  }, []);
 
   // Handle toggle active status
-  const handleToggleActive = (id: string) => {
-    setProducts(prev => prev.map(p => 
-      p._id === id ? { ...p, isActive: !p.isActive } : p
-    ));
+  const handleToggleActive = async (id: string) => {
+    try {
+      await fetch(`${apiUrl}/quick-picks/${id}/toggle`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+      });
+      fetchQuickPicks();
+    } catch (error) {
+      console.error('Failed to toggle quick pick', error);
+      alert('Failed to toggle quick pick');
+    }
   };
 
   // Handle delete product
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this Quick Pick?')) {
-      setProducts(prev => prev.filter(p => p._id !== id));
+      try {
+        await fetch(`${apiUrl}/quick-picks/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        fetchQuickPicks();
+      } catch (error) {
+        console.error('Failed to delete quick pick', error);
+        alert('Failed to delete quick pick');
+      }
     }
   };
 
@@ -85,7 +118,7 @@ export default function QuickPicksPage() {
   };
 
   // Handle form submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const price = parseFloat(formData.price);
@@ -96,27 +129,33 @@ export default function QuickPicksPage() {
       return;
     }
     
-    if (editingProduct) {
-      // Update existing product
-      setProducts(prev => prev.map(p => 
-        p._id === editingProduct._id 
-          ? { ...p, name: formData.name, price, comparePrice, image: formData.image }
-          : p
-      ));
-    } else {
-      // Add new product
-      const newProduct: QuickPickProduct = {
-        _id: `qp${Date.now()}`,
-        name: formData.name,
-        price,
-        comparePrice,
-        image: formData.image,
-        isActive: true,
-      };
-      setProducts(prev => [...prev, newProduct]);
+    const payload = {
+      name: formData.name,
+      price,
+      comparePrice,
+      image: formData.image,
+    };
+
+    try {
+      if (editingProduct) {
+        await fetch(`${apiUrl}/quick-picks/${editingProduct._id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await fetch(`${apiUrl}/quick-picks`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+      }
+      await fetchQuickPicks();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Failed to save quick pick', error);
+      alert('Failed to save quick pick');
     }
-    
-    setIsModalOpen(false);
   };
 
   // Calculate discount percentage

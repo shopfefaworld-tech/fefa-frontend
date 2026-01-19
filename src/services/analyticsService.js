@@ -63,6 +63,26 @@ class AnalyticsService {
     }
   }
 
+  async getChartData(months = 12) {
+    try {
+      const response = await fetch(`${this.baseURL}/analytics/chart-data?months=${months}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch chart data');
+      }
+
+      return { success: true, data: data.data };
+    } catch (error) {
+      console.error('Get chart data error:', error);
+      return { success: false, error: error.message || 'Failed to fetch chart data' };
+    }
+  }
+
   async getTopProducts(limit = 10) {
     try {
       const response = await fetch(`${this.baseURL}/analytics/top-products?limit=${limit}`, {

@@ -185,89 +185,74 @@ export default function WishlistPage() {
                 const price = wishlistItem.variant?.price || product.price;
                 
                 return (
-                  <motion.div
-                    key={wishlistItem._id}
-                    id={`wishlist-item-${product._id}`}
-                    variants={item as any}
-                    exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
-                    className="bg-white rounded-lg shadow-soft overflow-hidden group"
-                  >
-                    <div className="relative aspect-square overflow-hidden bg-red-200 border-2 border-blue-500">
-                      {/* Test fallback image */}
-                      <img
-                        src="/images/logo.jpg"
-                        alt="Fallback"
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          zIndex: 0
-                        }}
-                      />
-                      <Link href={`/product/${product.slug}`}>
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={product.name}
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              zIndex: 1
-                            }}
-                            className="transition-transform duration-500 group-hover:scale-105"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = '/images/logo.jpg';
-                            }}
-                          />
-                        ) : (
-                          <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-center justify-center">
-                            <div className="text-center">
-                              <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
-                                <svg 
-                                  className="w-8 h-8 text-gray-400" 
-                                  fill="none" 
-                                  stroke="currentColor" 
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round" 
-                                    strokeWidth={2} 
-                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" 
-                                  />
-                                </svg>
-                              </div>
-                              <span className="text-primary font-cormorant text-sm">No Image</span>
-                            </div>
-                          </div>
-                        )}
-                      </Link>
-                      
-                      <div className="absolute inset-0 bg-white bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
-                      
-                      <div className="absolute top-3 right-3 flex flex-col gap-2">
-                        <button
-                          onClick={() => handleRemoveFromWishlist(product._id, wishlistItem.variant?._id)}
-                          className="bg-white p-2 rounded-full shadow-md hover:bg-red-500 hover:text-white transition-colors"
-                          disabled={removingItemId === product._id}
-                          title="Remove from wishlist"
-                        >
-                          {removingItemId === product._id ? (
-                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    <motion.div
+                      key={wishlistItem._id}
+                      id={`wishlist-item-${product._id}`}
+                      variants={item as any}
+                      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
+                      className="bg-white rounded-lg shadow-soft overflow-hidden group"
+                    >
+                      <div className="relative aspect-square overflow-hidden">
+                        <Link href={`/product/${product.slug}`}>
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={product.name}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                              }}
+                              className="transition-transform duration-500 group-hover:scale-105"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/images/logo.jpg';
+                              }}
+                            />
                           ) : (
-                            <FiTrash2 className="w-4 h-4" />
+                            <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-center justify-center">
+                              <div className="text-center">
+                                <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
+                                  <svg 
+                                    className="w-8 h-8 text-gray-400" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path 
+                                      strokeLinecap="round" 
+                                      strokeLinejoin="round" 
+                                      strokeWidth={2} 
+                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                                    />
+                                  </svg>
+                                </div>
+                                <span className="text-primary font-cormorant text-sm">No Image</span>
+                              </div>
+                            </div>
                           )}
-                        </button>
+                        </Link>
+                        
+                        <div className="absolute inset-0 bg-white bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
+                        
+                        <div className="absolute top-3 right-3 flex flex-col gap-2">
+                          <button
+                            onClick={() => handleRemoveFromWishlist(product._id, wishlistItem.variant?._id)}
+                            className="bg-white p-2 rounded-full shadow-md hover:bg-red-500 hover:text-white transition-colors"
+                            disabled={removingItemId === product._id}
+                            title="Remove from wishlist"
+                          >
+                            {removingItemId === product._id ? (
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <FiTrash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
-                    </div>
                     
                     <div className="p-4">
                       <Link href={`/product/${product.slug}`}>

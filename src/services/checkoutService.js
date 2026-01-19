@@ -282,30 +282,6 @@ class CheckoutService {
     }
   }
 
-  // Simulate payment processing (for demo purposes)
-  async simulatePayment(paymentData) {
-    return new Promise((resolve, reject) => {
-      // Simulate API delay
-      setTimeout(() => {
-        // Simulate 90% success rate
-        const success = Math.random() > 0.1;
-        
-        if (success) {
-          resolve({
-            success: true,
-            transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            amount: paymentData.amount,
-            currency: paymentData.currency || 'INR',
-            status: 'completed',
-            timestamp: new Date().toISOString()
-          });
-        } else {
-          reject(new Error('Payment failed. Please try again.'));
-        }
-      }, 2000);
-    });
-  }
-
   // Get auth token from localStorage
   getAuthToken() {
     if (typeof window !== 'undefined') {

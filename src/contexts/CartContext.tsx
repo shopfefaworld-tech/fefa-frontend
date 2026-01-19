@@ -70,7 +70,7 @@ interface CartContextType {
   subtotal: number;
   total: number;
   currency: string;
-  addToCart: (productId: string, quantity?: number, variantId?: string, productInfo?: { name?: string; image?: string; slug?: string; price: number }) => Promise<void>;
+  addToCart: (productId: string, quantity?: number, variantId?: string, productInfo?: { name?: string; image?: string; slug?: string; price: number; maxQty?: number }) => Promise<void>;
   updateCartItem: (productId: string, quantity: number, variantId?: string) => Promise<void>;
   removeFromCart: (productId: string, variantId?: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -222,7 +222,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     productId: string, 
     quantity: number = 1, 
     variantId?: string,
-    productInfo?: { name?: string; image?: string; slug?: string; price: number }
+    productInfo?: { name?: string; image?: string; slug?: string; price: number; maxQty?: number }
   ) => {
     // If not authenticated, add to local storage
     if (!isAuthenticated) {
@@ -234,6 +234,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         (!variantId || item.variantId === variantId)
       );
       
+      const maxQty = productInfo?.maxQty;
+      const existingQty = existingIndex >= 0 ? localItems[existingIndex].quantity : 0;
+      const desiredQty = existingQty + quantity;
+
+      if (maxQty !== undefined && desiredQty > maxQty) {
+        const cappedQty = maxQty;
+        setError(`Only ${maxQty} available for this item`);
+        throw new Error(`Only ${maxQty} available`);
+      }
+
       if (existingIndex >= 0) {
         // Update quantity
         localItems[existingIndex].quantity += quantity;

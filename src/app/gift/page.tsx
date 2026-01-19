@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import MainLayout from '@/components/layout/MainLayout';
 import Button from '@/components/ui/Button';
@@ -14,36 +14,40 @@ interface GiftOption {
   image: string;
 }
 
-const giftOptions: GiftOption[] = [
-  {
-    id: 'classic-wrap',
-    name: 'Classic Gift Wrap',
-    description: 'Elegant gold and cream wrapping paper with satin ribbon',
-    price: 49,
-    image: '/images/gift-wrap-classic.jpg'
-  },
-  {
-    id: 'premium-box',
-    name: 'Premium Gift Box',
-    description: 'Luxurious velvet-lined jewelry box with magnetic closure',
-    price: 149,
-    image: '/images/gift-box-premium.jpg'
-  },
-  {
-    id: 'festive-wrap',
-    name: 'Festive Collection',
-    description: 'Seasonal themed wrapping with handcrafted decorations',
-    price: 79,
-    image: '/images/gift-wrap-festive.jpg'
-  }
-];
-
 export default function GiftPage() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [giftMessage, setGiftMessage] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [senderName, setSenderName] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [giftOptions, setGiftOptions] = useState<GiftOption[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGifts = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/gifts`);
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data)) {
+          const mapped = data.data.map((g: any) => ({
+            id: g._id,
+            name: g.name,
+            description: g.description,
+            price: g.price,
+            image: g.image,
+          }));
+          setGiftOptions(mapped);
+        }
+      } catch (error) {
+        console.error('Failed to load gift options', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGifts();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -199,11 +199,29 @@ class AuthService {
     }
   }
 
-  // Refresh access token (local storage only)
+  // Refresh access token
   async refreshToken(refreshToken) {
-    // Generate new tokens
-    const tokens = this.generateMockTokens();
-    return { tokens, message: 'Token refreshed successfully' };
+    try {
+      const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Token refresh failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      this.clearTokens();
+      throw error;
+    }
   }
 
   // Logout user

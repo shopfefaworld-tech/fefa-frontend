@@ -26,6 +26,7 @@ interface PincodeResult {
 interface StockStatus {
   status: 'out' | 'low' | 'available';
   message: string;
+  maxQty?: number;
 }
 
 interface Review {
@@ -255,7 +256,12 @@ export default function ProductDetail() {
   };
   
   const increaseQuantity = () => {
+  const stockStatus = getStockStatus();
+  const fallbackQty = product?.inventory?.quantity ?? 10;
+  const maxQty = stockStatus?.maxQty ?? fallbackQty;
+  if (!maxQty || quantity < maxQty) {
     setQuantity(quantity + 1);
+  }
   };
 
   const handleSizeChange = (size: string) => {
@@ -297,7 +303,10 @@ export default function ProductDetail() {
 
       // Get primary image URL
       const primaryImage = product.images?.find((img: any) => img.isPrimary) || product.images?.[0];
-      const imageUrl = primaryImage?.url || '';
+      const imageUrl = typeof primaryImage === 'string' ? primaryImage : primaryImage?.url || '';
+
+      const stockStatus = getStockStatus();
+      const maxQty = stockStatus?.maxQty ?? product.inventory?.quantity;
 
       // Add to cart with product info for local storage
       await addToCart(
@@ -308,7 +317,8 @@ export default function ProductDetail() {
           name: product.name,
           image: imageUrl,
           slug: product.slug,
-          price: variantPrice
+          price: variantPrice,
+          maxQty
         }
       );
       
@@ -490,36 +500,37 @@ export default function ProductDetail() {
   };
 
   const getStockStatus = (): StockStatus | null => {
-    if (!selectedSize || !product) return null;
+    if (!product) return null;
+    if (product.variants && product.variants.length > 0 && !selectedSize) return null;
     
     // Check if using variants structure
     if (product.variants && product.variants.length > 0) {
       const variant = product.variants.find((v: any) => v.name === selectedSize);
-      if (!variant || !variant.inventory) return { status: 'out', message: 'Size not available' };
+    if (!variant || !variant.inventory) return { status: 'out', message: 'Size not available', maxQty: 0 };
       
       const inventory = variant.inventory as any;
-      if (inventory.quantity === 0) return { status: 'out', message: 'Out of Stock' };
+    if (inventory.quantity === 0) return { status: 'out', message: 'Out of Stock', maxQty: 0 };
       if (inventory.quantity <= inventory.lowStockThreshold) {
-        return { status: 'low', message: `Only ${inventory.quantity} left in stock` };
+      return { status: 'low', message: `Only ${inventory.quantity} left in stock`, maxQty: inventory.quantity };
       }
-      return { status: 'available', message: `${inventory.quantity} in stock` };
+    return { status: 'available', message: `${inventory.quantity} in stock`, maxQty: inventory.quantity };
     }
     
     // Check if using new inventory structure
     if (product.inventory) {
-      if (!product.inventory.trackQuantity) return { status: 'available', message: 'In Stock' };
-      if (product.inventory.quantity === 0) return { status: 'out', message: 'Out of Stock' };
+    if (!product.inventory.trackQuantity) return { status: 'available', message: 'In Stock', maxQty: 99 };
+    if (product.inventory.quantity === 0) return { status: 'out', message: 'Out of Stock', maxQty: 0 };
       if (product.inventory.quantity <= product.inventory.lowStockThreshold) {
-        return { status: 'low', message: `Only ${product.inventory.quantity} left in stock` };
+      return { status: 'low', message: `Only ${product.inventory.quantity} left in stock`, maxQty: product.inventory.quantity };
       }
-      return { status: 'available', message: `${product.inventory.quantity} in stock` };
+    return { status: 'available', message: `${product.inventory.quantity} in stock`, maxQty: product.inventory.quantity };
     }
     
     // Fallback to legacy stock structure
     const stock = product.stock?.[selectedSize as keyof typeof product.stock];
-    if (stock === undefined || stock === 0) return { status: 'out', message: 'Out of Stock' };
-    if (stock <= 5) return { status: 'low', message: `Only ${stock} left in stock` };
-    return { status: 'available', message: `${stock} in stock` };
+  if (stock === undefined || stock === 0) return { status: 'out', message: 'Out of Stock', maxQty: 0 };
+  if (stock <= 5) return { status: 'low', message: `Only ${stock} left in stock`, maxQty: stock };
+  return { status: 'available', message: `${stock} in stock`, maxQty: stock };
   };
 
   // Carousel navigation functions

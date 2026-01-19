@@ -92,10 +92,11 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError('');
 
-      const [overviewRes, productsRes, ordersRes] = await Promise.all([
+      const [overviewRes, productsRes, ordersRes, chartRes] = await Promise.all([
         analyticsService.getOverview(),
         analyticsService.getTopProducts(5),
-        adminService.getRecentOrders(5)
+        adminService.getRecentOrders(5),
+        analyticsService.getChartData(12)
       ]);
 
       if (overviewRes.success) {
@@ -113,6 +114,18 @@ export default function AnalyticsPage() {
             customersChange: overviewRes.data.usersChange || 0,
             productsChange: 0
           }
+        }));
+      }
+
+      if (chartRes.success) {
+        const revenueChart = (chartRes.data || []).map((entry: any) => ({
+          month: `${entry._id.month}/${entry._id.year}`,
+          revenue: entry.revenue,
+          orders: entry.orders,
+        }));
+        setAnalyticsData((prev: any) => ({
+          ...prev,
+          revenueChart,
         }));
       }
 

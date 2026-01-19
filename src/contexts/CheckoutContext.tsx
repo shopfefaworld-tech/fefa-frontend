@@ -256,29 +256,20 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
     setError(null);
 
     try {
-      // If Razorpay response is provided, verify payment
-      if (razorpayResponse) {
-        const dbOrderId = (order as any).dbOrderId || order.id;
-        const verifyResponse = await checkoutService.verifyPayment(
-          razorpayResponse.razorpay_order_id,
-          razorpayResponse.razorpay_payment_id,
-          razorpayResponse.razorpay_signature,
-          dbOrderId
-        );
-
-        if (!verifyResponse.success) {
-          throw new Error(verifyResponse.message || 'Payment verification failed');
-        }
-
-        return true;
+      if (!razorpayResponse) {
+        throw new Error('Payment response required. Please complete payment through Razorpay.');
       }
 
-      // Fallback: simulate payment (for testing)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const success = Math.random() > 0.1;
-      
-      if (!success) {
-        throw new Error('Payment failed. Please try again.');
+      const dbOrderId = (order as any).dbOrderId || order.id;
+      const verifyResponse = await checkoutService.verifyPayment(
+        razorpayResponse.razorpay_order_id,
+        razorpayResponse.razorpay_payment_id,
+        razorpayResponse.razorpay_signature,
+        dbOrderId
+      );
+
+      if (!verifyResponse.success) {
+        throw new Error(verifyResponse.message || 'Payment verification failed');
       }
 
       return true;
