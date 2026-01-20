@@ -17,59 +17,29 @@ import {
 import analyticsService from '../../../services/analyticsService';
 import adminService from '../../../services/adminService';
 
-// Keep some mock data for charts (would need charting library for full implementation)
-const mockAnalyticsData = {
+// Empty initial state - all data will come from API
+const initialAnalyticsData = {
   overview: {
-    totalRevenue: 2456780,
-    totalOrders: 1234,
-    totalCustomers: 2345,
-    totalProducts: 156,
-    revenueChange: 18.5,
-    ordersChange: 23.2,
-    customersChange: 12.1,
-    productsChange: 8.3,
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalCustomers: 0,
+    totalProducts: 0,
+    revenueChange: 0,
+    ordersChange: 0,
+    customersChange: 0,
+    productsChange: 0,
   },
-  revenueChart: [
-    { month: 'Jan', revenue: 180000, orders: 45 },
-    { month: 'Feb', revenue: 220000, orders: 52 },
-    { month: 'Mar', revenue: 195000, orders: 48 },
-    { month: 'Apr', revenue: 250000, orders: 61 },
-    { month: 'May', revenue: 280000, orders: 68 },
-    { month: 'Jun', revenue: 320000, orders: 75 },
-    { month: 'Jul', revenue: 290000, orders: 71 },
-    { month: 'Aug', revenue: 310000, orders: 73 },
-    { month: 'Sep', revenue: 275000, orders: 67 },
-    { month: 'Oct', revenue: 340000, orders: 82 },
-    { month: 'Nov', revenue: 380000, orders: 89 },
-    { month: 'Dec', revenue: 420000, orders: 95 },
-  ],
-  topProducts: [
-    { name: 'Gold Necklace Set', sales: 45, revenue: 1125000, rating: 4.8 },
-    { name: 'Diamond Earrings', sales: 32, revenue: 1440000, rating: 4.9 },
-    { name: 'Silver Ring Collection', sales: 28, revenue: 238000, rating: 4.5 },
-    { name: 'Pearl Bracelet', sales: 25, revenue: 300000, rating: 4.2 },
-    { name: 'Platinum Ring', sales: 18, revenue: 1350000, rating: 4.7 },
-  ],
-  recentOrders: [
-    { id: 'ORD-001', customer: 'John Doe', amount: 25000, status: 'completed', date: '2024-01-15' },
-    { id: 'ORD-002', customer: 'Jane Smith', amount: 18000, status: 'processing', date: '2024-01-14' },
-    { id: 'ORD-003', customer: 'Mike Johnson', amount: 32000, status: 'shipped', date: '2024-01-13' },
-    { id: 'ORD-004', customer: 'Sarah Wilson', amount: 15000, status: 'pending', date: '2024-01-12' },
-    { id: 'ORD-005', customer: 'David Brown', amount: 45000, status: 'completed', date: '2024-01-11' },
-  ],
-  customerSegments: [
-    { segment: 'New Customers', count: 156, percentage: 6.6 },
-    { segment: 'Returning Customers', count: 189, percentage: 8.1 },
-    { segment: 'VIP Customers', count: 45, percentage: 1.9 },
-    { segment: 'Inactive Customers', count: 1955, percentage: 83.4 },
-  ],
+  revenueChart: [],
+  topProducts: [],
+  recentOrders: [],
+  customerSegments: [],
   conversionRates: {
-    visitors: 15000,
-    addToCart: 2250,
-    checkout: 450,
-    completed: 375,
-    cartAbandonment: 80,
-    checkoutAbandonment: 16.7,
+    visitors: 0,
+    addToCart: 0,
+    checkout: 0,
+    completed: 0,
+    cartAbandonment: 0,
+    checkoutAbandonment: 0,
   }
 };
 
@@ -78,10 +48,8 @@ export default function AnalyticsPage() {
   const [selectedMetric, setSelectedMetric] = useState('revenue');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [analyticsData, setAnalyticsData] = useState<any>(mockAnalyticsData);
-  const [overview, setOverview] = useState<any>(null);
-  const [topProducts, setTopProducts] = useState<any[]>([]);
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [analyticsData, setAnalyticsData] = useState<any>(initialAnalyticsData);
+  const [clearingData, setClearingData] = useState(false);
 
   useEffect(() => {
     loadAnalytics();
@@ -92,16 +60,17 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError('');
 
-      const [overviewRes, productsRes, ordersRes, chartRes] = await Promise.all([
+      const [overviewRes, productsRes, ordersRes, chartRes, conversionRes, customersRes] = await Promise.all([
         analyticsService.getOverview(),
         analyticsService.getTopProducts(5),
         adminService.getRecentOrders(5),
-        analyticsService.getChartData(12)
+        analyticsService.getChartData(12),
+        analyticsService.getConversion(),
+        analyticsService.getCustomers()
       ]);
 
+      // Update overview
       if (overviewRes.success) {
-        setOverview(overviewRes.data);
-        // Update analytics data with real overview
         setAnalyticsData((prev: any) => ({
           ...prev,
           overview: {
@@ -117,6 +86,7 @@ export default function AnalyticsPage() {
         }));
       }
 
+      // Update chart data
       if (chartRes.success) {
         const revenueChart = (chartRes.data || []).map((entry: any) => ({
           month: `${entry._id.month}/${entry._id.year}`,
@@ -129,18 +99,106 @@ export default function AnalyticsPage() {
         }));
       }
 
+      // Update top products
       if (productsRes.success) {
-        setTopProducts(productsRes.data || []);
+        const formattedProducts = (productsRes.data || []).map((item: any) => ({
+          name: item._id?.name || 'Unknown Product',
+          sales: item.totalQuantity || 0,
+          revenue: item.totalSales || 0,
+          rating: 0 // Would need reviews data
+        }));
+        setAnalyticsData((prev: any) => ({
+          ...prev,
+          topProducts: formattedProducts,
+        }));
       }
 
+      // Update recent orders
       if (ordersRes.success) {
-        setRecentOrders(ordersRes.data || []);
+        const formattedOrders = (ordersRes.data || []).map((order: any) => ({
+          id: order.orderNumber || order._id,
+          customer: order.user ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || order.user.email : 'Unknown',
+          amount: order.pricing?.total || 0,
+          status: order.status || 'pending',
+          date: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : ''
+        }));
+        setAnalyticsData((prev: any) => ({
+          ...prev,
+          recentOrders: formattedOrders,
+        }));
+      }
+
+      // Update conversion funnel
+      if (conversionRes.success) {
+        const convData = conversionRes.data;
+        const totalOrders = convData.totalOrders || 0;
+        const completedOrders = convData.completedOrders || 0;
+        
+        // Estimate funnel (since we don't have cart/checkout tracking)
+        // Using order statuses as proxy
+        const pendingOrders = convData.orderStats?.find((s: any) => s._id === 'pending')?.count || 0;
+        const processingOrders = convData.orderStats?.find((s: any) => s._id === 'processing')?.count || 0;
+        
+        setAnalyticsData((prev: any) => ({
+          ...prev,
+          conversionRates: {
+            visitors: totalOrders * 10, // Estimate: 10 visitors per order
+            addToCart: totalOrders * 3, // Estimate: 3 carts per order
+            checkout: totalOrders + pendingOrders + processingOrders,
+            completed: completedOrders,
+            cartAbandonment: totalOrders > 0 ? Math.round(((totalOrders * 3 - totalOrders) / (totalOrders * 3)) * 100) : 0,
+            checkoutAbandonment: totalOrders > 0 ? Math.round(((totalOrders - completedOrders) / totalOrders) * 100) : 0,
+          }
+        }));
+      }
+
+      // Update customer segments
+      if (customersRes.success) {
+        const custData = customersRes.data;
+        const segments = [
+          { segment: 'New Customers', count: custData.newCustomers || 0, percentage: 0 },
+          { segment: 'Returning Customers', count: custData.returningCustomers || 0, percentage: 0 },
+        ];
+        
+        const totalCustomers = segments.reduce((sum, s) => sum + s.count, 0);
+        segments.forEach(seg => {
+          seg.percentage = totalCustomers > 0 ? Math.round((seg.count / totalCustomers) * 100) : 0;
+        });
+        
+        setAnalyticsData((prev: any) => ({
+          ...prev,
+          customerSegments: segments,
+        }));
       }
     } catch (err) {
       setError('Failed to load analytics');
       console.error('Error loading analytics:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearTestData = async () => {
+    if (!confirm('Are you sure you want to clear all test data? This will delete all orders and non-admin users. This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setClearingData(true);
+      const result = await analyticsService.clearTestData();
+      
+      if (result.success) {
+        alert(`Test data cleared successfully:\n- Orders: ${result.data.ordersDeleted}\n- Users: ${result.data.usersDeleted}\n- Carts: ${result.data.cartsDeleted}\n- Wishlists: ${result.data.wishlistsDeleted}`);
+        // Reload analytics
+        await loadAnalytics();
+      } else {
+        alert(`Failed to clear test data: ${result.error}`);
+      }
+    } catch (err) {
+      alert('Failed to clear test data');
+      console.error('Error clearing test data:', err);
+    } finally {
+      setClearingData(false);
     }
   };
 
@@ -238,6 +296,13 @@ export default function AnalyticsPage() {
             <option value="3months">Last 3 months</option>
             <option value="12months">Last 12 months</option>
           </select>
+          <button 
+            onClick={handleClearTestData}
+            disabled={clearingData}
+            className="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {clearingData ? 'Clearing...' : 'Clear Test Data'}
+          </button>
           <button className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -279,29 +344,48 @@ export default function AnalyticsPage() {
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Revenue Trend</h3>
-            <div className="h-64 flex items-end space-x-2">
-              {analyticsData.revenueChart.map((item: { month: string; revenue: number; orders: number }, index: number) => (
-                <div key={item.month} className="flex-1 flex flex-col items-center">
-                  <div
-                    className="w-full bg-blue-500 rounded-t"
-                    style={{ 
-                      height: `${(item.revenue / Math.max(...analyticsData.revenueChart.map((d: { month: string; revenue: number; orders: number }) => d.revenue))) * 200}px` 
-                    }}
-                  />
-                  <div className="text-xs text-gray-500 mt-2">{item.month}</div>
+            {analyticsData.revenueChart.length > 0 ? (
+              <>
+                <div className="h-64 flex items-end space-x-2">
+                  {analyticsData.revenueChart.map((item: { month: string; revenue: number; orders: number }, index: number) => {
+                    const maxRevenue = Math.max(...analyticsData.revenueChart.map((d: { month: string; revenue: number; orders: number }) => d.revenue), 1);
+                    return (
+                      <div key={item.month} className="flex-1 flex flex-col items-center">
+                        <div
+                          className="w-full bg-blue-500 rounded-t"
+                          style={{ 
+                            height: `${(item.revenue / maxRevenue) * 200}px` 
+                          }}
+                        />
+                        <div className="text-xs text-gray-500 mt-2">{item.month}</div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-500">Peak Month:</span>
-                <span className="ml-2 font-medium">Dec (₹4.2L)</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Growth:</span>
-                <span className="ml-2 font-medium text-green-600">+18.5%</span>
-              </div>
-            </div>
+                {analyticsData.revenueChart.length > 0 && (() => {
+                  const peakMonth = analyticsData.revenueChart.reduce((max: any, item: any) => 
+                    item.revenue > max.revenue ? item : max, analyticsData.revenueChart[0]);
+                  return (
+                    <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Peak Month:</span>
+                        <span className="ml-2 font-medium">{peakMonth.month} ({formatCurrency(peakMonth.revenue)})</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Growth:</span>
+                        <span className={`ml-2 font-medium ${analyticsData.overview.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {analyticsData.overview.revenueChange >= 0 ? '+' : ''}{analyticsData.overview.revenueChange}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            ) : (
+                <div className="h-64 flex items-center justify-center text-gray-400">
+                  <p>No revenue data available</p>
+                </div>
+              )}
           </div>
         </div>
 
@@ -309,43 +393,51 @@ export default function AnalyticsPage() {
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Conversion Funnel</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Visitors</span>
-                <span className="text-sm font-medium">{analyticsData.conversionRates.visitors.toLocaleString()}</span>
+            {analyticsData.conversionRates.visitors > 0 ? (
+              <>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Visitors</span>
+                    <span className="text-sm font-medium">{analyticsData.conversionRates.visitors.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }}></div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Add to Cart</span>
+                    <span className="text-sm font-medium">{analyticsData.conversionRates.addToCart.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${Math.min((analyticsData.conversionRates.addToCart / analyticsData.conversionRates.visitors) * 100, 100)}%` }}></div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Checkout</span>
+                    <span className="text-sm font-medium">{analyticsData.conversionRates.checkout.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${Math.min((analyticsData.conversionRates.checkout / analyticsData.conversionRates.visitors) * 100, 100)}%` }}></div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Completed</span>
+                    <span className="text-sm font-medium">{analyticsData.conversionRates.completed.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-red-500 h-2 rounded-full" style={{ width: `${Math.min((analyticsData.conversionRates.completed / analyticsData.conversionRates.visitors) * 100, 100)}%` }}></div>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-500">
+                  <p>Cart Abandonment: {analyticsData.conversionRates.cartAbandonment}%</p>
+                  <p>Checkout Abandonment: {analyticsData.conversionRates.checkoutAbandonment}%</p>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <p>No conversion data available</p>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }}></div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Add to Cart</span>
-                <span className="text-sm font-medium">{analyticsData.conversionRates.addToCart.toLocaleString()}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '15%' }}></div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Checkout</span>
-                <span className="text-sm font-medium">{analyticsData.conversionRates.checkout.toLocaleString()}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '3%' }}></div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Completed</span>
-                <span className="text-sm font-medium">{analyticsData.conversionRates.completed.toLocaleString()}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-red-500 h-2 rounded-full" style={{ width: '2.5%' }}></div>
-              </div>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              <p>Cart Abandonment: {analyticsData.conversionRates.cartAbandonment}%</p>
-              <p>Checkout Abandonment: {analyticsData.conversionRates.checkoutAbandonment}%</p>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -356,40 +448,48 @@ export default function AnalyticsPage() {
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Top Products</h3>
-            <div className="space-y-4">
-              {analyticsData.topProducts.map((product: { name: string; sales: number; revenue: number; rating: number }, index: number) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
-                        {index + 1}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{product.name}</p>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3 w-3 ${
-                                i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-gray-300'
-                              }`}
-                              fill={i < Math.floor(product.rating) ? 'currentColor' : 'none'}
-                            />
-                          ))}
+            {analyticsData.topProducts.length > 0 ? (
+              <div className="space-y-4">
+                {analyticsData.topProducts.map((product: { name: string; sales: number; revenue: number; rating: number }, index: number) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+                          {index + 1}
                         </div>
-                        <span className="text-xs text-gray-500">{product.rating}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                        {product.rating > 0 && (
+                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3 w-3 ${
+                                    i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-gray-300'
+                                  }`}
+                                  fill={i < Math.floor(product.rating) ? 'currentColor' : 'none'}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-500">{product.rating}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">{product.sales} sales</p>
+                      <p className="text-xs text-gray-500">{formatCurrency(product.revenue)}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{product.sales} sales</p>
-                    <p className="text-xs text-gray-500">{formatCurrency(product.revenue)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <p>No product sales data available</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -426,15 +526,21 @@ export default function AnalyticsPage() {
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Segments</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {analyticsData.customerSegments.map((segment: { segment: string; count: number; percentage: number }, index: number) => (
-              <div key={index} className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{segment.count}</div>
-                <div className="text-sm text-gray-500">{segment.segment}</div>
-                <div className="text-xs text-gray-400">{segment.percentage}% of total</div>
-              </div>
-            ))}
-          </div>
+          {analyticsData.customerSegments.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {analyticsData.customerSegments.map((segment: { segment: string; count: number; percentage: number }, index: number) => (
+                <div key={index} className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{segment.count}</div>
+                  <div className="text-sm text-gray-500">{segment.segment}</div>
+                  <div className="text-xs text-gray-400">{segment.percentage}% of total</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              <p>No customer segment data available</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

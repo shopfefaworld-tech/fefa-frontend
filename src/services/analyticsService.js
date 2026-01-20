@@ -160,6 +160,32 @@ class AnalyticsService {
       };
     }
   }
+
+  async clearTestData() {
+    try {
+      const response = await fetch(`${this.baseURL}/analytics/clear-test-data`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to clear test data');
+      }
+
+      return {
+        success: true,
+        data: data.data
+      };
+    } catch (error) {
+      console.error('Clear test data error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to clear test data'
+      };
+    }
+  }
 }
 
 export default new AnalyticsService();
