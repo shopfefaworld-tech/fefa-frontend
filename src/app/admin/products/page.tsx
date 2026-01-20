@@ -11,7 +11,6 @@ import {
   MdMoreHoriz as MoreHorizontal,
   MdInventory as Package,
   MdStar as Star,
-  MdAttachMoney as DollarSign,
   MdRefresh as Refresh,
   MdError as ErrorIcon,
   MdCheckCircle as CheckCircle,
@@ -57,11 +56,24 @@ export default function ProductsPage() {
   const [testResults, setTestResults] = useState<Record<string, any>>({});
   const [testing, setTesting] = useState<Record<string, boolean>>({});
 
-  // Debounce search term
+  // Debounce search term and avoid hammering the API on every keystroke
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setCurrentPage(1); // Reset to first page when search changes
+      const trimmed = searchTerm.trim();
+
+      // If input is cleared, reset search immediately
+      if (trimmed.length === 0) {
+        setDebouncedSearchTerm('');
+        setCurrentPage(1);
+        return;
+      }
+
+      // Only trigger API search when the user has typed at least 2 characters
+      if (trimmed.length >= 2) {
+        setDebouncedSearchTerm(trimmed);
+        setCurrentPage(1); // Reset to first page when search changes
+      }
+      // For single-character input, do nothing – keep previous results and avoid a noisy query
     }, 500); // Wait 500ms after user stops typing
 
     return () => clearTimeout(timer);
@@ -447,6 +459,7 @@ export default function ProductsPage() {
                 <input
                   type="text"
                   placeholder="Search products..."
+                  autoFocus
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -584,8 +597,8 @@ export default function ProductsPage() {
                             {product.sku} • {product.category}
                           </div>
                           <div className="flex items-center text-sm text-gray-900">
-                            <DollarSign className="h-3 w-3 mr-1" />
-                            ₹{product.price.toLocaleString()}
+                            <span className="mr-1">₹</span>
+                            {product.price.toLocaleString()}
                             <span className={`ml-2 text-xs ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
                               {product.stock} in stock
                             </span>
@@ -674,8 +687,8 @@ export default function ProductsPage() {
                           <span>{product.category}</span>
                         </div>
                         <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          ₹{product.price.toLocaleString()}
+                          <span className="mr-1">₹</span>
+                          {product.price.toLocaleString()}
                           <span className="mx-2">•</span>
                           <span className={product.stock > 0 ? 'text-green-600' : 'text-red-600'}>
                             {product.stock} in stock

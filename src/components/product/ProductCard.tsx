@@ -67,6 +67,10 @@ interface ProductCardProps {
   isFeatured?: boolean;
   isActive?: boolean;
   stockStatus?: 'in-stock' | 'out-of-stock' | 'low-stock';
+  inventory?: {
+    quantity: number;
+    lowStockThreshold?: number;
+  };
   discountPercentage?: number;
   ratings?: {
     average: number;
@@ -90,6 +94,7 @@ export default function ProductCard({
   isFeatured,
   isActive,
   stockStatus,
+  inventory,
   discountPercentage,
   ratings,
 }: ProductCardProps) {
@@ -245,7 +250,8 @@ export default function ProductCard({
           name: name,
           image: imageUrl,
           slug: slug,
-          price: price
+          price: price,
+          maxQty: inventory?.quantity
         }
       );
       

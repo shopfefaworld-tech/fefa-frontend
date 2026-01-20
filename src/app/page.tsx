@@ -21,8 +21,7 @@ import {
   Category, 
   Feature, 
   Product, 
-  TrendingLook, 
-  Testimonial
+  TrendingLook
 } from '@/types/data';
 
 // Import category images for fallback
@@ -95,11 +94,10 @@ export default function Home() {
   
   // Get data from context
   const { 
-    categories,
-    features,
+    categories, 
+    features, 
     products,
     trending,
-    testimonials,
     fieldErrors,
     loadCategories
   } = useDataContext();
@@ -118,7 +116,6 @@ export default function Home() {
   const safeFeatures = getSafeArray(features);
   const safeProducts = getSafeArray(products);
   const safeTrendingLooks = getSafeArray(trending);
-  const safeTestimonials = getSafeArray(testimonials);
 
   // Fetch hero banners from admin
   useEffect(() => {
@@ -955,7 +952,7 @@ export default function Home() {
       )}
 
       {/* Features Section */}
-      <section className="pt-6 pb-4 bg-white overflow-hidden transition-colors duration-300">
+      <section className="pt-4 pb-2 bg-white overflow-hidden transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -964,58 +961,95 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-4"
           >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2">WHY CHOOSE US</h2>
-            <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
-              Discover what makes our jewelry special
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2">WHAT MAKES FEFA SPECIAL</h2>
+            <p className="text-dark-gray max-w-2xl mx-auto text-xs xs:text-sm sm:text-base">
+              Real reasons women keep coming back to FEFA
             </p>
           </motion.div>
           
           {/* Features container with horizontal scroll for all screen sizes */}
           <div className="w-full flex justify-center lg:overflow-hidden">
-            <div 
-              id="features-container"
-              className="flex gap-2 xs:gap-3 sm:gap-4 md:gap-4 lg:gap-5 overflow-x-auto scrollbar-hide pb-2 cursor-grab active:cursor-grabbing lg:justify-center"
-              style={{ 
-                scrollbarWidth: 'none', 
-                msOverflowStyle: 'none',
-                scrollBehavior: 'smooth',
-                touchAction: 'auto'
-              }}
-              onMouseDown={handleMouseDown}
-              onMouseLeave={handleMouseLeave}
-              onMouseUp={handleMouseUp}
-              onMouseMove={handleMouseMove}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-            {safeFeatures.map((feature: Feature, index: number) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xs:gap-4 sm:gap-5 md:gap-6">
               <motion.div
-                key={feature.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: 0.0 }}
                 viewport={{ once: true }}
-                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-2 xs:p-3 sm:p-3 md:p-4 text-center flex-shrink-0 w-36 xs:w-40 sm:w-44 md:w-48 lg:w-52"
+                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left"
               >
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-primary via-purple-600 to-pink-500 rounded-full flex items-center justify-center mb-1 xs:mb-1.5 sm:mb-2 shadow-lg">
-                    <svg className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
-                      <path d={feature.icon}/>
-                    </svg>
-                  </div>
-                  <h3 className="text-primary font-bold text-base xs:text-base sm:text-lg md:text-lg leading-tight">
-                    {feature.title}
-                  </h3>
-                </div>
+                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
+                  Tarnish-Resistant Finish
+                </h3>
+                <p className="text-xs xs:text-sm text-dark-gray">
+                  Everyday-friendly plating that holds its shine wear after wear.
+                </p>
               </motion.div>
-            ))}
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.05 }}
+                viewport={{ once: true }}
+                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left"
+              >
+                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
+                  Lightweight for All-Day Wear
+                </h3>
+                <p className="text-xs xs:text-sm text-dark-gray">
+                  Statement pieces that stay light from workdays to weddings.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left"
+              >
+                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
+                  Handpicked Designs
+                </h3>
+                <p className="text-xs xs:text-sm text-dark-gray">
+                  Stylist-curated designs so your jewelry actually feels unique.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                viewport={{ once: true }}
+                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left"
+              >
+                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
+                  Premium Polish &amp; Plating
+                </h3>
+                <p className="text-xs xs:text-sm text-dark-gray">
+                  Rich, high-gloss finish that looks closer to fine jewelry.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left sm:col-span-2 lg:col-span-1"
+              >
+                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
+                  Affordable Luxury
+                </h3>
+                <p className="text-xs xs:text-sm text-dark-gray">
+                  Boutique-level pieces at prices that let you build a wardrobe, not just own one set.
+                </p>
+              </motion.div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Our Collections Section */}
+      {/* Featured Products Section */}
       <section className="pb-4 pt-6 bg-white transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
@@ -1025,118 +1059,116 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-4 xs:mb-5 sm:mb-6"
           >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2 xs:mb-3">OUR COLLECTIONS</h2>
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-2 xs:mb-3">FEATURED PRODUCTS</h2>
             <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
-              Discover our carefully curated collections of premium handcrafted jewelry
+              Discover our most popular jewelry pieces, handcrafted with love and attention to detail
             </p>
           </motion.div>
           
-          {/* Collections Carousel */}
-          <div className="relative group">
-            {/* Navigation Arrows - Fade out when at start/end */}
-            <button
-              onClick={() => scrollCollections('left')}
-              disabled={!canScrollCollectionsLeft}
-              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
-                !canScrollCollectionsLeft 
-                  ? 'opacity-0 pointer-events-none' 
-                  : 'opacity-70 hover:opacity-100 hover:scale-110'
-              } flex items-center justify-center`}
-              aria-label="Previous collections"
-            >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            <button
-              onClick={() => scrollCollections('right')}
-              disabled={!canScrollCollectionsRight}
-              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
-                !canScrollCollectionsRight 
-                  ? 'opacity-0 pointer-events-none' 
-                  : 'opacity-70 hover:opacity-100 hover:scale-110'
-              } flex items-center justify-center`}
-              aria-label="Next collections"
-            >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-
-            {/* Collections Slider Container */}
-            <div 
-              ref={setCollectionsSliderRef}
-              id="collections-slider"
-              className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
-              style={{ 
-                scrollbarWidth: 'none', 
-                msOverflowStyle: 'none',
-                scrollBehavior: 'smooth',
-                touchAction: 'auto'
-              }}
-              onMouseDown={handleMouseDown}
-              onMouseLeave={handleMouseLeave}
-              onMouseUp={handleMouseUp}
-              onMouseMove={handleMouseMove}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              {collections.length > 0 ? (
-                collections.map((collection, index) => (
-                  <motion.div
-                    key={collection._id || collection.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    viewport={{ once: true }}
-                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96 flex flex-col"
-                  >
-                    <Link href={`/collections`} className="block flex flex-col h-full">
-                      <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
-                        {/* Background Image or Gradient */}
-                        {collection.image ? (
-                          <Image
-                            src={collection.image}
-                            alt={collection.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50">
-                            {/* Large initial letter - positioned at top */}
-                            <div className="absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-0">
-                              <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-cormorant text-primary opacity-20 group-hover/card:opacity-30 transition-opacity">
-                                {collection.name.charAt(0)}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      {/* Content below image */}
-                      <div className="p-2 xs:p-3 sm:p-3 md:p-4 lg:p-4 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
-                        <motion.h3 
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.6, delay: 0.3 }}
-                          viewport={{ once: true }}
-                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900"
-                        >
-                          {collection.name}
-                        </motion.h3>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="flex items-center justify-center w-full py-12">
-                  <p className="text-gray-500">No collections available</p>
-                </div>
-              )}
+          {/* Featured Products Slider */}
+          {loadingFeaturedProducts ? (
+            <div className="flex justify-center items-center py-6">
+              <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
             </div>
-          </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="relative group">
+              {/* Navigation Arrows - Fade out when at start/end */}
+              <button
+                onClick={() => scrollFeaturedProducts('left')}
+                disabled={!canScrollLeft}
+                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                  !canScrollLeft 
+                    ? 'opacity-0 pointer-events-none' 
+                    : 'opacity-70 hover:opacity-100 hover:scale-110'
+                } flex items-center justify-center`}
+                aria-label="Previous products"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => scrollFeaturedProducts('right')}
+                disabled={!canScrollRight}
+                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                  !canScrollRight 
+                    ? 'opacity-0 pointer-events-none' 
+                    : 'opacity-70 hover:opacity-100 hover:scale-110'
+                } flex items-center justify-center`}
+                aria-label="Next products"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Products Slider Container */}
+              <div 
+                ref={setFeaturedProductsSliderRef}
+                id="featured-products-slider"
+                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
+                style={{ 
+                  scrollbarWidth: 'none', 
+                  msOverflowStyle: 'none',
+                  scrollBehavior: 'smooth',
+                  touchAction: 'auto'
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {featuredProducts.map((product, index) => {
+                    const discountPercentage = product.comparePrice 
+                      ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
+                      : 0;
+                    
+                    return (
+                      <div 
+                        key={product._id || index} 
+                        className="flex-shrink-0 w-[200px] xs:w-[220px] sm:w-[240px] md:w-[260px] lg:w-[280px] h-full"
+                      >
+                        <ProductCard
+                          _id={product._id}
+                          name={product.name}
+                          price={product.price}
+                          comparePrice={product.comparePrice}
+                          images={product.images || []}
+                          slug={product.slug}
+                          category={product.category}
+                          isFeatured={product.isFeatured}
+                          isActive={product.isActive}
+                          discountPercentage={discountPercentage}
+                          stockStatus={product.inventory?.quantity > 0 ? 'in-stock' : 'out-of-stock'}
+                          ratings={product.ratings}
+                        />
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-dark-gray text-lg">No featured products available at the moment.</p>
+            </div>
+          )}
+          
+          {/* View All Products Button */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            viewport={{ once: true }}
+            className="text-center mt-12"
+          >
+            <Button href="/collections" variant="outline" className="border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-white">
+              View All Products
+            </Button>
+          </motion.div>
         </div>
       </section>
 
@@ -1270,130 +1302,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Products Section */}
-      <section className="pt-4 pb-4 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-4 xs:mb-5 sm:mb-6"
-          >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-2 xs:mb-3">FEATURED PRODUCTS</h2>
-            <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
-              Discover our most popular jewelry pieces, handcrafted with love and attention to detail
-            </p>
-          </motion.div>
-          
-          {/* Featured Products Slider */}
-          {loadingFeaturedProducts ? (
-            <div className="flex justify-center items-center py-6">
-              <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : featuredProducts.length > 0 ? (
-            <div className="relative group">
-              {/* Navigation Arrows - Fade out when at start/end */}
-              <button
-                onClick={() => scrollFeaturedProducts('left')}
-                disabled={!canScrollLeft}
-                className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
-                  !canScrollLeft 
-                    ? 'opacity-0 pointer-events-none' 
-                    : 'opacity-70 hover:opacity-100 hover:scale-110'
-                } flex items-center justify-center`}
-                aria-label="Previous products"
-              >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <button
-                onClick={() => scrollFeaturedProducts('right')}
-                disabled={!canScrollRight}
-                className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
-                  !canScrollRight 
-                    ? 'opacity-0 pointer-events-none' 
-                    : 'opacity-70 hover:opacity-100 hover:scale-110'
-                } flex items-center justify-center`}
-                aria-label="Next products"
-              >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              {/* Products Slider Container */}
-              <div 
-                ref={setFeaturedProductsSliderRef}
-                id="featured-products-slider"
-                className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
-              style={{ 
-                scrollbarWidth: 'none', 
-                msOverflowStyle: 'none',
-                scrollBehavior: 'smooth',
-                touchAction: 'auto'
-              }}
-              onMouseDown={handleMouseDown}
-              onMouseLeave={handleMouseLeave}
-              onMouseUp={handleMouseUp}
-              onMouseMove={handleMouseMove}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              {featuredProducts.map((product, index) => {
-                  const discountPercentage = product.comparePrice 
-                    ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
-                    : 0;
-                  
-                  return (
-                    <div 
-                      key={product._id || index} 
-                      className="flex-shrink-0 w-[200px] xs:w-[220px] sm:w-[240px] md:w-[260px] lg:w-[280px] h-full"
-                    >
-                      <ProductCard
-                        _id={product._id}
-                        name={product.name}
-                        price={product.price}
-                        comparePrice={product.comparePrice}
-                        images={product.images || []}
-                        slug={product.slug}
-                        category={product.category}
-                        isFeatured={product.isFeatured}
-                        isActive={product.isActive}
-                        discountPercentage={discountPercentage}
-                        stockStatus={product.inventory?.quantity > 0 ? 'in-stock' : 'out-of-stock'}
-                        ratings={product.ratings}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-dark-gray text-lg">No featured products available at the moment.</p>
-            </div>
-          )}
-          
-          {/* View All Products Button */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <Button href="/collections" variant="outline" className="border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-white">
-              View All Products
-            </Button>
-          </motion.div>
-        </div>
-      </section>
-          
-
       {/* Trending Looks / Best Sellers Section */}
       <section className="pt-4 pb-4 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
         <div className="container mx-auto px-4">
@@ -1489,6 +1397,7 @@ export default function Home() {
                         isActive={product.isActive}
                         discountPercentage={discountPercentage}
                         stockStatus={product.inventory?.quantity > 0 ? 'in-stock' : 'out-of-stock'}
+                        inventory={product.inventory}
                         ratings={product.ratings}
                       />
                     </div>
@@ -1516,110 +1425,6 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
-      {/* Customer Love Section */}
-      <section className="pt-4 pb-4 bg-gradient-to-br from-soft-pink-100 to-soft-pink-200">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-4 xs:mb-5 sm:mb-6"
-          >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-5xl !font-cormorant text-primary mb-3 xs:mb-4">CUSTOMER LOVE</h2>
-            <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
-              See why thousands of customers choose FEFA for their jewelry needs
-            </p>
-          </motion.div>
-          
-          {/* Customer testimonials container with horizontal scroll for mobile/tablet, grid for desktop */}
-          <div 
-            id="testimonials-container"
-            className="flex gap-3 xs:gap-4 sm:gap-5 md:gap-6 lg:hidden overflow-x-auto scrollbar-hide pb-2"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {safeTestimonials.map((testimonial: Testimonial, index: number) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="bg-white p-3 xs:p-4 sm:p-5 rounded-xl xs:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex-shrink-0 w-64 xs:w-72 sm:w-80"
-              >
-                <div className="flex items-center mb-2 xs:mb-3">
-                  <div className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs xs:text-sm sm:text-base">
-                    {testimonial.name.charAt(0)}
-                  </div>
-                  <div className="ml-2 xs:ml-3 sm:ml-4">
-                    <h4 className="font-semibold text-dark-gray text-xs xs:text-sm sm:text-base">{testimonial.name}</h4>
-                    <div className="flex text-accent text-xs xs:text-sm">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <span key={i}>★</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-dark-gray text-xs xs:text-sm mb-2 xs:mb-3 leading-relaxed">
-                  "{testimonial.review}"
-                </p>
-                <p className="text-primary text-xs font-medium">
-                  Purchased: {testimonial.product}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-          
-          {/* Desktop grid layout */}
-          <div className="hidden lg:grid lg:grid-cols-4 gap-6">
-            {safeTestimonials.map((testimonial: Testimonial, index: number) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-              >
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {testimonial.name.charAt(0)}
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="font-semibold text-dark-gray">{testimonial.name}</h4>
-                    <div className="flex text-accent">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <span key={i}>★</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-dark-gray text-sm mb-3">
-                  "{testimonial.review}"
-                </p>
-                <p className="text-primary text-xs font-medium">
-                  Purchased: {testimonial.product}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <Button href="/collections" variant="outline" className="border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-white">
-              Shop Now
-            </Button>
-          </motion.div>
-        </div>
-      </section>
-
-
 
       {/* Newsletter */}
       <section className="pt-6 xs:pt-8 pb-12 xs:pb-16 bg-primary text-white">

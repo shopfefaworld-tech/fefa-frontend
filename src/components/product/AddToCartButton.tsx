@@ -16,6 +16,7 @@ interface AddToCartButtonProps {
   productName?: string;
   productImage?: string;
   productSlug?: string;
+  maxQty?: number;
 }
 
 export default function AddToCartButton({
@@ -27,7 +28,8 @@ export default function AddToCartButton({
   disabled = false,
   productName,
   productImage,
-  productSlug
+  productSlug,
+  maxQty
 }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -47,7 +49,8 @@ export default function AddToCartButton({
           name: productName,
           image: productImage,
           slug: productSlug,
-          price: price
+          price: price,
+          maxQty
         }
       );
       

@@ -77,6 +77,7 @@ export default function QuickPicks({ cartSubtotal }: QuickPicksProps) {
                   price={product.price}
                   comparePrice={product.comparePrice}
                   image={product.image}
+                  maxQty={product.inventory?.quantity}
                 />
               </div>
             ))

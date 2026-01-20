@@ -142,11 +142,36 @@ export default function Header() {
     setShowSuggestions(value.length >= 1);
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setSearchInput(suggestion);
-    setSearchQuery(suggestion);
-    router.push(`/collections?search=${encodeURIComponent(suggestion)}`);
+  const handleSuggestionClick = (
+    suggestion: string,
+    type?: 'product' | 'category',
+    slug?: string
+  ) => {
+    setSearchInput('');
     setShowSuggestions(false);
+    
+    if (type === 'category') {
+      // Navigate to category page
+      // Prefer explicit slug from suggestions, then fall back to lookup by name
+      const matchedCategory = categories.find(c => 
+        c.value === slug ||
+        c.name === suggestion ||
+        c.value === suggestion.toLowerCase()
+      );
+
+      const categorySlug = slug || matchedCategory?.value || suggestion.toLowerCase();
+      router.push(`/collections?category=${encodeURIComponent(categorySlug)}`);
+    } else {
+      // Search for the suggestion text
+      setSearchQuery(suggestion);
+      router.push(`/collections?search=${encodeURIComponent(suggestion)}`);
+    }
+  };
+
+  const handleProductClick = (productSlug: string) => {
+    setSearchInput('');
+    setShowSuggestions(false);
+    router.push(`/product/${productSlug}`);
   };
 
   const handleSearchAll = () => {
@@ -229,6 +254,7 @@ export default function Header() {
                 products={products}
                 categories={categories}
                 onSuggestionClick={handleSuggestionClick}
+                onProductClick={handleProductClick}
                 onSearchAll={handleSearchAll}
                 onClose={() => setShowSuggestions(false)}
                 isVisible={showSuggestions && !isLoadingSuggestions}
@@ -373,6 +399,7 @@ export default function Header() {
               products={products}
               categories={categories}
               onSuggestionClick={handleSuggestionClick}
+              onProductClick={handleProductClick}
               onSearchAll={handleSearchAll}
               onClose={() => setShowSuggestions(false)}
               isVisible={showSuggestions && !isLoadingSuggestions}

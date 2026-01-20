@@ -12,6 +12,7 @@ interface QuickPickCardProps {
   price: number;
   comparePrice: number;
   image: string;
+  maxQty?: number;
 }
 
 export default function QuickPickCard({
@@ -20,6 +21,7 @@ export default function QuickPickCard({
   price,
   comparePrice,
   image,
+  maxQty,
 }: QuickPickCardProps) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
@@ -42,6 +44,7 @@ export default function QuickPickCard({
         image,
         slug: _id,
         price,
+        maxQty,
       });
       setIsAdded(true);
       setTimeout(() => {

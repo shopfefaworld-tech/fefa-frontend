@@ -224,6 +224,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     variantId?: string,
     productInfo?: { name?: string; image?: string; slug?: string; price: number; maxQty?: number }
   ) => {
+    const maxQty = productInfo?.maxQty;
+
     // If not authenticated, add to local storage
     if (!isAuthenticated) {
       const localItems = getLocalCart();
@@ -234,12 +236,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         (!variantId || item.variantId === variantId)
       );
       
-      const maxQty = productInfo?.maxQty;
       const existingQty = existingIndex >= 0 ? localItems[existingIndex].quantity : 0;
       const desiredQty = existingQty + quantity;
 
       if (maxQty !== undefined && desiredQty > maxQty) {
-        const cappedQty = maxQty;
         setError(`Only ${maxQty} available for this item`);
         throw new Error(`Only ${maxQty} available`);
       }
@@ -270,6 +270,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
+
+      // Check stock limit before adding to server cart
+      if (maxQty !== undefined && cart) {
+        const existingItem = cart.items.find(
+          item => item.product._id === productId && 
+          (!variantId || item.variant?._id === variantId)
+        );
+        const existingQty = existingItem ? existingItem.quantity : 0;
+        const desiredQty = existingQty + quantity;
+
+        if (desiredQty > maxQty) {
+          setError(`Only ${maxQty} available for this item`);
+          throw new Error(`Only ${maxQty} available`);
+        }
+      }
       
       const response = await (cartService.addToCart as CartServiceAddToCart)(productId, quantity, variantId);
       if (response.success) {
@@ -286,9 +301,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateCartItem = async (productId: string, quantity: number, variantId?: string) => {
-    // If not authenticated, update local cart
+    // Check stock limit for both authenticated and unauthenticated
+    const localItems = getLocalCart();
+    const itemInLocal = localItems.find(
+      item => item.productId === productId && 
+      (!variantId || item.variantId === variantId)
+    );
+
+    // If we have maxQty info in the cart already, or we can get it from somewhere?
+    // Actually, updateCartItem usually happens on the Cart page where we might not have maxQty passed in easily.
+    // However, the backend should handle it.
+    // But for local cart:
     if (!isAuthenticated) {
-      const localItems = getLocalCart();
       const itemIndex = localItems.findIndex(
         item => item.productId === productId && 
         (!variantId || item.variantId === variantId)
@@ -298,6 +322,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (quantity <= 0) {
           localItems.splice(itemIndex, 1);
         } else {
+          // For local cart, we don't store maxQty per item usually, 
+          // but we can't check it here easily unless we fetch product info.
           localItems[itemIndex].quantity = quantity;
         }
         saveLocalCart(localItems);

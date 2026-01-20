@@ -9,6 +9,7 @@ import { FiTrash2, FiShoppingBag, FiArrowRight, FiMinus, FiPlus } from 'react-ic
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useLoginModal } from '@/contexts/LoginModalContext';
+import checkoutService from '@/services/checkoutService';
 import MainLayout from '@/components/layout/MainLayout';
 import QuickPicks from '@/components/cart/QuickPicks';
 import '@/styles/components/cart/Cart.css';
@@ -48,7 +49,15 @@ export default function CartPage() {
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
-  const [discount, setDiscount] = useState(0);
+  const [couponDiscountAmount, setCouponDiscountAmount] = useState(0);
+  const [couponApplying, setCouponApplying] = useState(false);
+  const [appliedCouponDetails, setAppliedCouponDetails] = useState<{
+    code: string;
+    discountType: 'percentage' | 'fixed';
+    discountValue?: number;
+    maxDiscount?: number;
+  } | null>(null);
+  const [showCouponConfetti, setShowCouponConfetti] = useState(false);
   const { isAuthenticated } = useAuth();
   const { openLoginModal } = useLoginModal();
   const { 
@@ -117,12 +126,9 @@ export default function CartPage() {
     }
   };
 
-  const applyCoupon = () => {
-    if (couponCode.toUpperCase() === 'FEFA10') {
-      setDiscount(0.1); // 10% discount
-      setCouponApplied(true);
-    } else {
-      // Show error animation
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      // Show error animation for empty code as well
       const couponInput = document.getElementById('coupon-input');
       if (couponInput) {
         couponInput.classList.add('error-shake');
@@ -130,6 +136,53 @@ export default function CartPage() {
           couponInput.classList.remove('error-shake');
         }, 500);
       }
+      return;
+    }
+
+    try {
+      setCouponApplying(true);
+      // Call backend coupon apply endpoint
+      const response = await checkoutService.applyCoupon(couponCode.trim(), subtotal);
+
+      // Backend returns { success, data: { discount, ... } }
+      if (!response || response.success === false) {
+        throw new Error(response?.message || 'Invalid coupon code');
+      }
+
+      const discountFromCoupon = response.data?.discount || 0;
+      if (discountFromCoupon <= 0) {
+        throw new Error('Invalid coupon discount');
+      }
+
+      setCouponDiscountAmount(discountFromCoupon);
+      setCouponApplied(true);
+      setAppliedCouponDetails({
+        code: response.data?.code || couponCode.trim().toUpperCase(),
+        discountType: response.data?.discountType || 'fixed',
+        discountValue: response.data?.discountValue,
+        maxDiscount: response.data?.maxDiscount,
+      });
+      setShowCouponConfetti(true);
+      setTimeout(() => setShowCouponConfetti(false), 900);
+      // Normalize displayed code to actual applied code from backend
+      if (response.data?.code) {
+        setCouponCode(response.data.code);
+      }
+    } catch (error: any) {
+      console.error('Failed to apply coupon:', error);
+      setCouponDiscountAmount(0);
+      setCouponApplied(false);
+      setAppliedCouponDetails(null);
+
+      const couponInput = document.getElementById('coupon-input');
+      if (couponInput) {
+        couponInput.classList.add('error-shake');
+        setTimeout(() => {
+          couponInput.classList.remove('error-shake');
+        }, 500);
+      }
+    } finally {
+      setCouponApplying(false);
     }
   };
 
@@ -147,11 +200,12 @@ export default function CartPage() {
   };
   
   const thresholdDiscount = getThresholdDiscount();
-  // Use the higher of coupon discount or threshold discount
-  const effectiveDiscount = Math.max(discount, thresholdDiscount.rate);
-  const discountAmount = subtotal * effectiveDiscount;
+  const thresholdDiscountAmount = subtotal * thresholdDiscount.rate;
+  // Use the higher of coupon discount (absolute) or threshold discount
+  const discountAmount = Math.max(couponDiscountAmount, thresholdDiscountAmount);
   const finalTotal = subtotal - discountAmount;
-  const shipping = finalTotal > 0 ? (finalTotal >= 1000 ? 0 : 99) : 0;
+  // Shipping should be based on original subtotal, not discounted total
+  const shipping = finalTotal > 0 ? (subtotal >= 1000 ? 0 : 99) : 0;
   const grandTotal = finalTotal + shipping;
 
   // Calculate threshold messaging for Order Summary
@@ -430,12 +484,15 @@ export default function CartPage() {
                       <span className="font-medium">₹{subtotal.toFixed(2)}</span>
                     </div>
                     
-                    {effectiveDiscount > 0 && (
+                    {discountAmount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>
                           Discount 
-                          {thresholdDiscount.rate > 0 && thresholdDiscount.rate >= discount && (
+                          {thresholdDiscount.rate > 0 && thresholdDiscountAmount >= couponDiscountAmount && (
                             <span className="text-xs ml-1">({thresholdDiscount.label} threshold)</span>
+                          )} 
+                          {couponDiscountAmount > thresholdDiscountAmount && couponApplied && (
+                            <span className="text-xs ml-1">(coupon)</span>
                           )}
                         </span>
                         <span>-₹{discountAmount.toFixed(2)}</span>
@@ -522,23 +579,46 @@ export default function CartPage() {
                         <button
                           onClick={applyCoupon}
                           className="bg-primary text-white px-4 py-2 rounded-r-md hover:bg-accent transition-colors"
+                          disabled={couponApplying}
                         >
-                          Apply
+                          {couponApplying ? 'Applying...' : 'Apply'}
                         </button>
                       </div>
                       <p className="text-xs text-gray-500 mt-1" hidden={true}>Try code: FEFA10 for 10% off</p>
                     </div>
                   ) : (
-                    <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-3 flex justify-between items-center">
+                    <div className="mb-6 bg-green-50 border border-green-200 rounded-md p-3 flex justify-between items-center relative coupon-success">
+                      {showCouponConfetti && (
+                        <div className="coupon-confetti">
+                          <span className="coupon-confetti-piece" />
+                          <span className="coupon-confetti-piece" />
+                          <span className="coupon-confetti-piece" />
+                          <span className="coupon-confetti-piece" />
+                          <span className="coupon-confetti-piece" />
+                          <span className="coupon-confetti-piece" />
+                        </div>
+                      )}
                       <div>
                         <p className="text-green-700 font-medium">Coupon Applied!</p>
-                        <p className="text-green-600 text-sm">10% discount</p>
+                        <p className="text-green-600 text-sm">
+                          {appliedCouponDetails?.discountType === 'percentage' && appliedCouponDetails.discountValue
+                            ? `${appliedCouponDetails.discountValue}% off`
+                            : `₹${couponDiscountAmount.toFixed(2)} off`}
+                          {appliedCouponDetails?.maxDiscount
+                            ? ` (max ₹${appliedCouponDetails.maxDiscount})`
+                            : ''}
+                        </p>
+                        <p className="text-green-600 text-xs">
+                          Code: {couponCode.toUpperCase()} • Saving ₹{couponDiscountAmount.toFixed(2)}
+                        </p>
                       </div>
                       <button
                         onClick={() => {
                           setCouponApplied(false);
-                          setDiscount(0);
+                          setCouponDiscountAmount(0);
                           setCouponCode('');
+                          setAppliedCouponDetails(null);
+                          setShowCouponConfetti(false);
                         }}
                         className="text-gray-400 hover:text-gray-600"
                       >

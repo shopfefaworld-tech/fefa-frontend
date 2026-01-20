@@ -46,12 +46,12 @@ export default function WishlistPage() {
     }
   };
 
-  const handleMoveToCart = async (productId: string, variantId?: string, productInfo?: { name?: string; image?: string; slug?: string; price: number }) => {
+  const handleMoveToCart = async (productId: string, variantId?: string, productInfo?: { name?: string; image?: string; slug?: string; price: number; maxQty?: number }) => {
     try {
       setMovingToCartId(productId);
       
-      // If not authenticated, add to local cart first
-      if (!isAuthenticated && productInfo) {
+      // Add to cart first (handles both authenticated and unauthenticated with maxQty check)
+      if (productInfo) {
         await addToCart(productId, 1, variantId, productInfo);
       }
       
@@ -78,9 +78,9 @@ export default function WishlistPage() {
     }
   };
 
-  const handleAddToCart = async (productId: string) => {
+  const handleAddToCart = async (productId: string, productInfo?: { name?: string; image?: string; slug?: string; price: number; maxQty?: number }) => {
     try {
-      await addToCart(productId, 1);
+      await addToCart(productId, 1, undefined, productInfo);
       
       // Show success animation
       const item = document.getElementById(`wishlist-item-${productId}`);
@@ -283,7 +283,8 @@ export default function WishlistPage() {
                               name: product.name,
                               image: product.images?.[0]?.url || '',
                               slug: product.slug,
-                              price: wishlistItem.variant?.price || product.price
+                              price: wishlistItem.variant?.price || product.price,
+                              maxQty: product.inventory?.quantity
                             };
                             handleMoveToCart(product._id, wishlistItem.variant?._id, productInfo);
                           }}

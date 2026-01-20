@@ -1639,6 +1639,149 @@ class AdminService {
     }
   }
 
+  // ==================== COUPONS (ADMIN) ====================
+
+  // Get all coupons (admin view)
+  async getAllCoupons(params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (params.page) queryParams.append('page', params.page);
+      if (params.limit) queryParams.append('limit', params.limit);
+      if (params.search) queryParams.append('search', params.search);
+      if (params.status) queryParams.append('isActive', params.status === 'active');
+
+      const response = await fetch(`${this.baseURL}/coupons?${queryParams}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch coupons');
+      }
+
+      return {
+        success: true,
+        data: data.data || []
+      };
+    } catch (error) {
+      console.error('Get all coupons error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch coupons'
+      };
+    }
+  }
+
+  // Create coupon
+  async createCoupon(couponData) {
+    try {
+      const response = await fetch(`${this.baseURL}/coupons`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(couponData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          return {
+            success: false,
+            requiresAuth: true,
+            error: data.message || 'Authentication required'
+          };
+        }
+
+        throw new Error(data.message || data.error || 'Failed to create coupon');
+      }
+
+      return {
+        success: true,
+        data: data.data
+      };
+    } catch (error) {
+      console.error('Create coupon error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to create coupon'
+      };
+    }
+  }
+
+  // Update coupon
+  async updateCoupon(id, couponData) {
+    try {
+      const response = await fetch(`${this.baseURL}/coupons/${id}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(couponData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          return {
+            success: false,
+            requiresAuth: true,
+            error: data.message || 'Authentication required'
+          };
+        }
+
+        throw new Error(data.message || data.error || 'Failed to update coupon');
+      }
+
+      return {
+        success: true,
+        data: data.data
+      };
+    } catch (error) {
+      console.error('Update coupon error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to update coupon'
+      };
+    }
+  }
+
+  // Delete coupon
+  async deleteCoupon(id) {
+    try {
+      const response = await fetch(`${this.baseURL}/coupons/${id}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          return {
+            success: false,
+            requiresAuth: true,
+            error: data.message || 'Authentication required'
+          };
+        }
+
+        throw new Error(data.message || data.error || 'Failed to delete coupon');
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Coupon deleted successfully'
+      };
+    } catch (error) {
+      console.error('Delete coupon error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to delete coupon'
+      };
+    }
+  }
+
   // ==================== HELPER METHODS ====================
 
   // Format product for display
