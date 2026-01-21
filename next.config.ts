@@ -17,8 +17,6 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: false,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  // Enable SWC minification for better performance
-  swcMinify: true,
   // Add headers for better caching
   async headers() {
     return [

@@ -284,7 +284,7 @@ export default function WishlistPage() {
                               image: product.images?.[0]?.url || '',
                               slug: product.slug,
                               price: wishlistItem.variant?.price || product.price,
-                              maxQty: product.inventory?.quantity
+                              maxQty: (product as any).inventory?.quantity
                             };
                             handleMoveToCart(product._id, wishlistItem.variant?._id, productInfo);
                           }}
