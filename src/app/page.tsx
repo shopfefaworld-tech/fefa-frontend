@@ -71,11 +71,13 @@ export default function Home() {
   const [canScrollCategoriesLeft, setCanScrollCategoriesLeft] = useState(false);
   const [canScrollCategoriesRight, setCanScrollCategoriesRight] = useState(true);
   const [collections, setCollections] = useState<any[]>([]);
+  const [loadingCollections, setLoadingCollections] = useState(true);
   const [collectionCounts, setCollectionCounts] = useState<Record<string, number>>({});
   const [collectionsSliderRef, setCollectionsSliderRef] = useState<HTMLDivElement | null>(null);
   const [canScrollCollectionsLeft, setCanScrollCollectionsLeft] = useState(false);
   const [canScrollCollectionsRight, setCanScrollCollectionsRight] = useState(true);
   const [occasions, setOccasions] = useState<any[]>([]);
+  const [loadingOccasions, setLoadingOccasions] = useState(true);
   const [occasionCounts, setOccasionCounts] = useState<Record<string, number>>({});
   const [occasionsSliderRef, setOccasionsSliderRef] = useState<HTMLDivElement | null>(null);
   const [canScrollOccasionsLeft, setCanScrollOccasionsLeft] = useState(false);
@@ -252,18 +254,21 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Load collections data (with delay to avoid rate limiting)
+  // Load collections and occasions data in parallel for better performance
   useEffect(() => {
-    const loadCollections = async () => {
-      // Delay to stagger API requests
-      await new Promise(resolve => setTimeout(resolve, 3000));
+    const loadCollectionsAndOccasions = async () => {
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       
+      // Load both in parallel for faster page load
+      const [collectionsResponse, occasionsResponse] = await Promise.all([
+        fetch(`${baseURL}/collections?sortBy=sortOrder&sortOrder=asc`).catch(() => null),
+        fetch(`${baseURL}/occasions?sortBy=sortOrder&sortOrder=asc`).catch(() => null)
+      ]);
+
+      // Process collections
       try {
-        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        const response = await fetch(`${baseURL}/collections?sortBy=sortOrder&sortOrder=asc`);
-        
-        if (response.ok) {
-          const data = await response.json();
+        if (collectionsResponse?.ok) {
+          const data = await collectionsResponse.json();
           if (data.success) {
             setCollections(data.data || []);
           } else {
@@ -273,33 +278,15 @@ export default function Home() {
           setCollections([]);
         }
       } catch (error) {
-        // Silently fail
         setCollections([]);
+      } finally {
+        setLoadingCollections(false);
       }
-    };
 
-    loadCollections();
-  }, []);
-
-  // Load collection product counts (if needed in future)
-  useEffect(() => {
-    // Collections don't have direct product counts yet
-    // This can be implemented later if products are linked to collections
-    setCollectionCounts({});
-  }, [collections]);
-
-  // Load occasions data (with delay to avoid rate limiting)
-  useEffect(() => {
-    const loadOccasions = async () => {
-      // Delay to stagger API requests
-      await new Promise(resolve => setTimeout(resolve, 4000));
-      
+      // Process occasions
       try {
-        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        const response = await fetch(`${baseURL}/occasions?sortBy=sortOrder&sortOrder=asc`);
-        
-        if (response.ok) {
-          const data = await response.json();
+        if (occasionsResponse?.ok) {
+          const data = await occasionsResponse.json();
           if (data.success && data.data) {
             const activeOccasions = data.data.filter((occ: any) => occ.isActive !== false);
             setOccasions(activeOccasions);
@@ -310,13 +297,21 @@ export default function Home() {
           setOccasions([]);
         }
       } catch (error) {
-        // Silently fail
         setOccasions([]);
+      } finally {
+        setLoadingOccasions(false);
       }
     };
 
-    loadOccasions();
+    loadCollectionsAndOccasions();
   }, []);
+
+  // Load collection product counts (if needed in future)
+  useEffect(() => {
+    // Collections don't have direct product counts yet
+    // This can be implemented later if products are linked to collections
+    setCollectionCounts({});
+  }, [collections]);
 
   // Load occasion product counts (simplified - skip to avoid rate limiting)
   useEffect(() => {
@@ -471,6 +466,7 @@ export default function Home() {
 
   // Handle authentication redirect for admin users only
   useEffect(() => {
+    // Only redirect if auth check is complete, user is authenticated, and is admin
     if (!authLoading && isAuthenticated && isAdmin) {
       // Redirect admin users to admin dashboard
       router.push('/admin');
@@ -478,20 +474,10 @@ export default function Home() {
     }
   }, [isAuthenticated, authLoading, isAdmin, router]);
 
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-soft-pink-100 via-white to-soft-pink-200">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-primary font-medium text-lg">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render the home page if user is admin (they will be redirected by useEffect)
-  if (isAdmin) {
+  // Don't block page render for auth check - home page is public
+  // Just silently redirect admin users via useEffect above
+  // Show nothing while admin redirect is happening
+  if (!authLoading && isAdmin) {
     return null;
   }
 
@@ -773,6 +759,19 @@ export default function Home() {
       {/* Jewelry Categories Section */}
       <section id="categories-section" className="pb-4 pt-6 bg-white transition-colors duration-300">
         <div className="container mx-auto px-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-4 xs:mb-5 sm:mb-6"
+          >
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2 xs:mb-3">CATEGORIES</h2>
+            <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
+              Discover our carefully curated collections of premium handcrafted jewelry
+            </p>
+          </motion.div>
+          
           {fieldErrors.categories ? (
             <ErrorDisplay 
               field="Categories" 
@@ -1222,82 +1221,88 @@ export default function Home() {
             </button>
 
             {/* Occasions Slider Container */}
-            <div 
-              ref={setOccasionsSliderRef}
-              id="occasions-slider"
-              className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
-              style={{ 
-                scrollbarWidth: 'none', 
-                msOverflowStyle: 'none',
-                scrollBehavior: 'smooth',
-                touchAction: 'auto'
-              }}
-              onMouseDown={handleMouseDown}
-              onMouseLeave={handleMouseLeave}
-              onMouseUp={handleMouseUp}
-              onMouseMove={handleMouseMove}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              {occasions.length > 0 ? (
-                occasions.map((occasion: any, index: number) => (
-                  <motion.div
-                    key={occasion.value || occasion._id || index}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    viewport={{ once: true }}
-                    className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96 flex flex-col"
-                  >
-                    <Link href={`/collections?occasion=${occasion.value}`} className="block flex flex-col h-full">
-                      <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
-                        {/* Background Image or Gradient */}
-                        {occasion.image && !failedImages.has(occasion.image) ? (
-                          <Image
-                            src={occasion.image}
-                            alt={occasion.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
-                            onError={() => {
-                              // Track failed image to avoid retrying
-                              setFailedImages(prev => new Set(prev).add(occasion.image));
-                            }}
-                            unoptimized={occasion.image.startsWith('/images/')}
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50">
-                            {/* Large initial letter - positioned at top */}
-                            <div className="absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-0">
-                              <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-cormorant text-primary opacity-20 group-hover/card:opacity-30 transition-opacity">
-                                {occasion.name.charAt(0)}
-                              </span>
+            {loadingOccasions ? (
+              <div className="flex items-center justify-center w-full py-12">
+                <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <div 
+                ref={setOccasionsSliderRef}
+                id="occasions-slider"
+                className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
+                style={{ 
+                  scrollbarWidth: 'none', 
+                  msOverflowStyle: 'none',
+                  scrollBehavior: 'smooth',
+                  touchAction: 'auto'
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {occasions.length > 0 ? (
+                  occasions.map((occasion: any, index: number) => (
+                    <motion.div
+                      key={occasion.value || occasion._id || index}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96 flex flex-col"
+                    >
+                      <Link href={`/collections?occasion=${occasion.value}`} className="block flex flex-col h-full">
+                        <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
+                          {/* Background Image or Gradient */}
+                          {occasion.image && !failedImages.has(occasion.image) ? (
+                            <Image
+                              src={occasion.image}
+                              alt={occasion.name}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
+                              onError={() => {
+                                // Track failed image to avoid retrying
+                                setFailedImages(prev => new Set(prev).add(occasion.image));
+                              }}
+                              unoptimized={occasion.image.startsWith('/images/')}
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50">
+                              {/* Large initial letter - positioned at top */}
+                              <div className="absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-0">
+                                <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-cormorant text-primary opacity-20 group-hover/card:opacity-30 transition-opacity">
+                                  {occasion.name.charAt(0)}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                      {/* Content below image */}
-                      <div className="p-2 xs:p-3 sm:p-3 md:p-4 lg:p-4 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
-                        <motion.h3 
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.6, delay: 0.3 }}
-                          viewport={{ once: true }}
-                          className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900"
-                        >
-                          {occasion.name}
-                        </motion.h3>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="flex items-center justify-center w-full py-12">
-                  <p className="text-gray-500">No occasions available</p>
-                </div>
-              )}
-            </div>
+                          )}
+                        </div>
+                        {/* Content below image */}
+                        <div className="p-2 xs:p-3 sm:p-3 md:p-4 lg:p-4 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
+                          <motion.h3 
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                            viewport={{ once: true }}
+                            className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900"
+                          >
+                            {occasion.name}
+                          </motion.h3>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center w-full py-12">
+                    <p className="text-gray-500">No occasions available</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -1475,7 +1480,7 @@ export default function Home() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email address"
-              className="px-3 xs:px-4 py-2 xs:py-3 w-full sm:flex-1 rounded sm:rounded-l sm:rounded-r-none text-dark-gray focus:outline-none focus:ring-2 focus:ring-accent text-sm xs:text-base"
+              className="px-3 xs:px-4 py-2 xs:py-3 w-full sm:flex-1 rounded sm:rounded-l sm:rounded-r-none bg-white text-dark-gray placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent text-sm xs:text-base"
               required
               disabled={isSubscribing}
               suppressHydrationWarning

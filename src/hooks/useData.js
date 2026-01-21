@@ -39,6 +39,7 @@ export const useData = () => {
       }
     }
     
+    // Set loading to true but don't block rendering
     setLoading(true);
     setError(null);
     
@@ -70,6 +71,7 @@ export const useData = () => {
     } catch (err) {
       setError(err.message);
     } finally {
+      // Set loading to false after data loads
       setLoading(false);
     }
   }, []);
