@@ -44,7 +44,7 @@ class CheckoutService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const message = errorData.error || errorData.message || 'Failed to create Razorpay order';
+        const message = (errorData && (errorData.error || errorData.message)) || `Failed to create Razorpay order (${response.status})`;
         throw new Error(message);
       }
 
@@ -318,12 +318,13 @@ class CheckoutService {
     }
   }
 
-  // Get auth token from localStorage
+  // Get auth token from localStorage or cookie (AuthContext sets both; cookie-only sessions must still send token)
   getAuthToken() {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('fefa_access_token') || localStorage.getItem('authToken');
-    }
-    return null;
+    if (typeof window === 'undefined') return null;
+    const fromStorage = localStorage.getItem('fefa_access_token') || localStorage.getItem('authToken');
+    if (fromStorage) return fromStorage;
+    const match = document.cookie.match(/fefa_access_token=([^;]+)/);
+    return match ? decodeURIComponent(match[1].trim()) : null;
   }
 
   // Format order data for API
