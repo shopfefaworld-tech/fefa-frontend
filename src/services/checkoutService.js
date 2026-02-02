@@ -43,8 +43,9 @@ class CheckoutService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create Razorpay order');
+        const errorData = await response.json().catch(() => ({}));
+        const message = errorData.error || errorData.message || 'Failed to create Razorpay order';
+        throw new Error(message);
       }
 
       return await response.json();
