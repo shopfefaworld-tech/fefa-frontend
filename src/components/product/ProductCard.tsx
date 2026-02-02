@@ -31,6 +31,9 @@ import product7Hover from '@/assets/images/product-7-hover.png';
 import product8 from '@/assets/images/product-8.png';
 import product8Hover from '@/assets/images/product-8-hover.png';
 
+// Minimal gray blur placeholder for remote images (avoids blank area while loading)
+const BLUR_DATA_URL = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2U1ZTdlYiIvPjwvc3ZnPg==';
+
 // Image mapping for fallback
 const imageMap: { [key: string]: any } = {
   '/images/product-1.png': product1,
@@ -301,6 +304,8 @@ export default function ProductCard({
                 }`}
                 sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 onError={handleImageError}
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
               />
             </>
           ) : (

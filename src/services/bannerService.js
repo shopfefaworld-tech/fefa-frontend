@@ -42,9 +42,22 @@ class BannerService {
     }
   }
 
-  // Get active banners only
+  // Get active banners only (with client cache to avoid blocking repeat visits)
   async getActiveBanners() {
+    const cacheKey = 'fefa_banners_active';
+    const cacheTtlMs = 3 * 60 * 1000; // 3 minutes
+
     try {
+      if (typeof sessionStorage !== 'undefined') {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < cacheTtlMs) {
+            return { success: true, data: data || [] };
+          }
+        }
+      }
+
       // Check if baseURL is set
       if (!this.baseURL) {
         console.warn('[BannerService] API URL not configured');
@@ -59,7 +72,7 @@ class BannerService {
       
       // Add timeout to fetch request
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout (reduced from 10s)
 
       try {
         const response = await fetch(url, {
@@ -89,14 +102,32 @@ class BannerService {
         }
 
         const data = await response.json();
+        const banners = data.data || [];
+
+        if (typeof sessionStorage !== 'undefined' && Array.isArray(banners)) {
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ data: banners, timestamp: Date.now() }));
+          } catch (e) {}
+        }
 
         return {
           success: true,
-          data: data.data || []
+          data: banners
         };
       } catch (fetchError) {
         clearTimeout(timeoutId);
         
+        // On error, return cached data if any (even stale) so UI doesn't break
+        if (typeof sessionStorage !== 'undefined') {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            try {
+              const { data } = JSON.parse(cached);
+              return { success: true, data: data || [] };
+            } catch (e) {}
+          }
+        }
+
         // Handle different types of errors
         if (fetchError.name === 'AbortError') {
           return {

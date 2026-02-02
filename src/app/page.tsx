@@ -709,52 +709,38 @@ export default function Home() {
       <DataLoader>
       <MainLayout>
       <div className="overflow-x-hidden">
-      {/* Brand Banner Section - FEFA Logo (Always First) */}
-      {loadingBanners ? (
-        <section 
-          id="brand-banner"
-          className="relative py-0 overflow-hidden flex items-center justify-center h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh] mt-4 sm:mt-6 md:mt-8"
-          style={{ 
-            background: 'linear-gradient(135deg, #470031 0%, #470031 50%, #470031 100%)'
-          }}
-        >
-          <div className="container mx-auto px-4 relative z-10 flex items-center justify-center h-full">
-            <div className="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        </section>
-      ) : (
-        <section 
-          id="brand-banner"
-          className="hero-banner relative py-0 overflow-hidden mt-4 sm:mt-6 md:mt-8 w-full"
-        >
-          {/* Desktop Banner (Laptop and up) */}
-          <div className="hidden lg:block w-full">
-            <Image
-              src="/Fefa-shop-banner.png"
-              alt="FEFA Shop Banner"
-              width={1920}
-              height={600}
-              className="w-full"
-              priority
-              sizes="100vw"
-              unoptimized
-            />
-          </div>
-          {/* Mobile Banner (Below Laptop) */}
-          <div className="block lg:hidden w-full">
-            <Image
-              src="/fefa-shop-banner-biglogo.png"
-              alt="FEFA Shop Banner"
-              width={1920}
-              height={600}
-              className="w-full"
-              priority
-              sizes="100vw"
-              unoptimized
-            />
-          </div>
-        </section>
-      )}
+      {/* Brand Banner Section - Always show static banner immediately (no blocking on API) */}
+      <section 
+        id="brand-banner"
+        className="hero-banner relative py-0 overflow-hidden mt-4 sm:mt-6 md:mt-8 w-full"
+      >
+        {/* Desktop Banner (Laptop and up) */}
+        <div className="hidden lg:block w-full">
+          <Image
+            src="/Fefa-shop-banner.png"
+            alt="FEFA Shop Banner"
+            width={1920}
+            height={600}
+            className="w-full"
+            priority
+            sizes="100vw"
+            unoptimized
+          />
+        </div>
+        {/* Mobile Banner (Below Laptop) */}
+        <div className="block lg:hidden w-full">
+          <Image
+            src="/fefa-shop-banner-biglogo.png"
+            alt="FEFA Shop Banner"
+            width={1920}
+            height={600}
+            className="w-full"
+            priority
+            sizes="100vw"
+            unoptimized
+          />
+        </div>
+      </section>
 
       {/* Jewelry Categories Section */}
       <section id="categories-section" className="pb-4 pt-6 bg-white transition-colors duration-300">
@@ -1064,10 +1050,23 @@ export default function Home() {
             </p>
           </motion.div>
           
-          {/* Featured Products Slider */}
+          {/* Featured Products Slider - skeleton while loading, no blocking spinner */}
           {loadingFeaturedProducts ? (
-            <div className="flex justify-center items-center py-6">
-              <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+            <div 
+              className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-hidden scrollbar-hide pb-2 px-2 sm:px-3 md:px-4"
+              aria-hidden
+            >
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex-shrink-0 w-[200px] xs:w-[220px] sm:w-[240px] md:w-[260px] lg:w-[280px]">
+                  <div className="rounded-2xl overflow-hidden bg-gray-100 animate-pulse">
+                    <div className="aspect-square w-full bg-gray-200" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4" />
+                      <div className="h-4 bg-gray-200 rounded w-1/2" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : featuredProducts.length > 0 ? (
             <div className="relative group">
@@ -1220,10 +1219,22 @@ export default function Home() {
               </svg>
             </button>
 
-            {/* Occasions Slider Container */}
+            {/* Occasions Slider Container - skeleton while loading */}
             {loadingOccasions ? (
-              <div className="flex items-center justify-center w-full py-12">
-                <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+              <div 
+                className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-hidden scrollbar-hide pb-2 px-2 sm:px-3 md:px-4"
+                aria-hidden
+              >
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96">
+                    <div className="rounded-[1.25rem] xs:rounded-[1.5rem] overflow-hidden bg-gray-100 animate-pulse">
+                      <div className="aspect-[1/1.2] w-full bg-gray-200" />
+                      <div className="p-3 sm:p-4">
+                        <div className="h-5 bg-gray-200 rounded w-2/3 mx-auto" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div 
@@ -1323,10 +1334,23 @@ export default function Home() {
             </p>
           </motion.div>
           
-          {/* Trending Products Slider */}
+          {/* Trending Products Slider - skeleton while loading */}
           {loadingTrendingProducts ? (
-            <div className="flex justify-center items-center py-6">
-              <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+            <div 
+              className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-hidden scrollbar-hide pb-2 px-2 sm:px-3 md:px-4"
+              aria-hidden
+            >
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex-shrink-0 w-[200px] xs:w-[220px] sm:w-[240px] md:w-[260px] lg:w-[280px]">
+                  <div className="rounded-2xl overflow-hidden bg-gray-100 animate-pulse">
+                    <div className="aspect-square w-full bg-gray-200" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4" />
+                      <div className="h-4 bg-gray-200 rounded w-1/2" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : trendingProducts.length > 0 ? (
             <div className="relative group">
