@@ -10,32 +10,79 @@ import MainLayout from '@/components/layout/MainLayout';
 import checkoutService from '@/services/checkoutService';
 
 // Helper function to get valid image URL
-const getValidImageUrl = (images: any[] | undefined, fallback: string = '/images/logo.jpg'): string => {
-  if (!images || images.length === 0) {
+const getValidImageUrl = (image: string | undefined, fallback: string = '/images/logo.jpg'): string => {
+  if (!image || image.trim() === '' || image === 'undefined' || image === 'null') {
     return fallback;
   }
-  
-  const firstImage = images[0];
-  
-  if (typeof firstImage === 'string') {
-    if (firstImage.trim() === '' || firstImage === 'undefined' || firstImage === 'null') {
-      return fallback;
-    }
-    return firstImage;
-  } else if (firstImage && typeof firstImage === 'object' && firstImage.url) {
-    if (firstImage.url.trim() === '' || firstImage.url === 'undefined' || firstImage.url === 'null') {
-      return fallback;
-    }
-    return firstImage.url;
-  }
-  
-  return fallback;
+  return image;
 };
+
+// Order item interface matching API response
+interface OrderItem {
+  product: string | { _id: string; name: string; slug: string; images: any[] };
+  variant?: string;
+  name: string;
+  sku: string;
+  quantity: number;
+  price: number;
+  total: number;
+  image?: string;
+}
+
+// Order interface matching API response
+interface Order {
+  _id: string;
+  orderNumber: string;
+  user: string | { _id: string; firstName: string; lastName: string; email: string; phone?: string };
+  items: OrderItem[];
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    company?: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    phone: string;
+  };
+  billingAddress?: any;
+  payment: {
+    method: 'cod' | 'online' | 'wallet' | 'card';
+    status: 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
+    transactionId?: string;
+    gateway?: string;
+    paidAt?: string;
+  };
+  pricing: {
+    subtotal: number;
+    tax: number;
+    shipping: number;
+    discount: number;
+    total: number;
+    currency: string;
+  };
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'refunded';
+  tracking?: {
+    carrier?: string;
+    trackingNumber?: string;
+    trackingUrl?: string;
+    estimatedDelivery?: string;
+  };
+  timeline: Array<{
+    status: string;
+    timestamp: string;
+    note?: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function OrderConfirmationPage() {
   const params = useParams();
   const router = useRouter();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,8 +90,13 @@ export default function OrderConfirmationPage() {
     const fetchOrder = async () => {
       try {
         setLoading(true);
-        const orderData = await checkoutService.getOrder(params.orderId);
-        setOrder(orderData);
+        const response = await checkoutService.getOrder(params.orderId);
+        // API returns { success: true, data: {...} }
+        if (response.success && response.data) {
+          setOrder(response.data);
+        } else {
+          setError(response.message || 'Failed to fetch order');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -57,20 +109,35 @@ export default function OrderConfirmationPage() {
     }
   }, [params.orderId]);
 
-  const formatPaymentMethod = (method: any) => {
-    if (!method) return 'Not specified';
+  const formatPaymentMethod = (payment: Order['payment'] | undefined) => {
+    if (!payment) return 'Not specified';
     
-    switch (method.type) {
+    switch (payment.method) {
       case 'card':
-        return `**** **** **** ${method.details?.cardNumber?.slice(-4) || '****'}`;
-      case 'upi':
-        return method.details?.upiId || 'UPI Payment';
-      case 'netbanking':
-        return 'Net Banking';
+        return 'Credit/Debit Card';
+      case 'online':
+        return 'Online Payment (UPI/Net Banking)';
       case 'wallet':
         return 'Digital Wallet';
+      case 'cod':
+        return 'Cash on Delivery';
       default:
-        return 'Unknown';
+        return payment.method || 'Online Payment';
+    }
+  };
+
+  const getPaymentStatusText = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'Payment Successful';
+      case 'pending':
+        return 'Payment Pending';
+      case 'failed':
+        return 'Payment Failed';
+      case 'refunded':
+        return 'Refunded';
+      default:
+        return status;
     }
   };
 
@@ -164,7 +231,7 @@ export default function OrderConfirmationPage() {
               Thank you for your purchase. Your order has been successfully placed.
             </p>
             <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 max-w-md mx-auto">
-              <p className="text-sm text-accent font-medium">Order ID: {order.id}</p>
+              <p className="text-sm text-accent font-medium">Order Number: {order.orderNumber}</p>
             </div>
           </motion.div>
 
@@ -184,9 +251,9 @@ export default function OrderConfirmationPage() {
                 </h3>
                 
                 <div className="space-y-4">
-                  {order.items.map((item: any, index: number) => (
+                  {order.items.map((item: OrderItem, index: number) => (
                     <motion.div
-                      key={item.productId}
+                      key={`${item.product}-${index}`}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -194,23 +261,23 @@ export default function OrderConfirmationPage() {
                     >
                       <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                         <Image
-                          src={getValidImageUrl([{ url: item.image }])}
-                          alt={item.productName}
+                          src={getValidImageUrl(item.image)}
+                          alt={item.name}
                           fill
                           className="object-cover"
                           sizes="64px"
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-primary">{item.productName}</p>
-                        {item.variantName && (
-                          <p className="text-sm text-gray-500">Variant: {item.variantName}</p>
+                        <p className="font-medium text-primary">{item.name}</p>
+                        {item.sku && (
+                          <p className="text-sm text-gray-500">SKU: {item.sku}</p>
                         )}
                         <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-accent">₹{item.total.toFixed(2)}</p>
-                        <p className="text-sm text-gray-500">₹{item.price.toFixed(2)} each</p>
+                        <p className="font-medium text-accent">₹{item.total.toLocaleString()}</p>
+                        <p className="text-sm text-gray-500">₹{item.price.toLocaleString()} each</p>
                       </div>
                     </motion.div>
                   ))}
@@ -230,10 +297,13 @@ export default function OrderConfirmationPage() {
                 </h3>
                 <div className="text-sm text-gray-600">
                   <p className="font-medium">{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-                  <p>{order.shippingAddress.email}</p>
                   <p>{order.shippingAddress.phone}</p>
                   <p className="mt-2">
-                    {order.shippingAddress.address}, {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
+                    {order.shippingAddress.addressLine1}
+                    {order.shippingAddress.addressLine2 && `, ${order.shippingAddress.addressLine2}`}
+                  </p>
+                  <p>
+                    {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}
                   </p>
                   <p>{order.shippingAddress.country}</p>
                 </div>
@@ -251,15 +321,53 @@ export default function OrderConfirmationPage() {
                   Payment Information
                 </h3>
                 <div className="text-sm text-gray-600">
-                  <p className="font-medium">{formatPaymentMethod(order.paymentMethod)}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {order.paymentMethod?.type === 'card' && 'Credit/Debit Card'}
-                    {order.paymentMethod?.type === 'upi' && 'UPI Payment'}
-                    {order.paymentMethod?.type === 'netbanking' && 'Net Banking'}
-                    {order.paymentMethod?.type === 'wallet' && 'Digital Wallet'}
+                  <p className="font-medium">{formatPaymentMethod(order.payment)}</p>
+                  <p className={`text-xs mt-1 ${
+                    order.payment.status === 'paid' ? 'text-green-600' :
+                    order.payment.status === 'pending' ? 'text-yellow-600' :
+                    order.payment.status === 'failed' ? 'text-red-600' :
+                    'text-gray-500'
+                  }`}>
+                    {getPaymentStatusText(order.payment.status)}
                   </p>
+                  {order.payment.transactionId && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Transaction ID: {order.payment.transactionId}
+                    </p>
+                  )}
                 </div>
               </motion.div>
+
+              {/* Tracking Information (if available) */}
+              {order.tracking?.trackingNumber && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.25 }}
+                  className="bg-gray-50 rounded-lg p-6"
+                >
+                  <h3 className="text-lg font-medium text-primary mb-4 flex items-center gap-2">
+                    <FiTruck className="w-5 h-5 text-accent" />
+                    Tracking Information
+                  </h3>
+                  <div className="text-sm text-gray-600">
+                    {order.tracking.carrier && (
+                      <p><span className="font-medium">Carrier:</span> {order.tracking.carrier}</p>
+                    )}
+                    <p><span className="font-medium">Tracking Number:</span> {order.tracking.trackingNumber}</p>
+                    {order.tracking.trackingUrl && (
+                      <a 
+                        href={order.tracking.trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-accent hover:underline mt-2 inline-block"
+                      >
+                        Track Your Package →
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {/* Order Total & Next Steps */}
@@ -275,27 +383,34 @@ export default function OrderConfirmationPage() {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">₹{order.subtotal.toFixed(2)}</span>
+                    <span className="font-medium">₹{order.pricing.subtotal.toLocaleString()}</span>
                   </div>
                   
-                  {order.discount > 0 && (
+                  {order.pricing.discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Discount</span>
-                      <span>-₹{order.discount.toFixed(2)}</span>
+                      <span>-₹{order.pricing.discount.toLocaleString()}</span>
+                    </div>
+                  )}
+
+                  {order.pricing.tax > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Tax</span>
+                      <span className="font-medium">₹{order.pricing.tax.toLocaleString()}</span>
                     </div>
                   )}
                   
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Shipping</span>
                     <span className="font-medium">
-                      {order.shipping === 0 ? 'Free' : `₹${order.shipping.toFixed(2)}`}
+                      {order.pricing.shipping === 0 ? 'Free' : `₹${order.pricing.shipping.toLocaleString()}`}
                     </span>
                   </div>
                   
                   <div className="border-t pt-3">
                     <div className="flex justify-between font-medium text-lg">
                       <span>Total</span>
-                      <span className="text-accent">₹{order.total.toFixed(2)}</span>
+                      <span className="text-accent">₹{order.pricing.total.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -307,9 +422,11 @@ export default function OrderConfirmationPage() {
                     <div className={`w-3 h-3 rounded-full ${
                       order.status === 'pending' ? 'bg-yellow-400' :
                       order.status === 'confirmed' ? 'bg-blue-400' :
+                      order.status === 'processing' ? 'bg-blue-500' :
                       order.status === 'shipped' ? 'bg-purple-400' :
                       order.status === 'delivered' ? 'bg-green-400' :
-                      'bg-red-400'
+                      order.status === 'cancelled' ? 'bg-red-400' :
+                      'bg-gray-400'
                     }`}></div>
                     <span className="text-sm font-medium capitalize">{order.status}</span>
                   </div>

@@ -14,6 +14,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { loadCollectionsProductsData, loadProductBySlug } from '@/utils/dataLoader';
 import { Product } from '@/types/data';
 import reviewService from '@/services/reviewService';
+import checkoutService from '@/services/checkoutService';
 import '@/styles/components/product/ProductCard.css';
 
 // Type definitions
@@ -477,26 +478,54 @@ export default function ProductDetail() {
     }
 
     setIsCheckingPincode(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      if (product) {
-        const deliveryInfo = product.pincodeDelivery?.[pincode as keyof typeof product.pincodeDelivery];
-        if (deliveryInfo) {
-          setPincodeResult({
-            available: true,
-            deliveryTime: deliveryInfo.deliveryTime,
-            message: `Delivery available in ${deliveryInfo.deliveryTime}`
-          });
-        } else {
-          setPincodeResult({
-            available: false,
-            message: 'Delivery not available for this pincode'
-          });
-        }
+    setPincodeResult(null);
+
+    try {
+      // Use backend shipping serviceability check (Shiprocket-backed when configured)
+      const response = await checkoutService.checkPincodeServiceability(pincode, {
+        weight: 0.5,
+        cod: false,
+      });
+
+      if (!response || response.success === false) {
+        setPincodeResult({
+          available: false,
+          message: response?.message || 'Could not check delivery for this pincode',
+        });
+        return;
       }
+
+      const data = response.data;
+
+      if (!data || data.serviceable === false) {
+        setPincodeResult({
+          available: false,
+          message: data?.message || 'Delivery not available for this pincode',
+        });
+        return;
+      }
+
+      // Choose the first courier as representative for ETA, if available
+      const bestCourier = Array.isArray(data.couriers) && data.couriers.length > 0 ? data.couriers[0] : null;
+      const estimatedDays = bestCourier?.estimatedDays;
+      const deliveryTimeText = estimatedDays ? `${estimatedDays} days` : undefined;
+
+      setPincodeResult({
+        available: true,
+        deliveryTime: deliveryTimeText,
+        message:
+          deliveryTimeText
+            ? `Delivery available in approximately ${deliveryTimeText}`
+            : data.message || 'Delivery available to this pincode',
+      });
+    } catch (error: any) {
+      setPincodeResult({
+        available: false,
+        message: error?.message || 'Failed to check pincode availability',
+      });
+    } finally {
       setIsCheckingPincode(false);
-    }, 1000);
+    }
   };
 
   const getStockStatus = (): StockStatus | null => {

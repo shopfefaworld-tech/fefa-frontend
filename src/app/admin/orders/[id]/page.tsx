@@ -88,6 +88,7 @@ export default function OrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [creatingShipment, setCreatingShipment] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [statusNote, setStatusNote] = useState('');
   const [trackingInfo, setTrackingInfo] = useState({
@@ -131,6 +132,44 @@ export default function OrderDetailsPage() {
       console.error('Error loading order:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateShipment = async () => {
+    if (!order) return;
+
+    try {
+      setCreatingShipment(true);
+      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/shipping/create-shipment/${orderId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('fefa_access_token')}`
+          },
+          body: JSON.stringify({
+            weight: 0.5, // Default weight in kg
+            autoPickup: true
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(`Shipment created successfully!\nAWB: ${data.data.awbCode}\nCourier: ${data.data.courierName}`);
+        // Reload order to get updated tracking info
+        loadOrder();
+      } else {
+        alert(data.message || 'Failed to create shipment');
+      }
+    } catch (err) {
+      alert('Failed to create shipment');
+      console.error('Error creating shipment:', err);
+    } finally {
+      setCreatingShipment(false);
     }
   };
 
@@ -510,6 +549,57 @@ export default function OrderDetailsPage() {
                   {updating ? 'Updating...' : 'Update Order'}
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Shiprocket Shipment */}
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Shiprocket Shipment</h3>
+            </div>
+            <div className="px-4 py-5 sm:p-6">
+              {order.tracking?.trackingNumber ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">AWB Number</span>
+                    <span className="text-sm font-medium text-gray-900">{order.tracking.trackingNumber}</span>
+                  </div>
+                  {order.tracking.carrier && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Carrier</span>
+                      <span className="text-sm font-medium text-gray-900">{order.tracking.carrier}</span>
+                    </div>
+                  )}
+                  {order.tracking.url && (
+                    <a
+                      href={order.tracking.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full text-center mt-4 px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors text-sm"
+                    >
+                      Track Package
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-500">
+                    No shipment created yet. Create a Shiprocket shipment to get AWB and tracking.
+                  </p>
+                  <button
+                    onClick={handleCreateShipment}
+                    disabled={creatingShipment || order.status === 'pending' || order.status === 'cancelled'}
+                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {creatingShipment ? 'Creating Shipment...' : 'Create Shiprocket Shipment'}
+                  </button>
+                  {(order.status === 'pending' || order.payment.status === 'pending') && (
+                    <p className="text-xs text-yellow-600 mt-2">
+                      Payment must be confirmed before creating shipment
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

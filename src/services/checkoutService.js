@@ -241,6 +241,41 @@ class CheckoutService {
     }
   }
 
+  // Check delivery serviceability for a pincode (Shiprocket-backed)
+  async checkPincodeServiceability(pincode, options = {}) {
+    try {
+      const payload = {
+        deliveryPincode: pincode,
+        // Provide sane defaults, frontend can override if needed
+        weight: typeof options.weight === 'number' ? options.weight : 0.5,
+        cod: Boolean(options.cod),
+      };
+
+      const response = await fetch(`${API_BASE_URL}/shipping/check-serviceability`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        let errorData = {};
+        try {
+          errorData = await response.json();
+        } catch {
+          // ignore JSON parse errors
+        }
+        throw new Error(errorData.message || 'Failed to check pincode serviceability');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error checking pincode serviceability:', error);
+      throw error;
+    }
+  }
+
   // Apply coupon code
   async applyCoupon(couponCode, orderTotal) {
     try {
