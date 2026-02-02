@@ -47,6 +47,8 @@ export default function ConfirmationStep() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
+  // Prevent auto-reopening Razorpay after user cancels or payment fails (only auto-open once)
+  const [hasAttemptedPayment, setHasAttemptedPayment] = useState(false);
 
   const shipping = subtotal >= 1000 ? 0 : 99;
   const discount = 0;
@@ -76,12 +78,12 @@ export default function ConfirmationStep() {
     }
   }, []);
 
-  // Trigger payment when order is ready and Razorpay is loaded
+  // Auto-open Razorpay only once when landing on this step; do not reopen after cancel/fail
   useEffect(() => {
-    if (order && razorpayLoaded && !paymentInitiated && !paymentSuccess) {
+    if (order && razorpayLoaded && !paymentSuccess && !hasAttemptedPayment) {
       handleRazorpayPayment();
     }
-  }, [order, razorpayLoaded, paymentInitiated, paymentSuccess]);
+  }, [order, razorpayLoaded, paymentSuccess, hasAttemptedPayment]);
 
   const handlePayment = () => {
     setPaymentInitiated(false);
@@ -97,6 +99,7 @@ export default function ConfirmationStep() {
       return;
     }
 
+    setHasAttemptedPayment(true);
     setPaymentInitiated(true);
     setIsProcessingPayment(true);
 
@@ -119,7 +122,7 @@ export default function ConfirmationStep() {
         throw new Error('Razorpay key not configured');
       }
 
-      // Initialize Razorpay Checkout
+      // Initialize Razorpay Checkout — show only UPI and Cards (hide netbanking, wallet, EMI, UPI QR clutter)
       const options = {
         key: razorpayKey,
         amount: razorpayOrder.amount,
@@ -127,6 +130,13 @@ export default function ConfirmationStep() {
         name: 'FEFA Jewelry',
         description: `Order ${order.id}`,
         order_id: razorpayOrder.id,
+        display: {
+          hide: [
+            { method: 'netbanking' },
+            { method: 'wallet' },
+            { method: 'emi' }
+          ]
+        },
         handler: async function (response: any) {
           try {
             // Verify payment
@@ -230,9 +240,9 @@ export default function ConfirmationStep() {
         <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <FiCreditCard className="w-10 h-10 text-red-500" />
         </div>
-        <h2 className="text-2xl font-medium text-primary mb-2">Payment Failed</h2>
+        <h2 className="text-2xl font-medium text-primary mb-2">Payment cancelled or failed</h2>
         <p className="text-gray-600 mb-8 max-w-md mx-auto">
-          We encountered an issue processing your payment. Please try again or use a different payment method.
+          Your payment was cancelled or could not be completed. Click below to try again or return to cart.
         </p>
         <div className="space-y-4">
           <button

@@ -124,7 +124,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
 
   const nextStep = () => {
     if (canProceedToNext()) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, 3));
     }
   };
 
@@ -145,11 +145,9 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
           shippingAddress.state &&
           shippingAddress.zipCode
         );
-      case 2: // Payment Method
-        return !!paymentMethod;
-      case 3: // Order Review
+      case 2: // Order Review (payment via Razorpay after Place Order)
         return true;
-      case 4: // Order Confirmation
+      case 3: // Order Confirmation
         return false;
       default:
         return false;
@@ -157,9 +155,12 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
   };
 
   const createOrder = async (): Promise<void> => {
-    if (!paymentMethod || !shippingAddress) {
-      throw new Error('Payment method or shipping address not available');
+    if (!shippingAddress?.address && !shippingAddress?.addressLine1) {
+      throw new Error('Shipping address not available');
     }
+    // Default to online (Razorpay) when no payment step — customer pays in Razorpay modal
+    const methodToUse = paymentMethod || { type: 'upi' as const };
+    if (!paymentMethod) setPaymentMethod(methodToUse);
 
     // Check if we have cart items (either from cart context or need to get them)
     const cartItems = cart?.items || [];
@@ -196,9 +197,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       const response = await checkoutService.createOrder({
         shippingAddress: formattedShippingAddress,
         billingAddress: formattedShippingAddress, // Using same address for billing
-        paymentMethod: {
-          type: paymentMethod.type,
-        },
+        paymentMethod: { type: methodToUse.type },
         items: formattedItems, // Fallback items from frontend
       });
 
@@ -224,7 +223,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
               : item.product.images?.[0]?.url)
         })),
         shippingAddress,
-        paymentMethod,
+        paymentMethod: methodToUse,
         subtotal: response.order.pricing?.subtotal || subtotal,
         discount: response.order.pricing?.discount || 0,
         shipping: response.order.pricing?.shipping || (subtotal >= 1000 ? 0 : 99),
@@ -238,7 +237,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       (newOrder as any).dbOrderId = response.order._id;
 
       setOrder(newOrder);
-      setCurrentStep(4);
+      setCurrentStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create order');
       throw err;

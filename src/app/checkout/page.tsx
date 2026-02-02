@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiArrowLeft, FiArrowRight, FiCheck, FiCreditCard, FiMapPin, FiPackage, FiUser } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiCheck, FiMapPin, FiPackage, FiUser } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCheckout, CheckoutProvider } from '@/contexts/CheckoutContext';
@@ -13,15 +13,13 @@ import '@/styles/components/checkout/Checkout.css';
 
 // Step Components
 import ShippingStep from '../../components/checkout/ShippingStep';
-import PaymentStep from '../../components/checkout/PaymentStep';
 import ReviewStep from '../../components/checkout/ReviewStep';
 import ConfirmationStep from '../../components/checkout/ConfirmationStep';
 
 const steps = [
   { id: 1, title: 'Shipping', icon: FiMapPin, description: 'Delivery Information' },
-  { id: 2, title: 'Payment', icon: FiCreditCard, description: 'Payment Method' },
-  { id: 3, title: 'Review', icon: FiPackage, description: 'Order Review' },
-  { id: 4, title: 'Confirmation', icon: FiCheck, description: 'Order Confirmed' }
+  { id: 2, title: 'Review', icon: FiPackage, description: 'Order Review & Pay' },
+  { id: 3, title: 'Confirmation', icon: FiCheck, description: 'Order Confirmed' }
 ];
 
 function CheckoutContent() {
@@ -74,10 +72,8 @@ function CheckoutContent() {
       case 1:
         return <ShippingStep />;
       case 2:
-        return <PaymentStep />;
-      case 3:
         return <ReviewStep />;
-      case 4:
+      case 3:
         return <ConfirmationStep />;
       default:
         return <ShippingStep />;
@@ -270,7 +266,7 @@ function CheckoutContent() {
           </motion.div>
 
           {/* Navigation Buttons */}
-          {currentStep < 4 && (
+          {currentStep < 3 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -298,7 +294,7 @@ function CheckoutContent() {
                   </>
                 ) : (
                   <>
-                    <span>{currentStep === 3 ? 'Place Order' : 'Next'}</span>
+                    <span>{currentStep === 2 ? 'Place Order' : 'Next'}</span>
                     <FiArrowRight className="w-4 h-4" />
                   </>
                 )}

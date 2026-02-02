@@ -32,12 +32,12 @@ const getValidImageUrl = (images: any[] | undefined, fallback: string = '/images
 };
 
 export default function ReviewStep() {
-  const { shippingAddress, paymentMethod, createOrder, isProcessing } = useCheckout();
+  const { shippingAddress, createOrder, isProcessing } = useCheckout();
   const { cart, subtotal, total, itemCount } = useCart();
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   const shipping = subtotal >= 1000 ? 0 : 99;
-  const discount = 0; // You can implement discount logic here
+  const discount = 0;
   const grandTotal = subtotal + shipping - discount;
 
   const handlePlaceOrder = async () => {
@@ -48,23 +48,6 @@ export default function ReviewStep() {
       console.error('Error creating order:', error);
     } finally {
       setIsCreatingOrder(false);
-    }
-  };
-
-  const formatPaymentMethod = (method: typeof paymentMethod) => {
-    if (!method) return 'Not selected';
-    
-    switch (method.type) {
-      case 'card':
-        return `**** **** **** ${method.details?.cardNumber?.slice(-4) || '****'}`;
-      case 'upi':
-        return method.details?.upiId || 'UPI Payment';
-      case 'netbanking':
-        return 'Net Banking';
-      case 'wallet':
-        return 'Digital Wallet';
-      default:
-        return 'Unknown';
     }
   };
 
@@ -115,32 +98,20 @@ export default function ReviewStep() {
             </div>
           </motion.div>
 
-          {/* Payment Method */}
+          {/* Payment — done via Razorpay after Place Order */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
             className="bg-gray-50 rounded-lg p-4"
           >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-medium text-primary flex items-center gap-2">
-                <FiCreditCard className="w-5 h-5 text-accent" />
-                Payment Method
-              </h3>
-              <button className="text-sm text-accent hover:text-accent/80 flex items-center gap-1">
-                <FiEdit3 className="w-4 h-4" />
-                Edit
-              </button>
-            </div>
-            <div className="text-sm text-gray-600">
-              <p className="font-medium">{formatPaymentMethod(paymentMethod)}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {paymentMethod?.type === 'card' && 'Credit/Debit Card'}
-                {paymentMethod?.type === 'upi' && 'UPI Payment'}
-                {paymentMethod?.type === 'netbanking' && 'Net Banking'}
-                {paymentMethod?.type === 'wallet' && 'Digital Wallet'}
-              </p>
-            </div>
+            <h3 className="text-lg font-medium text-primary flex items-center gap-2 mb-2">
+              <FiCreditCard className="w-5 h-5 text-accent" />
+              Payment
+            </h3>
+            <p className="text-sm text-gray-600">
+              You will pay securely with <strong>UPI or Card</strong> in the next step (Razorpay).
+            </p>
           </motion.div>
 
           {/* Order Items */}
