@@ -44,7 +44,8 @@ class CheckoutService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const message = (errorData && (errorData.error || errorData.message)) || `Failed to create Razorpay order (${response.status})`;
+        const raw = (errorData && (errorData.error ?? errorData.message)) || '';
+        const message = (typeof raw === 'string' && raw) ? raw : `Failed to create Razorpay order (${response.status})`;
         throw new Error(message);
       }
 
