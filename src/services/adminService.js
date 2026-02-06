@@ -107,6 +107,197 @@ class AdminService {
     }
   }
 
+  // ==================== INVENTORY ====================
+
+  async getInventoryItems(params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (params.page) queryParams.append('page', params.page);
+      if (params.limit) queryParams.append('limit', params.limit);
+      if (params.search) queryParams.append('search', params.search);
+      if (params.category) queryParams.append('category', params.category);
+      if (params.lowStock !== undefined) queryParams.append('lowStock', String(params.lowStock));
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+      const response = await fetch(`${this.baseURL}/inventory/items?${queryParams.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch inventory items');
+      }
+
+      return {
+        success: true,
+        data: data.data || [],
+        pagination: data.pagination
+      };
+    } catch (error) {
+      console.error('Get inventory items error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch inventory items'
+      };
+    }
+  }
+
+  async getInventorySummary(params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (params.page) queryParams.append('page', params.page);
+      if (params.limit) queryParams.append('limit', params.limit);
+      if (params.search) queryParams.append('search', params.search);
+      if (params.category) queryParams.append('category', params.category);
+      if (params.lowStock !== undefined) queryParams.append('lowStock', String(params.lowStock));
+
+      const response = await fetch(`${this.baseURL}/inventory/summary?${queryParams.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch inventory summary');
+      }
+
+      return {
+        success: true,
+        data: data.data,
+        pagination: data.pagination
+      };
+    } catch (error) {
+      console.error('Get inventory summary error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch inventory summary'
+      };
+    }
+  }
+
+  async getInventoryItemById(id) {
+    try {
+      const response = await fetch(`${this.baseURL}/inventory/items/${id}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch inventory item details');
+      }
+
+      return {
+        success: true,
+        data: data.data
+      };
+    } catch (error) {
+      console.error('Get inventory item by id error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch inventory item details'
+      };
+    }
+  }
+
+  async adjustInventory(payload) {
+    try {
+      const response = await fetch(`${this.baseURL}/inventory/adjust`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to adjust inventory');
+      }
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || 'Stock adjusted successfully'
+      };
+    } catch (error) {
+      console.error('Adjust inventory error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to adjust inventory'
+      };
+    }
+  }
+
+  async bulkAdjustInventory(adjustments, note = '') {
+    try {
+      const response = await fetch(`${this.baseURL}/inventory/bulk`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ adjustments, note })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to apply bulk stock update');
+      }
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || 'Bulk stock update completed'
+      };
+    } catch (error) {
+      console.error('Bulk adjust inventory error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to apply bulk stock update'
+      };
+    }
+  }
+
+  getInventoryExportUrl(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.search) queryParams.append('search', params.search);
+    if (params.category) queryParams.append('category', params.category);
+    if (params.lowStock !== undefined) queryParams.append('lowStock', String(params.lowStock));
+
+    return `${this.baseURL}/inventory/export?${queryParams.toString()}`;
+  }
+
+  async downloadInventoryExport(params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.search) queryParams.append('search', params.search);
+      if (params.category) queryParams.append('category', params.category);
+      if (params.lowStock !== undefined) queryParams.append('lowStock', String(params.lowStock));
+
+      const response = await fetch(`${this.baseURL}/inventory/export?${queryParams.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to export stock summary');
+      }
+
+      const blob = await response.blob();
+      return {
+        success: true,
+        blob
+      };
+    } catch (error) {
+      console.error('Download inventory export error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to export stock summary'
+      };
+    }
+  }
+
   // ==================== PRODUCTS ====================
 
   // Get all products (admin view)

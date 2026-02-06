@@ -23,12 +23,15 @@ import {
   MdNotifications as Notifications,
   MdSearch as Search,
   MdAccountCircle as AccountCircle,
-  MdLocalOffer as LocalOffer
+  MdLocalOffer as LocalOffer,
+  MdAssessment as Assessment
 } from 'react-icons/md';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Products', href: '/admin/products', icon: Package },
+  { name: 'Items', href: '/admin/items', icon: Package },
+  { name: 'Stock Summary', href: '/admin/items/stock-summary', icon: Assessment },
+  { name: 'Products (Legacy)', href: '/admin/products', icon: Package },
   { name: 'Quick Picks', href: '/admin/quick-picks', icon: LocalOffer },
   { name: 'Coupons', href: '/admin/coupons', icon: Gift },
   { name: 'Collections', href: '/admin/collections', icon: Collections },
@@ -200,7 +203,7 @@ export default function AdminLayout({
             id: product._id,
             title: product.name,
             subtitle: `SKU: ${product.sku}`,
-            link: `/admin/products?search=${product.sku}`
+            link: `/admin/items?search=${product.sku}`
           });
         });
       }
@@ -292,7 +295,9 @@ export default function AdminLayout({
           {/* Mobile navigation */}
           <nav className="flex-1 space-y-1 px-2 py-3 sm:py-4 overflow-y-auto admin-sidebar-scroll">
             {navigation.map((item, index) => {
-              const isActive = pathname === item.href;
+              const isActive =
+                pathname === item.href ||
+                (item.href !== '/admin' && pathname.startsWith(`${item.href}/`));
               return (
                 <Link
                   key={item.name}
@@ -397,7 +402,9 @@ export default function AdminLayout({
           {/* Desktop navigation */}
           <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto admin-sidebar-scroll">
             {navigation.map((item, index) => {
-              const isActive = pathname === item.href;
+              const isActive =
+                pathname === item.href ||
+                (item.href !== '/admin' && pathname.startsWith(`${item.href}/`));
               return (
                 <Link
                   key={item.name}

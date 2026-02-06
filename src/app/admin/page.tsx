@@ -1,359 +1,240 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  MdPeople as Users,
-  MdInventory as Package,
-  MdShoppingCart as ShoppingCart,
-  MdAttachMoney as DollarSign,
-  MdTrendingUp as TrendingUp,
-  MdVisibility as Eye,
-  MdStar as Star,
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import {
+  MdArrowForwardIos as ArrowRight,
   MdCalendarToday as Calendar,
   MdRefresh as Refresh,
-  MdError as ErrorIcon
+  MdReceiptLong as Bill,
+  MdPayments as Payment,
+  MdAdd as Plus,
 } from 'react-icons/md';
-import adminService from '../../services/adminService';
+import adminService from '@/services/adminService';
+
+type DashboardOrder = {
+  _id: string;
+  orderNumber?: string;
+  status?: string;
+  payment?: { status?: string };
+  pricing?: { total?: number };
+  user?: { firstName?: string; lastName?: string; email?: string };
+  createdAt?: string;
+};
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalProducts: 0,
-    totalOrders: 0,
-    totalRevenue: 0,
-    activeBanners: 0,
-    pendingReviews: 0
-  });
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
-  const [recentUsers, setRecentUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+  const [recentOrders, setRecentOrders] = useState<DashboardOrder[]>([]);
+  const [inventoryTotals, setInventoryTotals] = useState({
+    totalStockValue: 0,
+    totalItems: 0,
+  });
+  const [toCollect, setToCollect] = useState(0);
 
-  // Load dashboard data on component mount
   useEffect(() => {
-    loadDashboardData();
+    loadData();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
-      const [statsRes, ordersRes, usersRes] = await Promise.all([
+      const [statsRes, recentOrdersRes, inventoryRes, pendingOrdersRes] = await Promise.all([
         adminService.getDashboardStats(),
-        adminService.getRecentOrders(4),
-        adminService.getRecentUsers(3)
+        adminService.getRecentOrders(5),
+        adminService.getInventorySummary({ limit: 1 }),
+        adminService.getAllOrders({ status: 'pending', limit: 100 }),
       ]);
 
-      if (statsRes.success && statsRes.data) {
-        setStats(statsRes.data);
+      if (statsRes.success) setStats(statsRes.data);
+      if (recentOrdersRes.success) setRecentOrders(recentOrdersRes.data || []);
+      if (inventoryRes.success) {
+        setInventoryTotals({
+          totalStockValue: inventoryRes.data?.totals?.totalStockValue || 0,
+          totalItems: inventoryRes.data?.totals?.totalItems || 0,
+        });
       }
-
-      if (ordersRes.success) {
-        setRecentOrders(ordersRes.data);
+      if (pendingOrdersRes.success) {
+        const pendingTotal = (pendingOrdersRes.data || []).reduce(
+          (sum: number, order: any) => sum + Number(order?.pricing?.total || 0),
+          0
+        );
+        setToCollect(pendingTotal);
       }
-
-      if (usersRes.success) {
-        setRecentUsers(usersRes.data);
-      }
-    } catch (err) {
-      setError('Failed to load dashboard data');
-      console.error('Dashboard data loading error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRefresh = () => {
-    loadDashboardData();
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await loadData();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
-  // Format stats for display
-  const formattedStats = [
-  {
-    name: 'Total Users',
-      value: stats.totalUsers.toLocaleString(),
-    change: '+12%',
-    changeType: 'positive',
-    icon: Users,
-  },
-  {
-    name: 'Total Products',
-      value: stats.totalProducts.toLocaleString(),
-    change: '+8%',
-    changeType: 'positive',
-    icon: Package,
-  },
-  {
-    name: 'Total Orders',
-      value: stats.totalOrders.toLocaleString(),
-    change: '+23%',
-    changeType: 'positive',
-    icon: ShoppingCart,
-  },
-  {
-    name: 'Total Revenue',
-      value: `₹${stats.totalRevenue.toLocaleString()}`,
-    change: '+18%',
-    changeType: 'positive',
-    icon: DollarSign,
-  },
-  {
-    name: 'Active Banners',
-      value: stats.activeBanners.toLocaleString(),
-    change: '+2',
-    changeType: 'positive',
-    icon: Eye,
-  },
-  {
-    name: 'Pending Reviews',
-      value: stats.pendingReviews.toLocaleString(),
-    change: '-3',
-    changeType: 'negative',
-    icon: Star,
-  },
-];
+  const thisWeekSales = useMemo(() => {
+    const now = Date.now();
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    return recentOrders
+      .filter((o) => {
+        const createdAt = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+        return createdAt >= weekAgo;
+      })
+      .reduce((sum, order) => sum + Number(order?.pricing?.total || 0), 0);
+  }, [recentOrders]);
 
-  // Format recent orders for display
-  const formatOrder = (order: any) => ({
-    id: order.orderNumber || order._id,
-    customer: `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim() || 'Unknown Customer',
-    amount: `₹${order.totalAmount?.toLocaleString() || '0'}`,
-    status: order.status || 'Pending',
-    date: new Date(order.createdAt).toLocaleDateString(),
-  });
-
-  // Format recent users for display
-  const formatUser = (user: any) => ({
-    name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User',
-    email: user.email || 'No email',
-    joinDate: new Date(user.createdAt).toLocaleDateString(),
-    orders: user.orderCount || 0,
-  });
-
-  // Loading state
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="sm:flex sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold script-font" style={{ color: 'var(--primary)' }}>Dashboard</h1>
-            <p className="mt-1 text-sm" style={{ color: 'var(--dark-gray)' }}>
-              Welcome back! Here's what's happening with your store today.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="flex items-center space-x-2">
-            <Refresh className="h-5 w-5 animate-spin text-blue-600" />
-            <span className="text-gray-600">Loading dashboard data...</span>
-          </div>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-indigo-600" />
       </div>
     );
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="sm:flex sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold script-font" style={{ color: 'var(--primary)' }}>Dashboard</h1>
-            <p className="mt-1 text-sm" style={{ color: 'var(--dark-gray)' }}>
-              Welcome back! Here's what's happening with your store today.
-            </p>
-          </div>
-          <button
-            onClick={handleRefresh}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-all hover:opacity-90"
-            style={{ backgroundColor: 'var(--primary)' }}
-          >
-            <Refresh className="h-4 w-4 mr-2" />
-            Refresh
-          </button>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <ErrorIcon className="mx-auto h-12 w-12 text-red-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading dashboard</h3>
-            <p className="mt-1 text-sm text-gray-500">{error}</p>
-            <button
-              onClick={handleRefresh}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-all hover:opacity-90"
-              style={{ backgroundColor: 'var(--primary)' }}
-            >
-              <Refresh className="h-4 w-4 mr-2" />
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
   return (
-    <div className="space-y-6 admin-fade-in">
-      {/* Header */}
-      <div className="sm:flex sm:items-center sm:justify-between admin-slide-in-down">
+    <div className="space-y-5 pb-28">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold script-font admin-heading-1" style={{ color: 'var(--primary)' }}>Dashboard</h1>
-          <p className="mt-1 text-sm sm:text-base admin-text" style={{ color: 'var(--dark-gray)' }}>
-            Welcome back! Here's what's happening with your store today.
-          </p>
+          <h1 className="text-2xl font-semibold text-gray-900">Fefa World</h1>
+          <p className="text-sm text-gray-500">Admin dashboard overview</p>
         </div>
         <button
           onClick={handleRefresh}
-          className="admin-btn admin-btn-primary mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white transition-all duration-300 transform hover:scale-105 active:scale-95 hover:shadow-lg"
-          style={{ backgroundColor: 'var(--primary)' }}
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
         >
-          <Refresh className="h-4 w-4 mr-2 transition-transform duration-200 hover:rotate-180" />
+          <Refresh className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {formattedStats.map((stat) => (
-          <div
-            key={stat.name}
-            className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-5 sm:py-6"
-          >
-            <dt>
-              <div className="absolute rounded-md p-2 sm:p-3" style={{ backgroundColor: 'var(--accent)' }}>
-                <stat.icon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <DashboardCard
+          title={`Rs ${toCollect.toLocaleString()}`}
+          subtitle="To Collect"
+          subtitleClass="text-emerald-700"
+          href="/admin/orders?status=pending"
+        />
+        <DashboardCard
+          title="Rs 0"
+          subtitle="To Pay"
+          subtitleClass="text-rose-700"
+          href="/admin/orders"
+        />
+        <DashboardCard
+          title="Stock Value"
+          subtitle={`Rs ${Number(inventoryTotals.totalStockValue || 0).toLocaleString()}`}
+          href="/admin/items/stock-summary"
+        />
+        <DashboardCard
+          title="This week's sale"
+          subtitle={`Rs ${thisWeekSales.toLocaleString()}`}
+          href="/admin/orders"
+        />
+        <DashboardCard
+          title="Total Balance"
+          subtitle={`Rs ${Number(stats?.totalRevenue || 0).toLocaleString()}`}
+          href="/admin/analytics"
+        />
+        <DashboardCard title="Reports" subtitle="Sales, Customer, Stock" href="/admin/analytics" />
+      </div>
+
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Transactions</h2>
+          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-indigo-700 hover:bg-indigo-50">
+            <Calendar className="h-4 w-4" />
+            Last 365 days
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {recentOrders.map((order) => {
+            const customerName = `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim() || order.user?.email || 'Customer';
+            const amount = Number(order.pricing?.total || 0);
+            const createdDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '--';
+            return (
+              <div key={order._id} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-base font-semibold text-gray-900">{customerName}</p>
+                    <p className="text-sm text-gray-500">Invoice #{order.orderNumber || order._id?.slice(0, 8)}</p>
+                    <p className="mt-1 text-sm text-gray-500">{createdDate}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-gray-900">Rs {amount.toLocaleString()}</p>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        order.payment?.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                      }`}
+                    >
+                      {order.payment?.status === 'paid' ? 'Paid' : 'Unpaid'}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-2 text-sm">
+                  <button className="font-medium text-indigo-700 hover:underline">Record Manually</button>
+                  <button className="font-medium text-emerald-700 hover:underline">Share Payment Link</button>
+                </div>
               </div>
-              <p className="ml-14 sm:ml-20 text-xs font-medium leading-tight" style={{ color: 'var(--dark-gray)' }}>
-                {stat.name}
-              </p>
-            </dt>
-            <dd className="ml-14 sm:ml-20 flex items-baseline flex-wrap gap-1 sm:gap-2">
-              <p className="text-base sm:text-lg font-semibold leading-tight" style={{ color: 'var(--primary)' }}>{stat.value}</p>
-              <p
-                className={`flex items-baseline text-xs font-semibold ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                <TrendingUp className="h-3 w-3 flex-shrink-0 self-center mr-1" />
-                <span className="sr-only">
-                  {stat.changeType === 'positive' ? 'Increased' : 'Decreased'} by
-                </span>
-                <span>{stat.change}</span>
-              </p>
-            </dd>
-          </div>
-        ))}
-      </div>
-
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
-        {/* Recent Orders */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-3 py-4 sm:px-4 sm:py-5 lg:p-6">
-            <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4 script-font" style={{ color: 'var(--primary)' }}>Recent Orders</h3>
-            <div className="flow-root">
-              <ul className="-my-3 sm:-my-5 divide-y divide-gray-200">
-                {recentOrders.map((order) => {
-                  const formattedOrder = formatOrder(order);
-                  return (
-                  <li key={formattedOrder.id} className="py-3 sm:py-4">
-                    <div className="flex items-center space-x-3 sm:space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                          <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                          {formattedOrder.customer}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500 truncate">
-                          {formattedOrder.id} • {formattedOrder.date}
-                        </p>
-                      </div>
-                      <div className="flex-shrink-0 text-right">
-                        <p className="text-xs sm:text-sm font-medium text-gray-900">{formattedOrder.amount}</p>
-                        <span className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          formattedOrder.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                          formattedOrder.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
-                          formattedOrder.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {formattedOrder.status}
-                        </span>
-                      </div>
-                    </div>
-                  </li>
-                  );
-                })}
-              </ul>
+            );
+          })}
+          {recentOrders.length === 0 && (
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-5 text-center text-sm text-gray-500">
+              No transactions yet.
             </div>
-            <div className="mt-4 sm:mt-6">
-              <a
-                href="/admin/orders"
-                className="w-full flex justify-center items-center px-3 py-2 sm:px-4 border shadow-sm text-xs sm:text-sm font-medium rounded-md text-white transition-all hover:opacity-90"
-                style={{ 
-                  borderColor: 'var(--primary)', 
-                  backgroundColor: 'var(--primary)' 
-                }}
-              >
-                View all orders
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Users */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-3 py-4 sm:px-4 sm:py-5 lg:p-6">
-            <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4 script-font" style={{ color: 'var(--primary)' }}>Recent Users</h3>
-            <div className="flow-root">
-              <ul className="-my-3 sm:-my-5 divide-y divide-gray-200">
-                {recentUsers.map((user, index) => {
-                  const formattedUser = formatUser(user);
-                  return (
-                  <li key={index} className="py-3 sm:py-4">
-                    <div className="flex items-center space-x-3 sm:space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                          <Users className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                          {formattedUser.name}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500 truncate">
-                          {formattedUser.email}
-                        </p>
-                      </div>
-                      <div className="flex-shrink-0 text-right">
-                        <p className="text-xs sm:text-sm text-gray-500">{formattedUser.joinDate}</p>
-                        <p className="text-xs sm:text-sm font-medium text-gray-900">
-                          {formattedUser.orders} orders
-                        </p>
-                      </div>
-                    </div>
-                  </li>
-                  );
-                })}
-              </ul>
-            </div>
-            <div className="mt-4 sm:mt-6">
-              <a
-                href="/admin/users"
-                className="w-full flex justify-center items-center px-3 py-2 sm:px-4 border shadow-sm text-xs sm:text-sm font-medium rounded-md text-white transition-all hover:opacity-90"
-                style={{ 
-                  borderColor: 'var(--primary)', 
-                  backgroundColor: 'var(--primary)' 
-                }}
-              >
-                View all users
-              </a>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
+      <div className="fixed bottom-4 left-1/2 z-30 flex w-[min(920px,92vw)] -translate-x-1/2 items-center gap-3">
+        <button className="flex-1 rounded-full bg-slate-900 px-5 py-4 text-sm font-semibold text-white shadow-lg hover:bg-slate-800">
+          <Payment className="mr-2 inline h-4 w-4" />
+          Received Payment
+        </button>
+        <button className="rounded-full bg-emerald-200 p-4 text-emerald-900 shadow-lg">
+          <Plus className="h-5 w-5" />
+        </button>
+        <Link
+          href="/admin/items/create"
+          className="flex-1 rounded-full bg-indigo-600 px-5 py-4 text-center text-sm font-semibold text-white shadow-lg hover:bg-indigo-700"
+        >
+          <Bill className="mr-2 inline h-4 w-4" />
+          + Bill / Invoice
+        </Link>
+      </div>
     </div>
   );
 }
+
+function DashboardCard({
+  title,
+  subtitle,
+  subtitleClass = 'text-gray-600',
+  href,
+}: {
+  title: string;
+  subtitle: string;
+  subtitleClass?: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-2xl border border-sky-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-2xl font-bold text-gray-900">{title}</p>
+          <p className={`mt-1 text-sm font-medium ${subtitleClass}`}>{subtitle}</p>
+        </div>
+        <ArrowRight className="h-4 w-4 text-gray-400 transition group-hover:text-gray-600" />
+      </div>
+    </Link>
+  );
+}
+
