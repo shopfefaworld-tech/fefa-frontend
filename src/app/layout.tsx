@@ -8,7 +8,10 @@ import { DataProvider } from "@/contexts/DataContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { LoginModalProvider } from "@/contexts/LoginModalContext";
+import ComingSoon from "@/components/ComingSoon";
 import "@/styles/base/index.css";
+
+const isComingSoon = process.env.NEXT_PUBLIC_COMING_SOON === "true";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -67,7 +70,7 @@ export default function RootLayout({
                 <CartProvider>
                   <WishlistProvider>
                     <SearchProvider>
-                      {children}
+                      {isComingSoon ? <ComingSoon /> : children}
                     </SearchProvider>
                   </WishlistProvider>
                 </CartProvider>
