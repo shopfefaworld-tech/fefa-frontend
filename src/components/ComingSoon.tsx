@@ -1,9 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import Image from 'next/image';
 
-const LAUNCH_DATE = new Date('2025-02-13');
+const LAUNCH_DATE = new Date('2026-02-13');
 
 function getDaysUntilLaunch(): number {
   const now = new Date();
@@ -27,35 +26,31 @@ export default function ComingSoon() {
   const launchLabel = useMemo(getLaunchLabel, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-stone-50 to-amber-50/30 dark:from-stone-950 dark:to-amber-950/10 px-4">
-      <div className="text-center max-w-lg mx-auto">
-        <div className="mb-8 flex justify-center">
-          <Image
-            src="/fefa-shop-banner-biglogo.png"
-            alt="fefa"
-            width={180}
-            height={80}
-            className="object-contain"
-            priority
-          />
-        </div>
-        <h1 className="font-dancing-script text-4xl sm:text-5xl text-stone-800 dark:text-stone-100 mb-2">
-          Something beautiful is coming
-        </h1>
-        <p className="text-stone-600 dark:text-stone-400 text-lg mb-6">
-          We&apos;re putting the finishing touches on our new collection.
-        </p>
-        <div className="inline-block bg-stone-100 dark:bg-stone-800/80 rounded-2xl px-8 py-6 mb-6">
-          <p className="text-5xl sm:text-6xl font-semibold text-stone-800 dark:text-stone-100 tabular-nums">
-            {daysLeft}
+    <div
+      className="relative min-h-screen flex flex-col bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: 'url(/Fefa-shop-banner.png)' }}
+    >
+      {/* Subtle overlay so text stays readable */}
+      <div className="absolute inset-0 bg-black/40" aria-hidden />
+      <div className="relative flex flex-col min-h-screen">
+        {/* Main message — centered, minimal */}
+        <main className="flex-1 flex flex-col items-center justify-center px-4 text-center">
+          <h1 className="font-dancing-script text-4xl sm:text-5xl md:text-6xl text-white drop-shadow-md max-w-xl">
+            Something beautiful is coming
+          </h1>
+          <p className="mt-4 text-white/90 text-lg sm:text-xl">
+            See you on {launchLabel}
           </p>
-          <p className="text-stone-600 dark:text-stone-400 text-sm uppercase tracking-wider mt-1">
-            days to launch
-          </p>
-        </div>
-        <p className="text-stone-700 dark:text-stone-300 font-medium">
-          See you on <span className="text-amber-700 dark:text-amber-400">{launchLabel}</span>
-        </p>
+        </main>
+        {/* Timer — bottom bar, simple and out of the way */}
+        <footer className="relative py-5 px-6 flex items-center justify-center gap-6 bg-black/30 backdrop-blur-sm border-t border-white/10">
+          <span className="text-white/90 text-sm uppercase tracking-widest">
+            Launching in
+          </span>
+          <span className="text-2xl sm:text-3xl font-light text-white tabular-nums">
+            {daysLeft} {daysLeft === 1 ? 'day' : 'days'}
+          </span>
+        </footer>
       </div>
     </div>
   );
