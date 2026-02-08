@@ -119,6 +119,29 @@ export default function Home() {
   const safeProducts = getSafeArray(products);
   const safeTrendingLooks = getSafeArray(trending);
 
+  const whatMakesFefaSpecial = [
+    {
+      title: 'Artisan Craftsmanship',
+      description: 'Handmade by master jewelers using traditional techniques.',
+    },
+    {
+      title: 'Ethical Sourcing',
+      description: 'Conflict-free gems and recycled precious metals.',
+    },
+    {
+      title: 'Timeless Design',
+      description: 'Heirlooms created to be cherished for generations.',
+    },
+    {
+      title: 'Bespoke Service',
+      description: 'Personalized consultations and custom creations.',
+    },
+    {
+      title: 'Sustainable Luxury',
+      description: 'Committed to environmental responsibility.',
+    },
+  ] as const;
+
   // Fetch hero banners from admin
   useEffect(() => {
     const loadHeroBanners = async () => {
@@ -937,7 +960,7 @@ export default function Home() {
       )}
 
       {/* Features Section */}
-      <section className="pt-4 pb-2 bg-white overflow-hidden transition-colors duration-300">
+      <section className="py-10 sm:py-12 bg-white transition-colors duration-300">
         <div className="container mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -947,89 +970,26 @@ export default function Home() {
             className="text-center mb-4"
           >
             <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2">WHAT MAKES FEFA SPECIAL</h2>
-            <p className="text-dark-gray max-w-2xl mx-auto text-xs xs:text-sm sm:text-base">
-              Real reasons women keep coming back to FEFA
-            </p>
+            <p className="text-dark-gray max-w-2xl mx-auto text-xs xs:text-sm sm:text-base">Draft A, minimal editorial style.</p>
           </motion.div>
           
-          {/* Features container with horizontal scroll for all screen sizes */}
-          <div className="w-full flex justify-center lg:overflow-hidden">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xs:gap-4 sm:gap-5 md:gap-6">
+          <div className="max-w-5xl mx-auto mt-8 sm:mt-10">
+            {whatMakesFefaSpecial.map((item, idx) => (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                key={item.title}
+                initial={{ opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.0 }}
+                transition={{ duration: 0.45, delay: idx * 0.05 }}
                 viewport={{ once: true }}
-                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left"
+                className={`py-5 sm:py-6 ${idx !== whatMakesFefaSpecial.length - 1 ? 'border-b border-gray-200/80' : ''}`}
               >
-                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
-                  Tarnish-Resistant Finish
-                </h3>
-                <p className="text-xs xs:text-sm text-dark-gray">
-                  Everyday-friendly plating that holds its shine wear after wear.
-                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-[minmax(120px,220px)_260px_1fr] items-start sm:items-center gap-2 sm:gap-x-6">
+                  <div className="hidden sm:block h-px w-full bg-[#DBC078]" aria-hidden />
+                  <h3 className="text-primary !font-cormorant font-semibold text-lg sm:text-xl">{item.title}</h3>
+                  <p className="text-dark-gray text-sm sm:text-base">{item.description}</p>
+                </div>
               </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.05 }}
-                viewport={{ once: true }}
-                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left"
-              >
-                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
-                  Lightweight for All-Day Wear
-                </h3>
-                <p className="text-xs xs:text-sm text-dark-gray">
-                  Statement pieces that stay light from workdays to weddings.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                viewport={{ once: true }}
-                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left"
-              >
-                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
-                  Handpicked Designs
-                </h3>
-                <p className="text-xs xs:text-sm text-dark-gray">
-                  Stylist-curated designs so your jewelry actually feels unique.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.15 }}
-                viewport={{ once: true }}
-                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left"
-              >
-                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
-                  Premium Polish &amp; Plating
-                </h3>
-                <p className="text-xs xs:text-sm text-dark-gray">
-                  Rich, high-gloss finish that looks closer to fine jewelry.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                viewport={{ once: true }}
-                className="relative bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 text-left sm:col-span-2 lg:col-span-1"
-              >
-                <h3 className="text-primary font-semibold text-base xs:text-lg sm:text-xl mb-1">
-                  Affordable Luxury
-                </h3>
-                <p className="text-xs xs:text-sm text-dark-gray">
-                  Boutique-level pieces at prices that let you build a wardrobe, not just own one set.
-                </p>
-              </motion.div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
