@@ -128,8 +128,9 @@ class BannerService {
           }
         }
 
-        // Handle different types of errors
-        if (fetchError.name === 'AbortError') {
+        // Handle timeout (AbortController abort throws AbortError or TimeoutError/code 23 in some envs)
+        const isTimeout = fetchError.name === 'AbortError' || fetchError.name === 'TimeoutError' || fetchError.code === 23;
+        if (isTimeout) {
           return {
             success: false,
             error: 'Request timeout: Server took too long to respond',
@@ -149,7 +150,9 @@ class BannerService {
         throw fetchError; // Re-throw if it's a different error
       }
     } catch (error) {
-      console.error('[BannerService] Get active banners error:', error);
+      if (error.name !== 'TimeoutError' && error.code !== 23) {
+        console.error('[BannerService] Get active banners error:', error);
+      }
       return {
         success: false,
         error: error.message || 'Failed to fetch active banners',
@@ -236,19 +239,21 @@ class BannerService {
         };
       } catch (fetchError) {
         clearTimeout(timeoutId);
-        
-        if (fetchError.name === 'AbortError') {
+        const isTimeout = fetchError.name === 'AbortError' || fetchError.name === 'TimeoutError' || fetchError.code === 23;
+        if (isTimeout) {
           return {
             success: false,
             error: 'Request timeout',
             data: []
           };
         }
-        
         throw fetchError;
       }
     } catch (error) {
-      console.error('[BannerService] Get banners by target error:', error);
+      // Avoid logging timeout errors (already handled above)
+      if (error.name !== 'TimeoutError' && error.code !== 23) {
+        console.error('[BannerService] Get banners by target error:', error);
+      }
       return {
         success: false,
         error: error.message || 'Failed to fetch banners',

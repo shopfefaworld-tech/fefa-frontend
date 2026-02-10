@@ -95,6 +95,20 @@ const imageMap: { [key: string]: any } = {
   '/images/product-8-hover.png': product8Hover,
 };
 
+const parseKeyHighlights = (value?: string): string[] => {
+  if (!value) return [];
+  return value
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/^[\s•*\-–—]+/, '').trim())
+    .filter(Boolean);
+};
+
+const getKeyHighlights = (product: Product): string[] => {
+  if (Array.isArray(product.details) && product.details.length > 0) return product.details;
+  return parseKeyHighlights(product.shortDescription);
+};
+
 export default function ProductDetail() {
   const { slug } = useParams();
   const { addToCart, isLoading: cartLoading } = useCart();
@@ -481,7 +495,7 @@ export default function ProductDetail() {
     setPincodeResult(null);
 
     try {
-      // Use backend shipping serviceability check (Shiprocket-backed when configured)
+      // Use backend shipping serviceability check (provider-backed when configured)
       const response = await checkoutService.checkPincodeServiceability(pincode, {
         weight: 0.5,
         cod: false,
@@ -826,14 +840,20 @@ export default function ProductDetail() {
                 {product.description}
               </p>
               
-              <div className="mb-4 sm:mb-6">
-                <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">Details</h3>
-                <ul className="list-disc list-inside text-dark-gray space-y-1 text-sm sm:text-base">
-                  {product.details?.map((detail, index) => (
-                    <li key={index}>{detail}</li>
-                  ))}
-                </ul>
-              </div>
+              {(() => {
+                const keyHighlights = getKeyHighlights(product);
+                if (keyHighlights.length === 0) return null;
+                return (
+                  <div className="mb-4 sm:mb-6">
+                    <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">Key Highlights</h3>
+                    <ul className="list-disc list-inside text-dark-gray space-y-1 text-sm sm:text-base">
+                      {keyHighlights.map((highlight, index) => (
+                        <li key={index}>{highlight}</li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })()}
 
               {/* Size Selection */}
               {product.variants && product.variants.length > 0 && (
@@ -1378,4 +1398,3 @@ export default function ProductDetail() {
     </MainLayout>
   );
 }
-

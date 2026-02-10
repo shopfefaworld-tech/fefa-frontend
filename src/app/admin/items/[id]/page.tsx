@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   MdArrowBack as ArrowLeft,
   MdEdit as Edit,
+  MdDelete as Trash,
   MdInventory as InventoryIcon,
   MdTimeline as TimelineIcon,
   MdInfoOutline as InfoIcon,
@@ -43,6 +44,15 @@ type ProductDetails = {
   updatedAt?: string;
 };
 
+function parseKeyHighlights(value?: string): string[] {
+  if (!value) return [];
+  return value
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map(line => line.replace(/^[\s•*\-–—]+/, '').trim())
+    .filter(Boolean);
+}
+
 const tabs = ['Item Timeline', 'Details', 'Stock'];
 
 export default function ItemDetailsPage() {
@@ -59,6 +69,8 @@ export default function ItemDetailsPage() {
   const [adjustMode, setAdjustMode] = useState<'add' | 'set'>('add');
   const [adjustQty, setAdjustQty] = useState('0');
   const [adjustNote, setAdjustNote] = useState('');
+
+  const keyHighlights = useMemo(() => parseKeyHighlights(product?.shortDescription), [product?.shortDescription]);
 
   useEffect(() => {
     if (itemId) {
@@ -120,6 +132,19 @@ export default function ItemDetailsPage() {
     }
   };
 
+  const handleDeleteItem = async () => {
+    if (!product) return;
+    if (!confirm('Delete this item permanently? This cannot be undone.')) return;
+
+    const res = await adminService.deleteProduct(product._id);
+    if (!res.success) {
+      alert(res.error || 'Failed to delete item');
+      return;
+    }
+
+    router.push('/admin/items');
+  };
+
   if (loading || !product) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -138,13 +163,22 @@ export default function ItemDetailsPage() {
           <ArrowLeft className="h-4 w-4" />
           Back
         </button>
-        <Link
-          href={`/admin/items/${product._id}/edit`}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          <Edit className="h-4 w-4" />
-          Edit Item
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/admin/items/${product._id}/edit`}
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            <Edit className="h-4 w-4" />
+            Edit Item
+          </Link>
+          <button
+            onClick={handleDeleteItem}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+          >
+            <Trash className="h-4 w-4" />
+            Delete
+          </button>
+        </div>
       </div>
 
       <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
@@ -240,7 +274,18 @@ export default function ItemDetailsPage() {
             <DetailRow label="Item Code" value={product.sku} />
             <DetailRow label="Category" value={product.category?.name || 'Uncategorized'} />
             <DetailRow label="Description" value={product.description || '--'} />
-            <DetailRow label="Short Description" value={product.shortDescription || '--'} />
+            {keyHighlights.length > 0 && (
+              <div className="flex items-start justify-between gap-3 border-b border-gray-100 pb-2 last:border-0">
+                <span className="text-gray-500">Key Highlights</span>
+                <ul className="max-w-[65%] list-disc space-y-1 pl-5 text-right font-medium text-gray-900">
+                  {keyHighlights.map((highlight, idx) => (
+                    <li key={idx} className="text-left">
+                      {highlight}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <DetailRow label="Last Updated" value={product.updatedAt ? new Date(product.updatedAt).toLocaleString() : '--'} />
           </div>
         </div>
@@ -348,4 +393,3 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

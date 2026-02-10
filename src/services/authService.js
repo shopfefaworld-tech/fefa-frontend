@@ -73,9 +73,8 @@ class AuthService {
         signal: controller.signal,
       }).catch((fetchError) => {
         clearTimeout(timeoutId);
-        
-        // Handle network errors specifically
-        if (fetchError.name === 'AbortError') {
+        const isTimeout = fetchError.name === 'AbortError' || fetchError.name === 'TimeoutError' || fetchError.code === 23;
+        if (isTimeout) {
           throw new Error('Request timed out. Please check your internet connection and try again.');
         }
         

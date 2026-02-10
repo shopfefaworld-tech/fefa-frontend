@@ -12,7 +12,8 @@ import {
   MdNotifications as Bell,
   MdStorage as Database,
   MdVpnKey as Key,
-  MdWarning as AlertTriangle
+  MdWarning as AlertTriangle,
+  MdLocalShipping as Truck
 } from 'react-icons/md';
 import settingsService from '../../../services/settingsService';
 
@@ -20,6 +21,11 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testingShipping, setTestingShipping] = useState(false);
+  const [shippingStatus, setShippingStatus] = useState<{
+    configured: boolean;
+    provider: string;
+  } | null>(null);
   const [settings, setSettings] = useState({
     // General Settings
     storeName: 'FEFA Jewelry',
@@ -67,6 +73,17 @@ export default function SettingsPage() {
     orderNotifications: true,
     customerNotifications: true,
     adminNotifications: true,
+
+    // Shipping Settings
+    shippingProvider: 'bluedart',
+    shippingAutoCreateShipment: false,
+    shippingPickupPincode: '110001',
+    shippingDefaultWeight: '0.5',
+    shippingDefaultLength: '15',
+    shippingDefaultBreadth: '10',
+    shippingDefaultHeight: '5',
+    shippingInsuredByDefault: false,
+    shippingDefaultServiceType: 'surface',
     
     // Top Banner Settings
     topBannerText: '',
@@ -93,8 +110,20 @@ export default function SettingsPage() {
           smtpPort: result.data.smtpPort?.toString() || '587',
           sessionTimeout: result.data.sessionTimeout?.toString() || '24',
           passwordMinLength: result.data.passwordMinLength?.toString() || '8',
-          maxLoginAttempts: result.data.maxLoginAttempts?.toString() || '5'
+          maxLoginAttempts: result.data.maxLoginAttempts?.toString() || '5',
+          shippingDefaultWeight: result.data.shippingDefaultWeight?.toString() || '0.5',
+          shippingDefaultLength: result.data.shippingDefaultLength?.toString() || '15',
+          shippingDefaultBreadth: result.data.shippingDefaultBreadth?.toString() || '10',
+          shippingDefaultHeight: result.data.shippingDefaultHeight?.toString() || '5'
         }));
+      }
+
+      const shippingResult = await settingsService.getShippingStatus();
+      if (shippingResult.success && shippingResult.data) {
+        setShippingStatus({
+          configured: Boolean(shippingResult.data.configured),
+          provider: shippingResult.data.provider || 'bluedart'
+        });
       }
     } catch (err) {
       console.error('Error loading settings:', err);
@@ -121,15 +150,32 @@ export default function SettingsPage() {
         smtpPort: parseInt(settings.smtpPort) || 587,
         sessionTimeout: parseInt(settings.sessionTimeout) || 24,
         passwordMinLength: parseInt(settings.passwordMinLength) || 8,
-        maxLoginAttempts: parseInt(settings.maxLoginAttempts as any) || 5
+        maxLoginAttempts: parseInt(settings.maxLoginAttempts as any) || 5,
+        shippingDefaultWeight: parseFloat(settings.shippingDefaultWeight as any) || 0.5,
+        shippingDefaultLength: parseFloat(settings.shippingDefaultLength as any) || 15,
+        shippingDefaultBreadth: parseFloat(settings.shippingDefaultBreadth as any) || 10,
+        shippingDefaultHeight: parseFloat(settings.shippingDefaultHeight as any) || 5
       };
       
       const result = await settingsService.updateSettings(settingsToSave);
+      const shippingConfigResult = await settingsService.updateShippingConfig({
+        provider: settingsToSave.shippingProvider,
+        autoCreateShipment: settingsToSave.shippingAutoCreateShipment,
+        pickupPincode: settingsToSave.shippingPickupPincode,
+        defaultWeight: settingsToSave.shippingDefaultWeight,
+        defaultDimensions: {
+          length: settingsToSave.shippingDefaultLength,
+          breadth: settingsToSave.shippingDefaultBreadth,
+          height: settingsToSave.shippingDefaultHeight
+        },
+        defaultInsured: settingsToSave.shippingInsuredByDefault,
+        defaultServiceType: settingsToSave.shippingDefaultServiceType
+      });
       
-      if (result.success) {
+      if (result.success && shippingConfigResult.success) {
         alert('Settings saved successfully!');
       } else {
-        alert(`Failed to save settings: ${result.error}`);
+        alert(`Failed to save settings: ${result.error || shippingConfigResult.error}`);
       }
     } catch (err) {
       console.error('Error saving settings:', err);
@@ -144,6 +190,7 @@ export default function SettingsPage() {
     { id: 'appearance', name: 'Appearance', icon: Palette },
     { id: 'email', name: 'Email', icon: Mail },
     { id: 'payment', name: 'Payment', icon: CreditCard },
+    { id: 'shipping', name: 'Shipping', icon: Truck },
     { id: 'security', name: 'Security', icon: Shield },
     { id: 'notifications', name: 'Notifications', icon: Bell },
     { id: 'advanced', name: 'Advanced', icon: Database },
@@ -577,6 +624,161 @@ export default function SettingsPage() {
     </div>
   );
 
+  const handleTestShipping = async () => {
+    try {
+      setTestingShipping(true);
+      const result = await settingsService.testShippingConnection();
+      if (result.success) {
+        alert(result.message || 'Blue Dart connection test successful');
+        setShippingStatus(prev => ({
+          configured: true,
+          provider: prev?.provider || 'bluedart'
+        }));
+      } else {
+        alert(result.error || 'Blue Dart connection test failed');
+      }
+    } finally {
+      setTestingShipping(false);
+    }
+  };
+
+  const renderShippingSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Blue Dart Shipping</h3>
+        <p className="mt-1 text-sm text-gray-500">Manage shipping automation and default shipment parameters</p>
+      </div>
+
+      <div className="bg-gray-50 border rounded-md p-4">
+        <p className="text-sm text-gray-700">
+          Provider: <span className="font-medium">{shippingStatus?.provider || settings.shippingProvider}</span>
+        </p>
+        <p className="text-sm text-gray-700 mt-1">
+          Connection Status:{' '}
+          <span className={shippingStatus?.configured ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+            {shippingStatus?.configured ? 'Configured' : 'Not Configured'}
+          </span>
+        </p>
+        <button
+          onClick={handleTestShipping}
+          disabled={testingShipping}
+          className="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+        >
+          {testingShipping ? 'Testing...' : 'Test Blue Dart Connection'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Shipping Provider</label>
+          <select
+            name="shippingProvider"
+            value={settings.shippingProvider}
+            onChange={handleInputChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="bluedart">Blue Dart</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>
+        <div className="flex items-end">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              name="shippingAutoCreateShipment"
+              checked={settings.shippingAutoCreateShipment}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <span className="ml-2 text-sm font-medium text-gray-700">Auto-create shipment after payment</span>
+          </label>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Default Pickup Pincode</label>
+          <input
+            type="text"
+            name="shippingPickupPincode"
+            value={settings.shippingPickupPincode}
+            onChange={handleInputChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Default Service Type</label>
+          <input
+            type="text"
+            name="shippingDefaultServiceType"
+            value={settings.shippingDefaultServiceType}
+            onChange={handleInputChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Default Weight (kg)</label>
+          <input
+            type="number"
+            step="0.1"
+            name="shippingDefaultWeight"
+            value={settings.shippingDefaultWeight}
+            onChange={handleInputChange}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="flex items-end">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              name="shippingInsuredByDefault"
+              checked={settings.shippingInsuredByDefault}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <span className="ml-2 text-sm font-medium text-gray-700">Insured shipments by default</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-sm font-medium text-gray-900 mb-3">Default Package Dimensions (cm)</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Length</label>
+            <input
+              type="number"
+              step="1"
+              name="shippingDefaultLength"
+              value={settings.shippingDefaultLength}
+              onChange={handleInputChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Breadth</label>
+            <input
+              type="number"
+              step="1"
+              name="shippingDefaultBreadth"
+              value={settings.shippingDefaultBreadth}
+              onChange={handleInputChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Height</label>
+            <input
+              type="number"
+              step="1"
+              name="shippingDefaultHeight"
+              value={settings.shippingDefaultHeight}
+              onChange={handleInputChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderSecuritySettings = () => (
     <div className="space-y-6">
       <div>
@@ -780,6 +982,7 @@ export default function SettingsPage() {
       case 'appearance': return renderAppearanceSettings();
       case 'email': return renderEmailSettings();
       case 'payment': return renderPaymentSettings();
+      case 'shipping': return renderShippingSettings();
       case 'security': return renderSecuritySettings();
       case 'notifications': return renderNotificationSettings();
       case 'advanced': return renderAdvancedSettings();

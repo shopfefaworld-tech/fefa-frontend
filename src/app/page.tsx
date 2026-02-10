@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiTool, FiShield, FiClock, FiUser, FiZap } from 'react-icons/fi';
 import MainLayout from '@/components/layout/MainLayout';
 import Button from '@/components/ui/Button';
 import ProductCard from '@/components/product/ProductCard';
@@ -120,27 +120,12 @@ export default function Home() {
   const safeTrendingLooks = getSafeArray(trending);
 
   const whatMakesFefaSpecial = [
-    {
-      title: 'Artisan Craftsmanship',
-      description: 'Handmade by master jewelers using traditional techniques.',
-    },
-    {
-      title: 'Ethical Sourcing',
-      description: 'Conflict-free gems and recycled precious metals.',
-    },
-    {
-      title: 'Timeless Design',
-      description: 'Heirlooms created to be cherished for generations.',
-    },
-    {
-      title: 'Bespoke Service',
-      description: 'Personalized consultations and custom creations.',
-    },
-    {
-      title: 'Sustainable Luxury',
-      description: 'Committed to environmental responsibility.',
-    },
-  ] as const;
+    { title: 'Artisan Craftsmanship', description: 'Handmade by master jewelers using traditional techniques.', icon: FiTool },
+    { title: 'Ethical Sourcing', description: 'Conflict-free gems and recycled precious metals.', icon: FiShield },
+    { title: 'Timeless Design', description: 'Heirlooms created to be cherished for generations.', icon: FiClock },
+    { title: 'Bespoke Service', description: 'Personalized consultations and custom creations.', icon: FiUser },
+    { title: 'Sustainable Luxury', description: 'Committed to environmental responsibility.', icon: FiZap },
+  ];
 
   // Fetch hero banners from admin
   useEffect(() => {
@@ -959,41 +944,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Features Section */}
-      <section className="py-10 sm:py-12 bg-white transition-colors duration-300">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-4"
-          >
-            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2">WHAT MAKES FEFA SPECIAL</h2>
-            <p className="text-dark-gray max-w-2xl mx-auto text-xs xs:text-sm sm:text-base">Draft A, minimal editorial style.</p>
-          </motion.div>
-          
-          <div className="max-w-5xl mx-auto mt-8 sm:mt-10">
-            {whatMakesFefaSpecial.map((item, idx) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: idx * 0.05 }}
-                viewport={{ once: true }}
-                className={`py-5 sm:py-6 ${idx !== whatMakesFefaSpecial.length - 1 ? 'border-b border-gray-200/80' : ''}`}
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-[minmax(120px,220px)_260px_1fr] items-start sm:items-center gap-2 sm:gap-x-6">
-                  <div className="hidden sm:block h-px w-full bg-[#DBC078]" aria-hidden />
-                  <h3 className="text-primary !font-cormorant font-semibold text-lg sm:text-xl">{item.title}</h3>
-                  <p className="text-dark-gray text-sm sm:text-base">{item.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Featured Products Section */}
       <section className="pb-4 pt-6 bg-white transition-colors duration-300">
         <div className="container mx-auto px-4">
@@ -1412,6 +1362,42 @@ export default function Home() {
               View All Products
             </Button>
           </motion.div>
+        </div>
+      </section>
+
+      {/* What Makes FEFA Special - compact with icons, at bottom */}
+      <section className="py-8 sm:py-10 bg-gray-50/80 border-t border-gray-200/60">
+        <div className="container mx-auto px-4">
+          <motion.h2
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="text-2xl sm:text-3xl !font-cormorant text-primary text-center mb-6"
+          >
+            What makes FEFA special
+          </motion.h2>
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 max-w-6xl mx-auto">
+            {whatMakesFefaSpecial.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: idx * 0.05 }}
+                  viewport={{ once: true }}
+                  className="flex flex-col items-center text-center p-4 rounded-xl bg-white/80 border border-gray-200/80 shadow-sm hover:shadow-md hover:border-[#DBC078]/40 transition-all"
+                >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#DBC078]/20 flex items-center justify-center mb-3 text-primary">
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" aria-hidden />
+                  </div>
+                  <h3 className="text-primary !font-cormorant font-semibold text-sm sm:text-base mb-1">{item.title}</h3>
+                  <p className="text-dark-gray text-xs sm:text-sm leading-snug">{item.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </section>
 

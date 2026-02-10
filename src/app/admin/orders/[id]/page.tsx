@@ -73,6 +73,7 @@ interface OrderData {
   tracking?: {
     carrier?: string;
     trackingNumber?: string;
+    trackingUrl?: string;
     url?: string;
   };
   createdAt: string;
@@ -89,6 +90,9 @@ export default function OrderDetailsPage() {
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
   const [creatingShipment, setCreatingShipment] = useState(false);
+  const [requestingPickup, setRequestingPickup] = useState(false);
+  const [refreshingTracking, setRefreshingTracking] = useState(false);
+  const [generatingLabel, setGeneratingLabel] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [statusNote, setStatusNote] = useState('');
   const [trackingInfo, setTrackingInfo] = useState({
@@ -121,7 +125,7 @@ export default function OrderDetailsPage() {
           setTrackingInfo({
             carrier: data.data.tracking.carrier || '',
             trackingNumber: data.data.tracking.trackingNumber || '',
-            url: data.data.tracking.url || ''
+            url: data.data.tracking.trackingUrl || data.data.tracking.url || ''
           });
         }
       } else {
@@ -187,7 +191,10 @@ export default function OrderDetailsPage() {
       }
       
       if (trackingInfo.trackingNumber) {
-        updateData.tracking = trackingInfo;
+        updateData.tracking = {
+          ...trackingInfo,
+          trackingUrl: trackingInfo.url,
+        };
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
@@ -213,6 +220,89 @@ export default function OrderDetailsPage() {
       console.error('Error updating order:', err);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleRequestPickup = async () => {
+    if (!order) return;
+    try {
+      setRequestingPickup(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/shipping/admin/request-pickup/${orderId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('fefa_access_token')}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        alert('Pickup requested successfully');
+        loadOrder();
+      } else {
+        alert(data.message || 'Failed to request pickup');
+      }
+    } catch (error) {
+      console.error('Request pickup error:', error);
+      alert('Failed to request pickup');
+    } finally {
+      setRequestingPickup(false);
+    }
+  };
+
+  const handleRefreshTracking = async () => {
+    if (!order) return;
+    try {
+      setRefreshingTracking(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/shipping/admin/refresh-tracking/${orderId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('fefa_access_token')}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        alert('Tracking refreshed successfully');
+        loadOrder();
+      } else {
+        alert(data.message || 'Failed to refresh tracking');
+      }
+    } catch (error) {
+      console.error('Refresh tracking error:', error);
+      alert('Failed to refresh tracking');
+    } finally {
+      setRefreshingTracking(false);
+    }
+  };
+
+  const handleGenerateLabel = async () => {
+    if (!order) return;
+    try {
+      setGeneratingLabel(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/shipping/generate-label/${orderId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('fefa_access_token')}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.success && data.data?.labelUrl) {
+        window.open(data.data.labelUrl, '_blank');
+      } else {
+        alert(data.message || 'Failed to generate label');
+      }
+    } catch (error) {
+      console.error('Generate label error:', error);
+      alert('Failed to generate label');
+    } finally {
+      setGeneratingLabel(false);
     }
   };
 
@@ -552,10 +642,10 @@ export default function OrderDetailsPage() {
             </div>
           </div>
 
-          {/* Shiprocket Shipment */}
+          {/* Blue Dart Shipment */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Shiprocket Shipment</h3>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Blue Dart Shipment</h3>
             </div>
             <div className="px-4 py-5 sm:p-6">
               {order.tracking?.trackingNumber ? (
@@ -570,9 +660,9 @@ export default function OrderDetailsPage() {
                       <span className="text-sm font-medium text-gray-900">{order.tracking.carrier}</span>
                     </div>
                   )}
-                  {order.tracking.url && (
+                  {(order.tracking.trackingUrl || order.tracking.url) && (
                     <a
-                      href={order.tracking.url}
+                      href={order.tracking.trackingUrl || order.tracking.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block w-full text-center mt-4 px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors text-sm"
@@ -580,18 +670,41 @@ export default function OrderDetailsPage() {
                       Track Package
                     </a>
                   )}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+                    <button
+                      onClick={handleRequestPickup}
+                      disabled={requestingPickup}
+                      className="inline-flex justify-center items-center px-3 py-2 border border-green-600 text-green-700 rounded-md hover:bg-green-50 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {requestingPickup ? 'Requesting...' : 'Request Pickup'}
+                    </button>
+                    <button
+                      onClick={handleGenerateLabel}
+                      disabled={generatingLabel}
+                      className="inline-flex justify-center items-center px-3 py-2 border border-blue-600 text-blue-700 rounded-md hover:bg-blue-50 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {generatingLabel ? 'Generating...' : 'Generate Label'}
+                    </button>
+                    <button
+                      onClick={handleRefreshTracking}
+                      disabled={refreshingTracking}
+                      className="inline-flex justify-center items-center px-3 py-2 border border-gray-500 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {refreshingTracking ? 'Refreshing...' : 'Refresh Tracking'}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-gray-500">
-                    No shipment created yet. Create a Shiprocket shipment to get AWB and tracking.
+                    No shipment created yet. Create a Blue Dart shipment to get AWB and tracking.
                   </p>
                   <button
                     onClick={handleCreateShipment}
                     disabled={creatingShipment || order.status === 'pending' || order.status === 'cancelled'}
                     className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {creatingShipment ? 'Creating Shipment...' : 'Create Shiprocket Shipment'}
+                    {creatingShipment ? 'Creating Shipment...' : 'Create Blue Dart Shipment'}
                   </button>
                   {(order.status === 'pending' || order.payment.status === 'pending') && (
                     <p className="text-xs text-yellow-600 mt-2">

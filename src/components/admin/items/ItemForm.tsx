@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   MdArrowBack as ArrowLeft,
@@ -8,6 +8,7 @@ import {
   MdQrCode as Barcode,
   MdDocumentScanner as ScanBarcode,
   MdAddPhotoAlternate as AddPhoto,
+  MdDelete as Trash,
 } from 'react-icons/md';
 import adminService from '@/services/adminService';
 
@@ -23,17 +24,47 @@ interface CategoryOption {
   name: string;
 }
 
-const tabs = ['Pricing', 'Stock', 'Other', 'Party Wise Prices'];
+interface OccasionOption {
+  name: string;
+  value: string;
+}
+
+interface CollectionOption {
+  _id?: string;
+  id?: string;
+  name: string;
+}
+
+interface ProductImage {
+  url: string;
+  publicId?: string;
+  alt?: string;
+  isPrimary?: boolean;
+  sortOrder?: number;
+}
+
+const tabs = ['Images', 'Pricing', 'Stock', 'Other', 'Party Wise Prices'];
 
 export default function ItemForm({ mode, itemId }: ItemFormProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('Pricing');
+  const [activeTab, setActiveTab] = useState(mode === 'create' ? 'Images' : 'Pricing');
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [occasions, setOccasions] = useState<OccasionOption[]>([]);
+  const [collections, setCollections] = useState<CollectionOption[]>([]);
+  const [selectedOccasions, setSelectedOccasions] = useState<string[]>([]);
+  const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<ProductImage[]>([]);
+  const [newImages, setNewImages] = useState<Array<{ file: File; preview: string }>>([]);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerLoading, setScannerLoading] = useState(false);
+  const [scannerError, setScannerError] = useState('');
+  const [manualCode, setManualCode] = useState('');
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const scannerStreamRef = useRef<MediaStream | null>(null);
+  const scanTimerRef = useRef<number | null>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -64,6 +95,7 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
 
   useEffect(() => {
     loadCategories();
+    loadOccasions();
   }, []);
 
   useEffect(() => {
@@ -72,10 +104,39 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
     }
   }, [mode, itemId]);
 
+  useEffect(() => {
+    loadCollections(selectedOccasions);
+  }, [selectedOccasions]);
+
+  useEffect(() => {
+    if (scannerOpen) {
+      startScanner();
+    } else {
+      stopScanner();
+    }
+    return () => {
+      stopScanner();
+    };
+  }, [scannerOpen]);
+
   const loadCategories = async () => {
     const res = await adminService.getAllCategories({ limit: 200, sortBy: 'name', sortOrder: 'asc' });
     if (res.success) {
       setCategories(res.data || []);
+    }
+  };
+
+  const loadOccasions = async () => {
+    const res = await adminService.getOccasions();
+    if (res.success) {
+      setOccasions(res.data || []);
+    }
+  };
+
+  const loadCollections = async (occasionValues: string[]) => {
+    const res = await adminService.getCollections(occasionValues);
+    if (res.success) {
+      setCollections(res.data || []);
     }
   };
 
@@ -89,10 +150,10 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
         return;
       }
       const product = res.data;
-      const existingPreview = (product.images || [])
-        .map((img: any) => img?.url)
-        .filter(Boolean);
-      setPreviewUrls(existingPreview);
+      const normalizedImages = (product.images || [])
+        .filter((img: any) => img?.url)
+        .sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      setExistingImages(normalizedImages);
 
       setForm({
         name: product.name || '',
@@ -118,6 +179,18 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
         lowStockAlert: (product.inventory?.lowStockThreshold ?? 0) > 0,
         partyWisePricingNotes: '',
       });
+
+      const itemOccasions = Array.isArray(product.occasions)
+        ? product.occasions.filter(Boolean)
+        : [];
+      setSelectedOccasions(itemOccasions);
+
+      const itemCollections = Array.isArray(product.collections)
+        ? product.collections
+            .map((col: any) => col?._id || col?.id || col)
+            .filter(Boolean)
+        : [];
+      setSelectedCollections(itemCollections);
     } finally {
       setLoading(false);
     }
@@ -151,10 +224,49 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
     if (valid.length !== files.length) {
       alert('Some files were ignored. Only images are allowed.');
     }
-    setNewImageFiles((prev) => [...prev, ...valid]);
-    const urls = valid.map((file) => URL.createObjectURL(file));
-    setPreviewUrls((prev) => [...prev, ...urls]);
+    const mapped = valid.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setNewImages((prev) => [...prev, ...mapped]);
     e.target.value = '';
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeNewImage = (index: number) => {
+    setNewImages((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const makeExistingPrimary = (index: number) => {
+    setExistingImages((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const copy = [...prev];
+      const [selected] = copy.splice(index, 1);
+      return [selected, ...copy];
+    });
+  };
+
+  const toggleOccasion = (occasionValue: string) => {
+    setSelectedOccasions((prev) =>
+      prev.includes(occasionValue)
+        ? prev.filter((value) => value !== occasionValue)
+        : [...prev, occasionValue]
+    );
+  };
+
+  const toggleCollection = (collectionId: string) => {
+    setSelectedCollections((prev) =>
+      prev.includes(collectionId)
+        ? prev.filter((value) => value !== collectionId)
+        : [...prev, collectionId]
+    );
   };
 
   const generateSku = () => {
@@ -164,6 +276,72 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
       .replace(/[^A-Z0-9-]/g, '')
       .replace(/\s+/g, '-');
     setForm((prev) => ({ ...prev, sku: generated }));
+  };
+
+  const stopScanner = () => {
+    if (scanTimerRef.current) {
+      window.clearInterval(scanTimerRef.current);
+      scanTimerRef.current = null;
+    }
+
+    if (scannerStreamRef.current) {
+      scannerStreamRef.current.getTracks().forEach((track) => track.stop());
+      scannerStreamRef.current = null;
+    }
+  };
+
+  const applyScannedCode = (code: string) => {
+    const normalized = code.trim();
+    if (!normalized) return;
+    setForm((prev) => ({ ...prev, sku: normalized.toUpperCase() }));
+    setScannerOpen(false);
+    setScannerError('');
+    setManualCode('');
+  };
+
+  const startScanner = async () => {
+    try {
+      setScannerError('');
+      setScannerLoading(true);
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+
+      scannerStreamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+
+      const Detector = (window as any).BarcodeDetector;
+      if (!Detector) {
+        setScannerError('Barcode auto-scan is not supported on this browser. Enter code manually below.');
+        return;
+      }
+
+      const detector = new Detector({
+        formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'],
+      });
+
+      scanTimerRef.current = window.setInterval(async () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) return;
+        try {
+          const codes = await detector.detect(videoRef.current);
+          if (codes?.length && codes[0]?.rawValue) {
+            applyScannedCode(String(codes[0].rawValue));
+          }
+        } catch {
+          // Ignore transient frame read failures.
+        }
+      }, 450);
+    } catch {
+      setScannerError('Could not access camera. Check browser permission, then try again.');
+    } finally {
+      setScannerLoading(false);
+    }
   };
 
   const validate = () => {
@@ -178,7 +356,9 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
     if (!form.stock || Number(form.stock) < 0) nextErrors.stock = 'Opening stock is required';
     if (!form.lowStockThreshold || Number(form.lowStockThreshold) < 0)
       nextErrors.lowStockThreshold = 'Low stock threshold must be 0 or more';
-    if (mode === 'create' && newImageFiles.length === 0) nextErrors.images = 'At least one image is required';
+    if (mode === 'create' && newImages.length === 0) nextErrors.images = 'At least one image is required';
+    if (mode === 'edit' && existingImages.length + newImages.length === 0)
+      nextErrors.images = 'At least one image is required';
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -216,6 +396,8 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
             .map((tag) => tag.trim())
             .filter(Boolean)
         : [],
+      occasions: selectedOccasions,
+      collections: selectedCollections,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       isDigital: false,
@@ -239,7 +421,7 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
             formData.append(key, String(value));
           }
         });
-        newImageFiles.forEach((file) => formData.append('images', file));
+        newImages.forEach((img) => formData.append('images', img.file));
 
         const res = await adminService.createProductWithImage(formData);
         if (!res.success) {
@@ -255,14 +437,28 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
         return;
       }
 
-      const res = await adminService.updateProduct(itemId, payload);
+      const payloadForEdit: any = {
+        ...payload,
+        images: existingImages.map((img, idx) => ({
+          url: img.url,
+          publicId: img.publicId || '',
+          alt: img.alt || form.name.trim() || 'Product image',
+          isPrimary: idx === 0,
+          sortOrder: idx + 1,
+        })),
+      };
+
+      const res = await adminService.updateProduct(itemId, payloadForEdit);
       if (!res.success) {
         alert(res.error || 'Failed to update item');
         return;
       }
 
-      if (newImageFiles.length > 0) {
-        await adminService.addProductImages(itemId, newImageFiles);
+      if (newImages.length > 0) {
+        await adminService.addProductImages(
+          itemId,
+          newImages.map((img) => img.file)
+        );
       }
 
       router.push(`/admin/items/${itemId}`);
@@ -311,6 +507,72 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
         </div>
 
         <div className="space-y-6 p-4 sm:p-6">
+          {activeTab === 'Images' && (
+            <>
+              <Field label="Item Images *" error={errors.images}>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100">
+                  <AddPhoto className="h-5 w-5" />
+                  Upload Images
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+                </label>
+                <p className="mt-2 text-xs text-gray-500">
+                  First existing image is used as primary. Use "Set Primary" to reorder.
+                </p>
+              </Field>
+
+              {existingImages.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {existingImages.map((image, idx) => (
+                    <div key={`${image.url}-${idx}`} className="group relative overflow-hidden rounded-lg border border-gray-200">
+                      <img src={image.url} alt={`item-preview-${idx}`} className="h-28 w-full object-cover" />
+                      {idx === 0 ? (
+                        <span className="absolute left-2 top-2 rounded bg-indigo-600 px-2 py-0.5 text-xs font-medium text-white">
+                          Primary
+                        </span>
+                      ) : null}
+                      {idx !== 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => makeExistingPrimary(idx)}
+                          className="absolute left-2 top-2 rounded bg-white/90 px-2 py-0.5 text-xs font-medium text-indigo-700"
+                        >
+                          Set Primary
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => removeExistingImage(idx)}
+                        className="absolute right-2 top-2 rounded bg-black/70 p-1 text-white opacity-90 hover:bg-black"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {newImages.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {newImages.map((image, idx) => (
+                    <div key={`${image.preview}-${idx}`} className="group relative overflow-hidden rounded-lg border border-gray-200">
+                      <img src={image.preview} alt={`new-item-preview-${idx}`} className="h-28 w-full object-cover" />
+                      <span className="absolute left-2 top-2 rounded bg-slate-800 px-2 py-0.5 text-xs font-medium text-white">
+                        New
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeNewImage(idx)}
+                        className="absolute right-2 top-2 rounded bg-black/70 p-1 text-white opacity-90 hover:bg-black"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
           {activeTab === 'Pricing' && (
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -431,7 +693,7 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => alert('Barcode scanning can be integrated with camera workflow in next step.')}
+                  onClick={() => setScannerOpen(true)}
                   className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   <ScanBarcode className="h-5 w-5" />
@@ -443,12 +705,13 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
 
           {activeTab === 'Other' && (
             <>
-              <Field label="Short Description">
+              <Field label="Key Highlights">
                 <textarea
                   name="shortDescription"
                   value={form.shortDescription}
                   onChange={handleChange}
-                  className="input min-h-20"
+                  placeholder="One highlight per line (optional)"
+                  className="input min-h-24"
                 />
               </Field>
               <Field label="Description *" error={errors.description}>
@@ -467,6 +730,60 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
                   className="input"
                   placeholder="jhumka, wedding, festive"
                 />
+              </Field>
+
+              <Field label="Occasions">
+                {occasions.length === 0 ? (
+                  <p className="text-sm text-gray-500">No occasions available.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {occasions.map((occasion) => {
+                      const selected = selectedOccasions.includes(occasion.value);
+                      return (
+                        <button
+                          key={occasion.value}
+                          type="button"
+                          onClick={() => toggleOccasion(occasion.value)}
+                          className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+                            selected
+                              ? 'bg-indigo-600 text-white'
+                              : 'border border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {occasion.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </Field>
+
+              <Field label="Collections">
+                {collections.length === 0 ? (
+                  <p className="text-sm text-gray-500">No collections available.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {collections.map((collection) => {
+                      const id = String(collection._id || collection.id || '');
+                      if (!id) return null;
+                      const selected = selectedCollections.includes(id);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => toggleCollection(id)}
+                          className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+                            selected
+                              ? 'bg-emerald-600 text-white'
+                              : 'border border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {collection.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </Field>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -496,22 +813,7 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
                 <Field label="Weight (g)">
                   <input type="number" name="weight" value={form.weight} onChange={handleChange} className="input" />
                 </Field>
-                <Field label="Upload Images" error={errors.images}>
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100">
-                    <AddPhoto className="h-5 w-5" />
-                    Add Images
-                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
-                  </label>
-                </Field>
               </div>
-
-              {previewUrls.length > 0 && (
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-                  {previewUrls.map((url, idx) => (
-                    <img key={`${url}-${idx}`} src={url} alt={`item-${idx}`} className="h-20 w-full rounded-lg object-cover" />
-                  ))}
-                </div>
-              )}
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="inline-flex items-center gap-2 text-sm text-gray-700">
@@ -577,6 +879,46 @@ export default function ItemForm({ mode, itemId }: ItemFormProps) {
           box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
         }
       `}</style>
+
+      {scannerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white p-4 shadow-xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-gray-900">Scan Barcode</h3>
+              <button
+                type="button"
+                onClick={() => setScannerOpen(false)}
+                className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-black">
+              <video ref={videoRef} className="h-64 w-full object-cover" muted playsInline />
+            </div>
+
+            {scannerLoading ? <p className="mt-2 text-sm text-gray-500">Starting camera...</p> : null}
+            {scannerError ? <p className="mt-2 text-sm text-red-600">{scannerError}</p> : null}
+
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                placeholder="Enter barcode manually"
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => applyScannedCode(manualCode)}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                Use Code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -607,4 +949,3 @@ function slugify(value: string) {
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
-

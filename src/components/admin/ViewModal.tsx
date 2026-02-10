@@ -50,6 +50,15 @@ interface ViewModalProps {
 export default function ViewModal({ isOpen, onClose, data, onEdit, type }: ViewModalProps) {
   if (!data) return null;
 
+  const parseKeyHighlights = (value: unknown): string[] => {
+    if (typeof value !== 'string') return [];
+    return value
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .map(line => line.replace(/^[\s•*\-–—]+/, '').trim())
+      .filter(Boolean);
+  };
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'super_admin': return 'bg-purple-100 text-purple-800';
@@ -196,7 +205,8 @@ export default function ViewModal({ isOpen, onClose, data, onEdit, type }: ViewM
 
   const renderProductDetails = () => {
     const product = data as any;
-    
+    const keyHighlights = parseKeyHighlights(product.shortDescription);
+     
     return (
       <div className="space-y-6">
         {/* Product Images */}
@@ -349,14 +359,18 @@ export default function ViewModal({ isOpen, onClose, data, onEdit, type }: ViewM
           </div>
         </div>
 
-        {/* Short Description */}
-        {product.shortDescription && (
+        {/* Key Highlights */}
+        {keyHighlights.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Short Description
+              Key Highlights
             </label>
-            <div className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm text-gray-900 min-h-[60px]">
-              {product.shortDescription}
+            <div className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm text-gray-900">
+              <ul className="list-disc pl-5 space-y-1">
+                {keyHighlights.map((highlight: string, idx: number) => (
+                  <li key={idx}>{highlight}</li>
+                ))}
+              </ul>
             </div>
           </div>
         )}

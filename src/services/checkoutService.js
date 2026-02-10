@@ -243,7 +243,7 @@ class CheckoutService {
     }
   }
 
-  // Check delivery serviceability for a pincode (Shiprocket-backed)
+  // Check delivery serviceability for a pincode (shipping-provider backed)
   async checkPincodeServiceability(pincode, options = {}) {
     try {
       const payload = {
