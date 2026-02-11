@@ -458,7 +458,13 @@ class AuthService {
         body: JSON.stringify(addressData),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.warn('Failed to parse addAddress response as JSON:', error);
+        data = {};
+      }
 
       if (!response.ok) {
         throw new Error(data.error || data.message || 'Failed to add address');
@@ -482,10 +488,16 @@ class AuthService {
         body: JSON.stringify(addressData),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.warn('Failed to parse updateAddress response as JSON:', error);
+        data = {};
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update address');
+        throw new Error(data.error || data.message || 'Failed to update address');
       }
 
       return data.data;
@@ -505,10 +517,16 @@ class AuthService {
         },
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.warn('Failed to parse deleteAddress response as JSON:', error);
+        data = {};
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete address');
+        throw new Error(data.error || data.message || 'Failed to delete address');
       }
 
       return data;

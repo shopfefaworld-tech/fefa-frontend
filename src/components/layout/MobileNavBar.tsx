@@ -36,7 +36,7 @@ export default function MobileNavBar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
   const router = useRouter();
-  const { isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { totalQuantity } = useCart();
   const { itemCount: wishlistCount } = useWishlist();
   const { openLoginModal } = useLoginModal();
@@ -243,7 +243,9 @@ export default function MobileNavBar() {
                     <FiUser className="w-4 h-4 text-pink-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-[#4B006E]">Chilla</p>
+                    <p className="text-sm font-medium text-[#4B006E]">
+                      {(user?.firstName || '').trim() || (user?.email?.split('@')[0] ?? 'Profile')}
+                    </p>
                   </div>
                 </div>
                 <div className="border-t border-gray-100 pt-2">

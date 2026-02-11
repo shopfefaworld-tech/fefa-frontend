@@ -542,7 +542,7 @@ function SettingsPageContent() {
       setIsSaving(true);
       const { accessToken } = authService.getStoredTokens();
       if (!accessToken) {
-        throw new Error('No access token found');
+        throw new Error('Your session has expired. Please log in again.');
       }
 
       // Prepare address data for backend (convert empty strings to undefined for optional fields)
@@ -567,26 +567,43 @@ function SettingsPageContent() {
         throw new Error('Please fill in all required fields');
       }
 
+      let updatedAddresses: Address[] = [];
+
       if (editingAddressId) {
         // Update existing address
         const updatedAddress = await authService.updateAddress(accessToken, editingAddressId, addressData);
         
-        // Update local state
-        setAddresses(prev => prev.map(addr => 
-          addr._id === editingAddressId ? updatedAddress.address : addr
-        ));
+        // Update local state optimistically
+        setAddresses(prev => {
+          const next = prev.map(addr =>
+            addr._id === editingAddressId ? updatedAddress.address : addr
+          );
+          updatedAddresses = next;
+          return next;
+        });
       } else {
         // Add new address
         const newAddress = await authService.addAddress(accessToken, addressData);
         
-        // Update local state
-        setAddresses(prev => [...prev, newAddress.address]);
+        // Update local state optimistically
+        setAddresses(prev => {
+          const next = [...prev, newAddress.address];
+          updatedAddresses = next;
+          return next;
+        });
       }
 
-      // Refresh user data to get updated addresses
-      const response = await authService.getProfile(accessToken);
-      setUserData(response.user);
-      setAddresses(response.user.addresses || []);
+      // Best-effort refresh of user data to get updated addresses
+      try {
+        const response = await authService.getProfile(accessToken);
+        setUserData(response.user);
+        setAddresses(response.user.addresses || updatedAddresses);
+      } catch (refreshError) {
+        console.error('Failed to refresh profile after saving address:', refreshError);
+        // Keep optimistic local state if refresh fails
+      }
+
+      alert('Address saved successfully.');
 
       setIsEditingAddress(false);
       setEditingAddressId(null);
