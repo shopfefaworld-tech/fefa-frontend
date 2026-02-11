@@ -26,9 +26,62 @@ const dancingScript = Dancing_Script({
 });
 
 export const metadata: Metadata = {
-  title: "fefa",
-  description: "Premium handcrafted jewelry for fashion-conscious women",
-  keywords: ["jewelry", "handcrafted", "premium", "women", "fashion", "accessories"],
+  metadataBase: new URL("https://shopfefa.world"),
+  title: {
+    default: "fefa jewelry | Premium Minimal Jewelry for Indian Women",
+    template: "%s | fefa jewelry",
+  },
+  description:
+    "Premium minimal, everyday jewelry handcrafted for modern Indian women – necklaces, earrings, rings and bracelets for office, casual and festive wear.",
+  keywords: [
+    "fefa",
+    "fefa jewelry",
+    "minimal jewelry",
+    "everyday jewelry",
+    "dainty necklaces",
+    "statement earrings",
+    "bracelets",
+    "rings",
+    "women",
+    "india",
+    "indian women",
+    "fashion accessories",
+  ],
+  openGraph: {
+    title: "fefa jewelry | Premium Minimal Jewelry for Indian Women",
+    description:
+      "Premium minimal, everyday jewelry handcrafted for modern Indian women – necklaces, earrings, rings and bracelets for office, casual and festive wear.",
+    url: "https://www.shopfefa.world",
+    siteName: "fefa",
+    type: "website",
+    locale: "en_IN",
+    images: [
+      {
+        url: "/Fefa-shop-banner.png",
+        width: 1200,
+        height: 630,
+        alt: "fefa jewelry - premium minimal jewelry for Indian women",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "fefa jewelry | Premium Minimal Jewelry for Indian Women",
+    description:
+      "Premium minimal, everyday jewelry handcrafted for modern Indian women – necklaces, earrings, rings and bracelets for office, casual and festive wear.",
+    images: ["/Fefa-shop-banner.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
