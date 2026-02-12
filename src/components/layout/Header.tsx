@@ -47,6 +47,7 @@ export default function Header() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<CollectionCategory[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [hasLoadedSuggestions, setHasLoadedSuggestions] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, isLoading, logout } = useAuth();
@@ -93,12 +94,12 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Load data for suggestions (lazy load - only when needed)
+  // Load data for suggestions once on first search interaction
   useEffect(() => {
+    if (!(searchInput.length >= 1 || showSuggestions)) return;
+    if (hasLoadedSuggestions || isLoadingSuggestions) return;
+
     const loadSuggestionsData = async () => {
-      // Only load when user starts typing or focuses search
-      if (!searchInput && !showSuggestions) return;
-      
       try {
         setIsLoadingSuggestions(true);
         const [productsData, categoriesData] = await Promise.all([
@@ -107,6 +108,7 @@ export default function Header() {
         ]);
         setProducts(productsData);
         setCategories(categoriesData);
+        setHasLoadedSuggestions(true);
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
           console.error('Error loading suggestions data:', error);
@@ -116,11 +118,8 @@ export default function Header() {
       }
     };
 
-    // Load on search input or when suggestions should show
-    if (searchInput.length >= 1 || showSuggestions) {
-      loadSuggestionsData();
-    }
-  }, [searchInput, showSuggestions]);
+    loadSuggestionsData();
+  }, [searchInput, showSuggestions, hasLoadedSuggestions, isLoadingSuggestions]);
 
   const handleDropdownToggle = (name: string) => {
     setOpenDropdown(openDropdown === name ? null : name);

@@ -1,4 +1,5 @@
 import { 
+  loadCategoriesData,
   loadFeaturesData, 
   loadStylesData, 
   loadProductsData, 
@@ -42,22 +43,21 @@ class DataService {
   // Data endpoints - Categories only from backend API
   async getCategories() {
     try {
-      const apiResponse = await API_HELPERS.getCategories();
-      if (apiResponse.success && apiResponse.data) {
-        return { success: true, data: apiResponse.data };
-      } else {
-        return { 
-          success: false, 
-          error: 'No categories data available from API',
-          field: 'categories',
-          message: 'Categories data loading failed'
-        };
+      const categories = await loadCategoriesData();
+      if (Array.isArray(categories)) {
+        return { success: true, data: categories };
       }
-    } catch (apiError) {
-      console.error('Failed to load categories data from API:', apiError);
       return { 
         success: false, 
-        error: 'Failed to load categories data from API',
+        error: 'No categories data available',
+        field: 'categories',
+        message: 'Categories data loading failed'
+      };
+    } catch (apiError) {
+      console.error('Failed to load categories data:', apiError);
+      return { 
+        success: false, 
+        error: 'Failed to load categories data from API and local fallback',
         field: 'categories',
         message: 'Categories data loading failed'
       };

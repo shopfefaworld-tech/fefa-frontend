@@ -12,16 +12,10 @@ import Image from 'next/image';
 import DataLoader from '@/components/DataLoader';
 import { useDataContext } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
-import dataService from '@/services/dataService';
 import bannerService from '@/services/bannerService';
 import { 
-  loadProductsWithFilters
-} from '@/utils/dataLoader';
-import { 
   Category, 
-  Feature, 
-  Product, 
-  TrendingLook
+  Product
 } from '@/types/data';
 
 // Import category images for fallback
@@ -60,6 +54,7 @@ export default function Home() {
   const [startY, setStartY] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const scrollDirectionRef = useRef<'horizontal' | 'vertical' | null>(null);
+  const hasRequestedInitialData = useRef(false);
   const [retrying, setRetrying] = useState({ categories: false });
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loadingFeaturedProducts, setLoadingFeaturedProducts] = useState(true);
@@ -97,10 +92,10 @@ export default function Home() {
   // Get data from context
   const { 
     categories, 
-    features, 
     products,
-    trending,
+    loading: dataLoading,
     fieldErrors,
+    loadAllData,
     loadCategories
   } = useDataContext();
 
@@ -115,9 +110,7 @@ export default function Home() {
 
   // Ensure arrays are not null and are actually arrays
   const safeJewelryCategories = getSafeArray(categories);
-  const safeFeatures = getSafeArray(features);
   const safeProducts = getSafeArray(products);
-  const safeTrendingLooks = getSafeArray(trending);
 
   const whatMakesFefaSpecial = [
     { title: 'Artisan Craftsmanship', description: 'Handmade by master jewelers using traditional techniques.', icon: FiTool },
@@ -126,6 +119,13 @@ export default function Home() {
     { title: 'Bespoke Service', description: 'Personalized consultations and custom creations.', icon: FiUser },
     { title: 'Sustainable Luxury', description: 'Committed to environmental responsibility.', icon: FiZap },
   ];
+
+  // Load shared homepage data once (categories/products/etc.)
+  useEffect(() => {
+    if (hasRequestedInitialData.current) return;
+    hasRequestedInitialData.current = true;
+    loadAllData();
+  }, [loadAllData]);
 
   // Fetch hero banners from admin
   useEffect(() => {
@@ -186,132 +186,120 @@ export default function Home() {
     // Banner impressions can be tracked server-side if needed
   }, [currentBannerIndex, heroBanners]);
 
-  // Fetch featured products
+  // Build featured products from already-loaded context data to avoid duplicate API calls
   useEffect(() => {
-    const loadFeaturedProducts = async () => {
-      
-      try {
-        setLoadingFeaturedProducts(true);
-        const result = await dataService.getFeaturedProducts(20);
-        if (result.success && result.data) {
-          // Filter to ensure only featured products are included
-          const featured = Array.isArray(result.data) 
-            ? result.data.filter((product) => product.isFeatured === true && product.isActive !== false)
-            : [];
-          setFeaturedProducts(featured);
-        }
-      } catch (error) {
-        setFeaturedProducts([]);
-      } finally {
-        setLoadingFeaturedProducts(false);
-      }
-    };
+    if (dataLoading && safeProducts.length === 0) {
+      setLoadingFeaturedProducts(true);
+      return;
+    }
 
-    loadFeaturedProducts();
-  }, []);
+    const activeProducts = safeProducts.filter((product: Product) => {
+      const isActiveValue = (product as any)?.isActive;
+      return isActiveValue !== false && isActiveValue !== 'false' && isActiveValue !== 0 && isActiveValue !== '0';
+    });
 
-  // Fetch trending/best seller products
+    const featured = activeProducts.filter((product: Product) => {
+      const featuredValue = (product as any)?.isFeatured;
+      return featuredValue === true || featuredValue === 'true' || featuredValue === 1 || featuredValue === '1';
+    });
+
+    // Keep section populated even if only a few products are explicitly featured.
+    // Non-featured products are appended only when featured count is low.
+    const minFeaturedDisplayCount = 6;
+    const filledFeatured = featured.length >= minFeaturedDisplayCount
+      ? featured
+      : [
+          ...featured,
+          ...activeProducts.filter((product: Product) => !featured.some((fp) => (fp as any)?._id === (product as any)?._id))
+        ];
+
+    setFeaturedProducts(filledFeatured.slice(0, 20));
+    setLoadingFeaturedProducts(false);
+  }, [dataLoading, safeProducts]);
+
+  // Build trending products from context data (best sellers first) to avoid extra API calls
   useEffect(() => {
-    const loadTrendingProducts = async () => {
-      try {
-        setLoadingTrendingProducts(true);
-        // Try to fetch best sellers or trending products
-        // First try best sellers, then fallback to featured products
-        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        
-        // Try fetching products sorted by popularity/sales
-        try {
-          const response = await fetch(`${baseURL}/products?sortBy=soldCount&sortOrder=desc&limit=20`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.data) {
-              const products = Array.isArray(data.data) 
-                ? data.data.filter((product: Product) => product.isActive !== false)
-                : [];
-              setTrendingProducts(products);
-              setLoadingTrendingProducts(false);
-              return;
-            }
-          }
-        } catch (error) {
-          // Fallback to featured products if best sellers endpoint fails
-        }
-        
-        // Fallback: use featured products
-        const result = await dataService.getFeaturedProducts(20);
-        if (result.success && result.data) {
-          const products = Array.isArray(result.data) 
-            ? result.data.filter((product: Product) => product.isActive !== false)
-            : [];
-          setTrendingProducts(products);
-        } else {
-          setTrendingProducts([]);
-        }
-      } catch (error) {
-        setTrendingProducts([]);
-      } finally {
-        setLoadingTrendingProducts(false);
-      }
-    };
+    if (dataLoading && safeProducts.length === 0) {
+      setLoadingTrendingProducts(true);
+      return;
+    }
 
-    // Delay to stagger API requests
-    const timer = setTimeout(() => {
-      loadTrendingProducts();
-    }, 2000);
+    const activeProducts = safeProducts.filter((product: Product) => product.isActive !== false);
+    const bestSellerSorted = [...activeProducts].sort((a: any, b: any) => {
+      const soldA = Number(a?.soldCount || 0);
+      const soldB = Number(b?.soldCount || 0);
+      return soldB - soldA;
+    });
 
-    return () => clearTimeout(timer);
-  }, []);
+    const topTrending = bestSellerSorted.slice(0, 20);
+    if (topTrending.length > 0) {
+      setTrendingProducts(topTrending);
+    } else {
+      setTrendingProducts(activeProducts.filter((product: Product) => product.isFeatured === true).slice(0, 20));
+    }
+    setLoadingTrendingProducts(false);
+  }, [dataLoading, safeProducts]);
 
-  // Load collections and occasions data in parallel for better performance
+  // Load occasions (with cache + local fallback). Collections section is currently not rendered.
   useEffect(() => {
-    const loadCollectionsAndOccasions = async () => {
+    const loadOccasions = async () => {
+      const cacheKey = 'fefa_home_occasions_cache';
+      const cacheTtlMs = 5 * 60 * 1000;
       const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      
-      // Load both in parallel for faster page load
-      const [collectionsResponse, occasionsResponse] = await Promise.all([
-        fetch(`${baseURL}/collections?sortBy=sortOrder&sortOrder=asc`).catch(() => null),
-        fetch(`${baseURL}/occasions?sortBy=sortOrder&sortOrder=asc`).catch(() => null)
-      ]);
 
-      // Process collections
+      setLoadingCollections(false);
+
       try {
-        if (collectionsResponse?.ok) {
-          const data = await collectionsResponse.json();
-          if (data.success) {
-            setCollections(data.data || []);
-          } else {
-            setCollections([]);
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < cacheTtlMs && Array.isArray(parsed.data)) {
+            setOccasions(parsed.data);
+            setLoadingOccasions(false);
+            return;
           }
-        } else {
-          setCollections([]);
         }
-      } catch (error) {
-        setCollections([]);
-      } finally {
-        setLoadingCollections(false);
-      }
+      } catch (_) {}
 
-      // Process occasions
+      let loadedOccasions: any[] = [];
+
       try {
-        if (occasionsResponse?.ok) {
+        const occasionsResponse = await fetch(`${baseURL}/occasions?sortBy=sortOrder&sortOrder=asc`, {
+          cache: 'force-cache'
+        });
+        if (occasionsResponse.ok) {
           const data = await occasionsResponse.json();
-          if (data.success && data.data) {
-            const activeOccasions = data.data.filter((occ: any) => occ.isActive !== false);
-            setOccasions(activeOccasions);
-          } else {
-            setOccasions([]);
+          if (data.success && Array.isArray(data.data)) {
+            loadedOccasions = data.data.filter((occ: any) => occ.isActive !== false);
           }
-        } else {
-          setOccasions([]);
         }
-      } catch (error) {
-        setOccasions([]);
-      } finally {
-        setLoadingOccasions(false);
+      } catch (_) {}
+
+      // Fallback to local data when backend is slow/unavailable
+      if (loadedOccasions.length === 0) {
+        try {
+          const localResponse = await fetch('/data/collections-occasions.json', { cache: 'force-cache' });
+          if (localResponse.ok) {
+            const localOccasions = await localResponse.json();
+            loadedOccasions = Array.isArray(localOccasions)
+              ? localOccasions.filter((occ: any) => occ.value !== 'all')
+              : [];
+          }
+        } catch (_) {}
       }
+
+      setOccasions(loadedOccasions);
+      setLoadingOccasions(false);
+
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          data: loadedOccasions,
+          timestamp: Date.now()
+        }));
+      } catch (_) {}
     };
 
-    loadCollectionsAndOccasions();
+    loadOccasions();
   }, []);
 
   // Load collection product counts (if needed in future)
@@ -829,7 +817,11 @@ export default function Home() {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {safeJewelryCategories.map((category: Category, index: number) => (
+              {safeJewelryCategories.map((category: Category, index: number) => {
+                const categoryImageSrc = imageMap[category.image || ''] || category.image || '/images/placeholder-category.jpg';
+                const skipCategoryOptimization = typeof categoryImageSrc === 'string' && categoryImageSrc.startsWith('http');
+
+                return (
                   <motion.div
                     key={category.slug}
                     initial={{ opacity: 0, y: 30 }}
@@ -842,12 +834,13 @@ export default function Home() {
                       <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
                         {/* Background Image */}
                         <Image
-                          src={imageMap[category.image || ''] || category.image || '/images/placeholder-category.jpg'}
+                          src={categoryImageSrc}
                           alt={category.name}
                           fill
                           className="object-cover"
                           sizes="(max-width: 475px) 224px, (max-width: 640px) 240px, (max-width: 768px) 256px, (max-width: 1024px) 288px, (max-width: 1280px) 320px, 448px"
                           priority={index < 3}
+                          unoptimized={skipCategoryOptimization}
                         />
                       </div>
                       {/* Content below image */}
@@ -864,7 +857,8 @@ export default function Home() {
                       </div>
                     </Link>
                   </motion.div>
-                ))}
+                );
+              })}
               </div>
             </div>
           )}
@@ -896,6 +890,7 @@ export default function Home() {
                       style={{ maxHeight: '450px', objectFit: 'cover' }}
                       priority={index === 0}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
+                      unoptimized={typeof banner.image === 'string' && banner.image.startsWith('http')}
                     />
                   </div>
                 );
@@ -1189,7 +1184,7 @@ export default function Home() {
                                 // Track failed image to avoid retrying
                                 setFailedImages(prev => new Set(prev).add(occasion.image));
                               }}
-                              unoptimized={occasion.image.startsWith('/images/')}
+                              unoptimized={occasion.image.startsWith('/images/') || occasion.image.startsWith('http')}
                             />
                           ) : (
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50">

@@ -157,6 +157,7 @@ export default function ProductCard({
   // Get current image
   const currentImage = images && images.length > 0 ? images[currentImageIndex] : null;
   const currentImageUrl = currentImage ? getImageUrl(currentImage as any) : null;
+  const useUnoptimizedImage = typeof currentImageUrl === 'string' && currentImageUrl.startsWith('http');
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -306,6 +307,7 @@ export default function ProductCard({
                 onError={handleImageError}
                 placeholder="blur"
                 blurDataURL={BLUR_DATA_URL}
+                unoptimized={useUnoptimizedImage}
               />
             </>
           ) : (

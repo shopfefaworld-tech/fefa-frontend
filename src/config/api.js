@@ -91,12 +91,15 @@ const API_CONFIG = {
 };
 
 // Retry function with exponential backoff for rate limiting (429 errors)
-async function fetchWithRetry(url, maxRetries = 3, initialDelay = 1000) {
+async function fetchWithRetry(url, maxRetries = 3, initialDelay = 1000, options = {}) {
   let lastError = null;
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        cache: 'force-cache',
+        ...options
+      });
       
       // If rate limited (429), retry with exponential backoff
       if (response.status === 429 && attempt < maxRetries) {
@@ -167,11 +170,7 @@ const API_HELPERS = {
   
   getActiveBanners: async () => {
     try {
-      // Use /banners endpoint instead of /banners/active to get all active banners
-      // regardless of date restrictions (startDate/endDate)
-      // Add cache-busting parameter to ensure fresh data
-      const cacheBuster = `?t=${Date.now()}`;
-      const response = await fetchWithRetry(API_HELPERS.getUrl(API_CONFIG.ENDPOINTS.BANNERS + cacheBuster));
+      const response = await fetchWithRetry(API_HELPERS.getUrl(API_CONFIG.ENDPOINTS.BANNERS_ACTIVE));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

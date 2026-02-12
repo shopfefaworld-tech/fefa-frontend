@@ -7,12 +7,19 @@ class BannerService {
   }
 
   // Helper method to get auth headers
-  getAuthHeaders() {
+  getAuthHeaders(includeJsonContentType = true) {
     const token = localStorage.getItem('fefa_access_token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
-    };
+    const headers = {};
+
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
   }
 
   // Get all banners (admin view - includes inactive)
@@ -20,7 +27,7 @@ class BannerService {
     try {
       const response = await fetch(`${this.baseURL}/banners`, {
         method: 'GET',
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(false)
       });
 
       const data = await response.json();
@@ -77,7 +84,7 @@ class BannerService {
       try {
         const response = await fetch(url, {
           method: 'GET',
-          headers: this.getAuthHeaders(),
+          headers: this.getAuthHeaders(false),
           signal: controller.signal
         });
 
@@ -166,7 +173,7 @@ class BannerService {
     try {
       const response = await fetch(`${this.baseURL}/banners/${id}`, {
         method: 'GET',
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(false)
       });
 
       const data = await response.json();
@@ -211,7 +218,7 @@ class BannerService {
       try {
         const response = await fetch(url, {
           method: 'GET',
-          headers: this.getAuthHeaders(),
+          headers: this.getAuthHeaders(false),
           signal: controller.signal
         });
 
@@ -368,7 +375,7 @@ class BannerService {
     try {
       const response = await fetch(`${this.baseURL}/banners/${id}/click`, {
         method: 'POST',
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(false)
       });
 
       const data = await response.json();
@@ -395,7 +402,7 @@ class BannerService {
     try {
       const response = await fetch(`${this.baseURL}/banners/${id}/impression`, {
         method: 'POST',
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(false)
       });
 
       const data = await response.json();

@@ -79,6 +79,7 @@ export default function QuickPickCard({
           fill
           className="object-cover"
           sizes="100px"
+          unoptimized={typeof image === 'string' && image.startsWith('http')}
         />
       </div>
 

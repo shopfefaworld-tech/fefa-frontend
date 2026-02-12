@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import dataService from '../services/dataService.js';
 
 export const useData = () => {
@@ -15,7 +15,7 @@ export const useData = () => {
     trending: null
   });
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -130,11 +130,6 @@ export const useData = () => {
     }
     return result;
   }, []);
-
-  // Load data on mount
-  useEffect(() => {
-    loadAllData();
-  }, [loadAllData]);
 
   return {
     data,
