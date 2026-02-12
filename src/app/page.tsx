@@ -13,6 +13,7 @@ import DataLoader from '@/components/DataLoader';
 import { useDataContext } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import bannerService from '@/services/bannerService';
+import { optimizeCloudinaryUrl } from '@/utils/cloudinary';
 import { 
   Category, 
   Product
@@ -111,6 +112,7 @@ export default function Home() {
   // Ensure arrays are not null and are actually arrays
   const safeJewelryCategories = getSafeArray(categories);
   const safeProducts = getSafeArray(products);
+  const activeHeroBanner = heroBanners[currentBannerIndex];
 
   const whatMakesFefaSpecial = [
     { title: 'Artisan Craftsmanship', description: 'Handmade by master jewelers using traditional techniques.', icon: FiTool },
@@ -719,8 +721,9 @@ export default function Home() {
             height={600}
             className="w-full"
             priority
+            fetchPriority="high"
+            loading="eager"
             sizes="100vw"
-            unoptimized
           />
         </div>
         {/* Mobile Banner (Below Laptop) */}
@@ -732,8 +735,9 @@ export default function Home() {
             height={600}
             className="w-full"
             priority
+            fetchPriority="high"
+            loading="eager"
             sizes="100vw"
-            unoptimized
           />
         </div>
       </section>
@@ -819,7 +823,9 @@ export default function Home() {
             >
               {safeJewelryCategories.map((category: Category, index: number) => {
                 const categoryImageSrc = imageMap[category.image || ''] || category.image || '/images/placeholder-category.jpg';
-                const skipCategoryOptimization = typeof categoryImageSrc === 'string' && categoryImageSrc.startsWith('http');
+                const categoryImage = typeof categoryImageSrc === 'string'
+                  ? optimizeCloudinaryUrl(categoryImageSrc, { width: 900 })
+                  : categoryImageSrc;
 
                 return (
                   <motion.div
@@ -834,13 +840,12 @@ export default function Home() {
                       <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
                         {/* Background Image */}
                         <Image
-                          src={categoryImageSrc}
+                          src={categoryImage}
                           alt={category.name}
                           fill
                           className="object-cover"
                           sizes="(max-width: 475px) 224px, (max-width: 640px) 240px, (max-width: 768px) 256px, (max-width: 1024px) 288px, (max-width: 1280px) 320px, 448px"
                           priority={index < 3}
-                          unoptimized={skipCategoryOptimization}
                         />
                       </div>
                       {/* Content below image */}
@@ -874,27 +879,20 @@ export default function Home() {
           <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             {/* Single carousel container with all banners */}
             <div className="relative w-full overflow-hidden rounded-lg" style={{ position: 'relative', maxHeight: '450px' }}>
-              {heroBanners.map((banner: any, index: number) => {
-                const isActive = index === currentBannerIndex;
-                return (
-                  <div
-                    key={banner._id || index}
-                    className={`w-full ${isActive ? 'block' : 'hidden'}`}
-                  >
-                    <Image
-                      src={banner.image}
-                      alt={banner.title || 'Hero Banner'}
-                      width={1920}
-                      height={450}
-                      className="w-full h-full object-cover"
-                      style={{ maxHeight: '450px', objectFit: 'cover' }}
-                      priority={index === 0}
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
-                      unoptimized={typeof banner.image === 'string' && banner.image.startsWith('http')}
-                    />
-                  </div>
-                );
-              })}
+              {activeHeroBanner && (
+                <div className="w-full">
+                  <Image
+                    src={optimizeCloudinaryUrl(activeHeroBanner.image, { width: 1920 })}
+                    alt={activeHeroBanner.title || 'Hero Banner'}
+                    width={1920}
+                    height={450}
+                    className="w-full h-full object-cover"
+                    style={{ maxHeight: '450px', objectFit: 'cover' }}
+                    priority
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
+                  />
+                </div>
+              )}
             </div>
             
             {/* Navigation Buttons - Single set for the entire carousel */}
@@ -1175,7 +1173,7 @@ export default function Home() {
                           {/* Background Image or Gradient */}
                           {occasion.image && !failedImages.has(occasion.image) ? (
                             <Image
-                              src={occasion.image}
+                              src={optimizeCloudinaryUrl(occasion.image, { width: 900 })}
                               alt={occasion.name}
                               fill
                               className="object-cover"
@@ -1184,7 +1182,6 @@ export default function Home() {
                                 // Track failed image to avoid retrying
                                 setFailedImages(prev => new Set(prev).add(occasion.image));
                               }}
-                              unoptimized={occasion.image.startsWith('/images/') || occasion.image.startsWith('http')}
                             />
                           ) : (
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50">

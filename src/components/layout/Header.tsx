@@ -265,6 +265,7 @@ export default function Header() {
               <button
                 type="submit"
                 className="p-2 text-[#DBC078] focus:outline-none hover:text-[#cfb570] transition-colors"
+                aria-label="Search products"
                 suppressHydrationWarning
               >
                 <FiSearch className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
@@ -302,6 +303,7 @@ export default function Header() {
                   <Link
                     href={item.href}
                     className="text-xs xl:text-sm font-medium uppercase tracking-wide transition-colors hover:text-[#cfb570] text-[#DBC078]"
+                    aria-label={item.isIcon ? 'Gift collections' : item.name}
                     onMouseEnter={() => item.hasDropdown && handleDropdownToggle(item.name)}
                   >
                     {item.isIcon ? (
@@ -407,7 +409,7 @@ export default function Header() {
           
           {/* User Icons */}
           <div className="flex items-center gap-3 xl:gap-4">
-             <Link href="/wishlist" className="p-2 text-[#DBC078] hover:text-[#cfb570] transition-colors relative">
+             <Link href="/wishlist" aria-label="Wishlist" className="p-2 text-[#DBC078] hover:text-[#cfb570] transition-colors relative">
                <FiHeart className="w-4 h-4 sm:w-5 sm:h-5" />
                {wishlistCount > 0 && (
                  <span className="absolute -top-1 -right-1 bg-[#cfb570] text-[#470031] text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
@@ -415,7 +417,7 @@ export default function Header() {
                  </span>
                )}
              </Link>
-             <Link href="/cart" className="p-2 text-[#DBC078] hover:text-[#cfb570] transition-colors relative">
+             <Link href="/cart" aria-label="Cart" className="p-2 text-[#DBC078] hover:text-[#cfb570] transition-colors relative">
                <FiShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
                {totalQuantity > 0 && (
                  <span className="absolute -top-1 -right-1 bg-[#cfb570] text-[#470031] text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
@@ -435,7 +437,7 @@ export default function Header() {
                 <div className="flex items-center space-x-2">
                   <Link 
                     href="/auth/login" 
-                    className="px-4 py-2 text-sm font-medium text-primary hover:text-accent transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-[#DBC078] hover:text-[#cfb570] transition-colors"
                   >
                     Sign In
                   </Link>

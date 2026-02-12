@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Dancing_Script } from "next/font/google";
+import { Cormorant_Garamond } from "next/font/google";
+import { Playfair_Display } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
@@ -21,6 +23,18 @@ const poppins = Poppins({
 
 const dancingScript = Dancing_Script({
   variable: "--font-dancing-script",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -113,7 +127,7 @@ export default function RootLayout({
         <link rel="preload" href="/fefa-shop-banner-biglogo.png" as="image" />
       </head>
       <body
-        className={`${poppins.variable} ${dancingScript.variable} antialiased`}
+        className={`${poppins.variable} ${dancingScript.variable} ${cormorant.variable} ${playfair.variable} antialiased`}
         suppressHydrationWarning={true}
       >
         <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false} storageKey="fefa-theme">

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiPlus, FiCheck } from 'react-icons/fi';
 import { useCart } from '@/contexts/CartContext';
+import { optimizeCloudinaryUrl } from '@/utils/cloudinary';
 
 interface QuickPickCardProps {
   _id: string;
@@ -74,12 +75,11 @@ export default function QuickPickCard({
       {/* Product Image */}
       <div className="quick-pick-image">
         <Image
-          src={image}
+          src={optimizeCloudinaryUrl(image, { width: 240 })}
           alt={name}
           fill
           className="object-cover"
           sizes="100px"
-          unoptimized={typeof image === 'string' && image.startsWith('http')}
         />
       </div>
 

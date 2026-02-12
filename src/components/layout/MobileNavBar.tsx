@@ -55,6 +55,7 @@ export default function MobileNavBar() {
             <div key={item.name} className="relative">
               <Link
                 href={item.href}
+                aria-label={item.name}
                 className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
                 onMouseEnter={() => setHoveredIcon(item.name)}
                 onMouseLeave={() => setHoveredIcon(null)}
@@ -137,6 +138,7 @@ export default function MobileNavBar() {
         <div className="relative">
           <Link 
             href="/wishlist" 
+            aria-label="Wishlist"
             className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 relative"
             onMouseEnter={() => setHoveredIcon('WISHLIST')}
             onMouseLeave={() => setHoveredIcon(null)}
@@ -166,6 +168,7 @@ export default function MobileNavBar() {
         <div className="relative">
           <Link 
             href="/cart" 
+            aria-label="Cart"
             className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 relative"
             onMouseEnter={() => setHoveredIcon('CART')}
             onMouseLeave={() => setHoveredIcon(null)}
@@ -199,6 +202,7 @@ export default function MobileNavBar() {
             </button>
           ) : isAuthenticated ? (
             <button
+              aria-label="Profile"
               className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
               onMouseEnter={() => setHoveredIcon('PROFILE')}
               onMouseLeave={() => setHoveredIcon(null)}
@@ -208,6 +212,7 @@ export default function MobileNavBar() {
             </button>
           ) : (
             <button 
+              aria-label="Sign in"
               onClick={() => openLoginModal()}
               className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
               onMouseEnter={() => setHoveredIcon('PROFILE')}

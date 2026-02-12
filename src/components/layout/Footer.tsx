@@ -41,7 +41,7 @@ export default function Footer() {
         {/* Footer Links */}
         <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-6 lg:gap-8 mb-6 xs:mb-8">
           <div>
-            <h4 className="font-medium text-base xs:text-lg mb-3 xs:mb-4 text-accent">Shop</h4>
+            <h3 className="font-medium text-base xs:text-lg mb-3 xs:mb-4 text-accent">Shop</h3>
             <ul className="space-y-1.5 xs:space-y-2">
               {footerLinks.shop.map((link) => (
                 <li key={link.name}>
@@ -53,7 +53,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-base xs:text-lg mb-3 xs:mb-4 text-accent">Company</h4>
+            <h3 className="font-medium text-base xs:text-lg mb-3 xs:mb-4 text-accent">Company</h3>
             <ul className="space-y-1.5 xs:space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
@@ -65,7 +65,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-base xs:text-lg mb-3 xs:mb-4 text-accent">Help</h4>
+            <h3 className="font-medium text-base xs:text-lg mb-3 xs:mb-4 text-accent">Help</h3>
             <ul className="space-y-1.5 xs:space-y-2">
               {footerLinks.help.map((link) => (
                 <li key={link.name}>
@@ -77,7 +77,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-base xs:text-lg mb-3 xs:mb-4 text-accent">Policies</h4>
+            <h3 className="font-medium text-base xs:text-lg mb-3 xs:mb-4 text-accent">Policies</h3>
             <ul className="space-y-1.5 xs:space-y-2">
               {footerLinks.policies.map((link) => (
                 <li key={link.name}>

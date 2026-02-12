@@ -11,6 +11,7 @@ import { ProductImage, Category } from '@/types/data';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { optimizeCloudinaryUrl } from '@/utils/cloudinary';
 import '@/styles/components/product/ProductCard.css';
 
 // Import product images for fallback
@@ -157,7 +158,10 @@ export default function ProductCard({
   // Get current image
   const currentImage = images && images.length > 0 ? images[currentImageIndex] : null;
   const currentImageUrl = currentImage ? getImageUrl(currentImage as any) : null;
-  const useUnoptimizedImage = typeof currentImageUrl === 'string' && currentImageUrl.startsWith('http');
+  const optimizedCurrentImageUrl =
+    typeof currentImageUrl === 'string'
+      ? optimizeCloudinaryUrl(currentImageUrl, { width: 900 })
+      : currentImageUrl;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -297,7 +301,7 @@ export default function ProductCard({
           {currentImageUrl && !imageError ? (
             <>
               <Image
-                src={currentImageUrl}
+                src={optimizedCurrentImageUrl}
                 alt={name}
                 fill
                 className={`object-cover transition-transform duration-500 ease-in-out ${
@@ -307,7 +311,6 @@ export default function ProductCard({
                 onError={handleImageError}
                 placeholder="blur"
                 blurDataURL={BLUR_DATA_URL}
-                unoptimized={useUnoptimizedImage}
               />
             </>
           ) : (
@@ -439,9 +442,9 @@ export default function ProductCard({
           {name}
         </h3>
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-3 sm:mb-4">
-          <span className="font-semibold text-accent text-base sm:text-xl">₹{price.toFixed(2)}</span>
+          <span className="font-semibold text-[#8A5A00] text-base sm:text-xl">₹{price.toFixed(2)}</span>
           {(comparePrice || originalPrice) && (
-            <span className="text-gray-400 line-through text-xs sm:text-sm">
+            <span className="text-gray-600 line-through text-xs sm:text-sm">
               ₹{((comparePrice || originalPrice) as number).toFixed(2)}
             </span>
           )}
