@@ -282,23 +282,26 @@ function CheckoutContent() {
                 <span>Previous</span>
               </button>
 
-              <button
-                onClick={handleNext}
-                disabled={!canProceedToNext() || isProcessing}
-                className="flex items-center gap-2 bg-accent text-white px-8 py-3 rounded-md hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>{currentStep === 2 ? 'Place Order' : 'Next'}</span>
-                    <FiArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+              {/* Only show primary next button on steps that don't already have their own CTA */}
+              {currentStep !== 2 && (
+                <button
+                  onClick={handleNext}
+                  disabled={!canProceedToNext() || isProcessing}
+                  className="flex items-center gap-2 bg-accent text-white px-8 py-3 rounded-md hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Next</span>
+                      <FiArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              )}
             </motion.div>
           )}
         </div>

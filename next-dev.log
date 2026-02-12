@@ -1,0 +1,27 @@
+
+> fefa-jewelry@0.1.0 dev
+> next dev --port 3007
+
+   ▲ Next.js 15.5.7
+   - Local:        http://localhost:3007
+   - Network:      http://192.168.1.200:3007
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 187s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1091ms (114 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 31.7s (1789 modules)
+ ⨯ Error: ENOENT: no such file or directory, open 'd:\FIFA\frontend\.next\required-server-files.json'
+    at async L (d:\FIFA\frontend\.next\server\app\page.js:1:44933) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'd:\\FIFA\\frontend\\.next\\required-server-files.json',
+  page: '/'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 15.1s (1989 modules)
+ GET / 500 in 48030ms
+ ✓ Compiled in 1167ms (906 modules)

@@ -6,30 +6,27 @@ import '@/styles/components/layout/Footer.css';
 
 const footerLinks = {
   shop: [
-    { name: 'Earrings', href: '/collections/earrings' },
-    { name: 'Necklaces', href: '/collections/necklaces' },
-    { name: 'Bangles', href: '/collections/bangles' },
-    { name: 'Rings', href: '/collections/rings' },
-    { name: 'Sets', href: '/collections/sets' },
-    { name: 'Gifting', href: '/collections/gifting' },
+    { name: 'Earrings', href: '/collections?category=earrings' },
+    { name: 'Necklaces', href: '/collections?category=necklaces' },
+    { name: 'Bangles', href: '/collections?category=bangles' },
+    { name: 'Rings', href: '/collections?category=rings' },
+    { name: 'Sets', href: '/collections?category=sets' },
+    { name: 'Gifting', href: '/gift' },
   ],
   company: [
     { name: 'About Us', href: '/about' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'Careers', href: '/careers' },
     { name: 'Contact Us', href: '/contact' },
   ],
   help: [
     { name: 'FAQs', href: '/faqs' },
     { name: 'Shipping', href: '/shipping' },
-    { name: 'Returns', href: '/returns' },
-    { name: 'Track Order', href: '/track-order' },
+    { name: 'Returns & Refunds', href: '/returns' },
     { name: 'Size Guide', href: '/size-guide' },
   ],
   policies: [
     { name: 'Terms & Conditions', href: '/terms' },
     { name: 'Privacy Policy', href: '/privacy' },
-    { name: 'Refund Policy', href: '/refund' },
+    { name: 'Return & Refund Policy', href: '/returns' },
   ],
 };
 
@@ -109,7 +106,7 @@ export default function Footer() {
             <Link href="https://youtube.com" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="YouTube">
               <FiYoutube className="w-4 h-4 xs:w-5 xs:h-5" />
             </Link>
-            <Link href="mailto:info@fefa.com" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="Email">
+            <Link href="mailto:shopfefa.world@gmail.com" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="Email">
               <FiMail className="w-4 h-4 xs:w-5 xs:h-5" />
             </Link>
           </div>

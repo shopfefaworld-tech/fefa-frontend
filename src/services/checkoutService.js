@@ -133,7 +133,7 @@ class CheckoutService {
   // Get user orders
   async getUserOrders() {
     try {
-      const response = await fetch(`${API_BASE_URL}/orders/user`, {
+      const response = await fetch(`${API_BASE_URL}/orders`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -151,28 +151,11 @@ class CheckoutService {
     }
   }
 
-  // Update order status
+  // Manual status updates are intentionally disabled.
   async updateOrderStatus(orderId, status) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
-        },
-        body: JSON.stringify({ status })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update order status');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      throw error;
-    }
+    throw new Error(
+      `Manual status updates are disabled for order ${orderId}. Requested status "${status}" was rejected because status is synced from Delhivery tracking events.`
+    );
   }
 
   // Send order confirmation email

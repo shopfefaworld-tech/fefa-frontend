@@ -5,8 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FiCheck, FiPackage, FiTruck, FiMail, FiDownload, FiHome, FiCreditCard, FiArrowLeft } from 'react-icons/fi';
+import { FiCheck, FiPackage, FiTruck, FiDownload, FiCreditCard, FiArrowLeft } from 'react-icons/fi';
 import MainLayout from '@/components/layout/MainLayout';
+import PrintableReceipt, { type PrintableReceiptData } from '@/components/orders/PrintableReceipt';
 import checkoutService from '@/services/checkoutService';
 
 // Helper function to get valid image URL
@@ -196,9 +197,80 @@ export default function OrderConfirmationPage() {
     );
   }
 
+  const formatVariantSummary = (variant?: string) => {
+    if (!variant) return undefined;
+    return variant;
+  };
+
+  const receiptData: PrintableReceiptData = {
+    orderNumber: order.orderNumber,
+    createdAt: order.createdAt,
+    status: order.status,
+    paymentStatus: order.payment.status,
+    paymentMethod: formatPaymentMethod(order.payment),
+    customer:
+      typeof order.user === 'object'
+        ? {
+            name: `${order.user.firstName} ${order.user.lastName}`.trim(),
+            email: order.user.email,
+            phone: order.user.phone,
+          }
+        : undefined,
+    shippingAddress: {
+      name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`.trim(),
+      phone: order.shippingAddress.phone,
+      addressLine1: order.shippingAddress.addressLine1,
+      addressLine2: order.shippingAddress.addressLine2,
+      city: order.shippingAddress.city,
+      state: order.shippingAddress.state,
+      postalCode: order.shippingAddress.postalCode,
+      country: order.shippingAddress.country,
+    },
+    billingAddress: order.billingAddress
+      ? {
+          name: `${order.billingAddress.firstName || ''} ${order.billingAddress.lastName || ''}`.trim(),
+          phone: order.billingAddress.phone,
+          addressLine1: order.billingAddress.addressLine1,
+          addressLine2: order.billingAddress.addressLine2,
+          city: order.billingAddress.city,
+          state: order.billingAddress.state,
+          postalCode: order.billingAddress.postalCode,
+          country: order.billingAddress.country,
+        }
+      : undefined,
+    tracking: {
+      carrier: order.tracking?.carrier,
+      trackingNumber: order.tracking?.trackingNumber,
+      trackingUrl: order.tracking?.trackingUrl,
+    },
+    items: order.items.map((item) => ({
+      name: item.name,
+      sku: item.sku,
+      quantity: item.quantity,
+      unitPrice: item.price,
+      total: item.total,
+      variantSummary: formatVariantSummary(item.variant),
+    })),
+    pricing: {
+      subtotal: order.pricing.subtotal,
+      tax: order.pricing.tax,
+      shipping: order.pricing.shipping,
+      discount: order.pricing.discount,
+      total: order.pricing.total,
+      currency: order.pricing.currency,
+    },
+  };
+
   return (
     <MainLayout>
-      <div className="min-h-screen pt-32 pb-16 px-4">
+      <div className="hidden print:block print:px-6 print:py-4">
+        <PrintableReceipt
+          data={receiptData}
+          title="Order Receipt"
+          subtitle="Customer copy"
+        />
+      </div>
+      <div className="min-h-screen pt-32 pb-16 px-4 print:hidden">
         <div className="container mx-auto max-w-6xl">
           {/* Back Button */}
           <motion.div

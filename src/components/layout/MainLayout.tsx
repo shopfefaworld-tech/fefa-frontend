@@ -1,6 +1,5 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
 import { FaWhatsapp } from 'react-icons/fa';
 import Header from './Header';
 import Footer from './Footer';
@@ -25,17 +24,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <>
       <TopBanner />
       <Header />
-      <AnimatePresence mode="wait">
-        <motion.main
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.3 }}
-          className="lg:min-h-screen bg-white transition-colors duration-300 pt-20 sm:pt-24 md:pt-28 lg:pt-32"
-        >
-          {children}
-        </motion.main>
-      </AnimatePresence>
+      <main className="lg:min-h-screen bg-white transition-colors duration-300 pt-20 sm:pt-24 md:pt-28 lg:pt-32">
+        {children}
+      </main>
 
       {/* Floating WhatsApp Chat Button */}
       <a

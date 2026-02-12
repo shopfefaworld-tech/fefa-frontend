@@ -113,6 +113,8 @@ export default function Home() {
   const safeJewelryCategories = getSafeArray(categories);
   const safeProducts = getSafeArray(products);
   const activeHeroBanner = heroBanners[currentBannerIndex];
+  const HOMEPAGE_PRODUCT_LIMIT = 10;
+  const HOMEPAGE_CAROUSEL_LIMIT = 8;
 
   const whatMakesFefaSpecial = [
     { title: 'Artisan Craftsmanship', description: 'Handmade by master jewelers using traditional techniques.', icon: FiTool },
@@ -159,7 +161,11 @@ export default function Home() {
       }
     };
 
-    loadHeroBanners();
+    const timerId = window.setTimeout(() => {
+      loadHeroBanners();
+    }, 1200);
+
+    return () => window.clearTimeout(timerId);
   }, []);
 
   // Auto-rotate banners if multiple exist
@@ -215,9 +221,9 @@ export default function Home() {
           ...activeProducts.filter((product: Product) => !featured.some((fp) => (fp as any)?._id === (product as any)?._id))
         ];
 
-    setFeaturedProducts(filledFeatured.slice(0, 20));
+    setFeaturedProducts(filledFeatured.slice(0, HOMEPAGE_PRODUCT_LIMIT));
     setLoadingFeaturedProducts(false);
-  }, [dataLoading, safeProducts]);
+  }, [dataLoading, safeProducts, HOMEPAGE_PRODUCT_LIMIT]);
 
   // Build trending products from context data (best sellers first) to avoid extra API calls
   useEffect(() => {
@@ -233,14 +239,14 @@ export default function Home() {
       return soldB - soldA;
     });
 
-    const topTrending = bestSellerSorted.slice(0, 20);
+    const topTrending = bestSellerSorted.slice(0, HOMEPAGE_PRODUCT_LIMIT);
     if (topTrending.length > 0) {
       setTrendingProducts(topTrending);
     } else {
-      setTrendingProducts(activeProducts.filter((product: Product) => product.isFeatured === true).slice(0, 20));
+      setTrendingProducts(activeProducts.filter((product: Product) => product.isFeatured === true).slice(0, HOMEPAGE_PRODUCT_LIMIT));
     }
     setLoadingTrendingProducts(false);
-  }, [dataLoading, safeProducts]);
+  }, [dataLoading, safeProducts, HOMEPAGE_PRODUCT_LIMIT]);
 
   // Load occasions (with cache + local fallback). Collections section is currently not rendered.
   useEffect(() => {
@@ -712,34 +718,18 @@ export default function Home() {
         id="brand-banner"
         className="hero-banner relative py-0 overflow-hidden mt-4 sm:mt-6 md:mt-8 w-full"
       >
-        {/* Desktop Banner (Laptop and up) */}
-        <div className="hidden lg:block w-full">
-          <Image
-            src="/Fefa-shop-banner.png"
-            alt="FEFA Shop Banner"
-            width={1920}
-            height={600}
-            className="w-full"
-            priority
-            fetchPriority="high"
-            loading="eager"
-            sizes="100vw"
-          />
-        </div>
-        {/* Mobile Banner (Below Laptop) */}
-        <div className="block lg:hidden w-full">
-          <Image
-            src="/fefa-shop-banner-biglogo.png"
-            alt="FEFA Shop Banner"
-            width={1920}
-            height={600}
-            className="w-full"
-            priority
-            fetchPriority="high"
-            loading="eager"
-            sizes="100vw"
-          />
-        </div>
+        <Image
+          src="/Fefa-shop-banner.png"
+          alt="FEFA Shop Banner"
+          width={1280}
+          height={500}
+          className="w-full h-auto"
+          priority
+          fetchPriority="high"
+          loading="eager"
+          quality={50}
+          sizes="(max-width: 768px) 100vw, 1280px"
+        />
       </section>
 
       {/* Jewelry Categories Section */}
@@ -821,10 +811,10 @@ export default function Home() {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {safeJewelryCategories.map((category: Category, index: number) => {
+              {safeJewelryCategories.slice(0, HOMEPAGE_CAROUSEL_LIMIT).map((category: Category, index: number) => {
                 const categoryImageSrc = imageMap[category.image || ''] || category.image || '/images/placeholder-category.jpg';
                 const categoryImage = typeof categoryImageSrc === 'string'
-                  ? optimizeCloudinaryUrl(categoryImageSrc, { width: 900 })
+                  ? optimizeCloudinaryUrl(categoryImageSrc, { width: 800 })
                   : categoryImageSrc;
 
                 return (
@@ -845,6 +835,7 @@ export default function Home() {
                           fill
                           className="object-cover"
                           sizes="(max-width: 475px) 224px, (max-width: 640px) 240px, (max-width: 768px) 256px, (max-width: 1024px) 288px, (max-width: 1280px) 320px, 448px"
+                          quality={55}
                           priority={index < 3}
                         />
                       </div>
@@ -871,7 +862,7 @@ export default function Home() {
       </section>
 
       {/* Hero Banner Section - Admin Managed (After Categories) */}
-      {!loadingBanners && heroBanners.length > 0 && (
+      {(loadingBanners || heroBanners.length > 0) && (
         <section 
           id="hero-banner"
           className="hero-banner relative py-0 overflow-hidden w-full"
@@ -879,7 +870,9 @@ export default function Home() {
           <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             {/* Single carousel container with all banners */}
             <div className="relative w-full overflow-hidden rounded-lg" style={{ position: 'relative', maxHeight: '450px' }}>
-              {activeHeroBanner && (
+              {loadingBanners ? (
+                <div className="w-full bg-gray-100 animate-pulse" style={{ height: '260px', maxHeight: '450px' }} />
+              ) : activeHeroBanner ? (
                 <div className="w-full">
                   <Image
                     src={optimizeCloudinaryUrl(activeHeroBanner.image, { width: 1920 })}
@@ -889,10 +882,11 @@ export default function Home() {
                     className="w-full h-full object-cover"
                     style={{ maxHeight: '450px', objectFit: 'cover' }}
                     priority
+                    quality={60}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
                   />
                 </div>
-              )}
+              ) : null}
             </div>
             
             {/* Navigation Buttons - Single set for the entire carousel */}
@@ -1159,7 +1153,7 @@ export default function Home() {
                 onTouchEnd={handleTouchEnd}
               >
                 {occasions.length > 0 ? (
-                  occasions.map((occasion: any, index: number) => (
+                  occasions.slice(0, HOMEPAGE_CAROUSEL_LIMIT).map((occasion: any, index: number) => (
                     <motion.div
                       key={occasion.value || occasion._id || index}
                       initial={{ opacity: 0, y: 30 }}
@@ -1173,11 +1167,12 @@ export default function Home() {
                           {/* Background Image or Gradient */}
                           {occasion.image && !failedImages.has(occasion.image) ? (
                             <Image
-                              src={optimizeCloudinaryUrl(occasion.image, { width: 900 })}
+                              src={optimizeCloudinaryUrl(occasion.image, { width: 800 })}
                               alt={occasion.name}
                               fill
                               className="object-cover"
                               sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
+                              quality={55}
                               onError={() => {
                                 // Track failed image to avoid retrying
                                 setFailedImages(prev => new Set(prev).add(occasion.image));

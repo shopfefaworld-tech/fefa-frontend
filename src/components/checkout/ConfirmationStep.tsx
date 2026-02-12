@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FiCheck, FiPackage, FiTruck, FiMail, FiDownload, FiHome, FiCreditCard, FiLoader } from 'react-icons/fi';
+import { FiCheck, FiPackage, FiTruck, FiDownload, FiCreditCard } from 'react-icons/fi';
 import { useCheckout } from '../../contexts/CheckoutContext';
 import { useCart } from '../../contexts/CartContext';
 import checkoutService from '../../services/checkoutService';
+import authService from '../../services/authService';
+import PrintableReceipt, { type PrintableReceiptData } from '../orders/PrintableReceipt';
 
 declare global {
   interface Window {
@@ -52,7 +54,27 @@ export default function ConfirmationStep() {
 
   const shipping = subtotal >= 1000 ? 0 : 99;
   const discount = 0;
-  const grandTotal = (order?.total || subtotal + shipping - discount);
+  // Prefer backend/order total (which already includes shipping), fall back to a simple local calculation
+  const grandTotal = (order?.total ?? (subtotal + shipping - discount));
+
+  const cancelPendingOrder = async (dbOrderId: string) => {
+    try {
+      const { accessToken } = authService.getStoredTokens();
+      if (!accessToken || !dbOrderId) return;
+
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${dbOrderId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: 'Payment was cancelled or failed at Razorpay checkout' }),
+      });
+    } catch (err) {
+      // Non-blocking: failure to cancel on backend should not break UI
+      console.error('Failed to cancel unpaid order:', err);
+    }
+  };
 
   // Load Razorpay script
   useEffect(() => {
@@ -178,6 +200,10 @@ export default function ConfirmationStep() {
           ondismiss: function() {
             setIsProcessingPayment(false);
             setPaymentInitiated(false);
+            // User closed the Razorpay modal without completing payment – cancel the pending order
+            if (dbOrderId) {
+              cancelPendingOrder(dbOrderId);
+            }
           }
         }
       };
@@ -187,6 +213,9 @@ export default function ConfirmationStep() {
         setIsProcessingPayment(false);
         setPaymentInitiated(false);
         alert('Payment failed: ' + (response.error.description || 'Unknown error'));
+        if (dbOrderId) {
+          cancelPendingOrder(dbOrderId);
+        }
       });
 
       razorpay.open();
@@ -264,8 +293,56 @@ export default function ConfirmationStep() {
     );
   }
 
+  const receiptData: PrintableReceiptData = {
+    orderNumber: order.id,
+    createdAt: order.createdAt,
+    status: order.status,
+    paymentStatus: paymentSuccess ? 'paid' : 'pending',
+    paymentMethod: formatPaymentMethod(order.paymentMethod),
+    customer: {
+      name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`.trim(),
+      email: order.shippingAddress.email,
+      phone: order.shippingAddress.phone,
+    },
+    shippingAddress: {
+      name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`.trim(),
+      email: order.shippingAddress.email,
+      phone: order.shippingAddress.phone,
+      addressLine1: order.shippingAddress.address || order.shippingAddress.addressLine1 || '',
+      addressLine2: order.shippingAddress.addressLine2,
+      city: order.shippingAddress.city,
+      state: order.shippingAddress.state,
+      postalCode: order.shippingAddress.zipCode || order.shippingAddress.postalCode || '',
+      country: order.shippingAddress.country,
+    },
+    items: order.items.map((item) => ({
+      name: item.productName,
+      sku: item.productId,
+      quantity: item.quantity,
+      unitPrice: item.price,
+      total: item.total,
+      variantSummary: item.variantName,
+    })),
+    pricing: {
+      subtotal: order.subtotal,
+      tax: 0,
+      shipping: order.shipping,
+      discount: order.discount,
+      total: order.total,
+      currency: 'INR',
+    },
+  };
+
   return (
-    <div className="p-6">
+    <>
+      <div className="hidden print:block print:px-6 print:py-4">
+        <PrintableReceipt
+          data={receiptData}
+          title="Order Receipt"
+          subtitle="Customer copy"
+        />
+      </div>
+      <div className="p-6 print:hidden">
       {/* Success Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -467,6 +544,7 @@ export default function ConfirmationStep() {
           </div>
         </motion.div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

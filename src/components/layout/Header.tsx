@@ -266,9 +266,11 @@ export default function Header() {
                 type="submit"
                 className="p-2 text-[#DBC078] focus:outline-none hover:text-[#cfb570] transition-colors"
                 aria-label="Search products"
+                title="Search products"
                 suppressHydrationWarning
               >
                 <FiSearch className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                <span className="sr-only">Search products</span>
               </button>
             </div>
           </form>

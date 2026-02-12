@@ -12,6 +12,8 @@ import {
   MdClose as X,
   MdSave as Save,
   MdLocalOffer as Tag,
+  MdImage as ImageIcon,
+  MdCloudUpload as Upload,
 } from 'react-icons/md';
 
 interface QuickPickProduct {
@@ -32,15 +34,26 @@ export default function QuickPicksPage() {
     price: '',
     comparePrice: '',
     image: '',
+    imageFile: null as File | null,
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-  const getAuthHeaders = () => ({
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('fefa_access_token') || '' : ''}`,
-  });
+  const getAuthHeaders = (includeJsonContentType = true) => {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${
+        typeof window !== 'undefined' ? localStorage.getItem('fefa_access_token') || '' : ''
+      }`,
+    };
+
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    return headers;
+  };
 
   const fetchQuickPicks = async () => {
     try {
@@ -101,7 +114,9 @@ export default function QuickPicksPage() {
       price: product.price.toString(),
       comparePrice: product.comparePrice.toString(),
       image: product.image,
+      imageFile: null,
     });
+    setImagePreview(product.image || null);
     setIsModalOpen(true);
   };
 
@@ -112,9 +127,38 @@ export default function QuickPicksPage() {
       name: '',
       price: '',
       comparePrice: '',
-      image: '/images/product-1.png',
+      image: '',
+      imageFile: null,
     });
+    setImagePreview(null);
     setIsModalOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image size must be less than 10MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setImagePreview(result);
+      setFormData((prev) => ({
+        ...prev,
+        image: result,
+        imageFile: file,
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   // Handle form submit
@@ -128,28 +172,48 @@ export default function QuickPicksPage() {
       alert('Quick Pick products must be under ₹200');
       return;
     }
-    
-    const payload = {
-      name: formData.name,
-      price,
-      comparePrice,
-      image: formData.image,
-    };
 
     try {
-      if (editingProduct) {
+      // If we have an image file, use FormData so the backend can upload to Cloudinary
+      if (formData.imageFile) {
+        const formDataToSend = new FormData();
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('price', price.toString());
+        formDataToSend.append('comparePrice', comparePrice.toString());
+        formDataToSend.append('image', formData.imageFile);
+
+        const url = editingProduct
+          ? `${apiUrl}/quick-picks/${editingProduct._id}`
+          : `${apiUrl}/quick-picks`;
+
+        const method = editingProduct ? 'PUT' : 'POST';
+
+        await fetch(url, {
+          method,
+          headers: getAuthHeaders(false),
+          body: formDataToSend,
+        });
+      } else {
+        // Fallback: allow keeping existing image on edit, but require image on create
+        if (!editingProduct) {
+          alert('Please upload a product image');
+          return;
+        }
+
+        const payload = {
+          name: formData.name,
+          price,
+          comparePrice,
+          image: formData.image || editingProduct.image,
+        };
+
         await fetch(`${apiUrl}/quick-picks/${editingProduct._id}`, {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(payload),
         });
-      } else {
-        await fetch(`${apiUrl}/quick-picks`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
-        });
       }
+
       await fetchQuickPicks();
       setIsModalOpen(false);
     } catch (error) {
@@ -476,17 +540,60 @@ export default function QuickPicksPage() {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Image URL
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Product Image
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.image}
-                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                        placeholder="/images/product-1.png"
-                      />
+                      <div className="mt-1 flex justify-center px-4 pt-4 pb-5 border-2 border-gray-300 border-dashed rounded-md">
+                        <div className="space-y-1 text-center">
+                          {imagePreview || formData.image ? (
+                            <div className="relative inline-block">
+                              <img
+                                src={imagePreview || formData.image}
+                                alt="Quick pick preview"
+                                className="mx-auto h-32 w-32 object-cover rounded-lg"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setImagePreview(null);
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    image: '',
+                                    imageFile: null,
+                                  }));
+                                }}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div>
+                              <ImageIcon className="mx-auto h-10 w-10 text-gray-400" />
+                              <div className="flex text-sm text-gray-600 justify-center">
+                                <label
+                                  htmlFor="quick-pick-image-upload"
+                                  className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
+                                >
+                                  <span className="inline-flex items-center">
+                                    <Upload className="h-4 w-4 mr-1" />
+                                    Upload an image
+                                  </span>
+                                  <input
+                                    id="quick-pick-image-upload"
+                                    name="quick-pick-image-upload"
+                                    type="file"
+                                    className="sr-only"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                  />
+                                </label>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="mt-5 sm:mt-6 flex gap-3">

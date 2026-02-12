@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import authService from '@/services/authService';
-import { signInWithGoogle, signOutUser, setupRecaptcha, sendOTP as sendPhoneOTP, verifyOTP, sendEmailOTP, verifyEmailOTP } from '@/config/firebase';
+
+const loadFirebaseAuth = () => import('@/config/firebase');
 
 interface User {
   id: string;
@@ -123,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isPhone) {
         // Phone OTP
         const formattedPhone = formatPhoneNumber(phoneOrEmail);
+        const { setupRecaptcha, sendOTP: sendPhoneOTP } = await loadFirebaseAuth();
         
         console.log('Setting up reCAPTCHA for phone:', formattedPhone);
         
@@ -202,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!confirmationResult) {
           throw new Error('OTP session expired. Please request a new OTP.');
         }
+        const { verifyOTP } = await loadFirebaseAuth();
         
         let firebaseUser;
         let idToken: string;
@@ -293,6 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsOTPLoading(true); // Use separate OTP loading state
       setError(null);
+      const { verifyEmailOTP } = await loadFirebaseAuth();
 
       const result = await verifyEmailOTP(email);
       const idToken = await result.user.getIdToken();
@@ -462,6 +466,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsOTPLoading(true); // Use separate OTP loading state instead of global isLoading
       setError(null);
+      const { signInWithGoogle } = await loadFirebaseAuth();
       
       const result = await signInWithGoogle();
       const idToken = await result.user.getIdToken();
@@ -531,6 +536,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Also sign out from Firebase
+      const { signOutUser } = await loadFirebaseAuth();
       await signOutUser();
     } catch (error) {
       console.error('Logout error:', error);

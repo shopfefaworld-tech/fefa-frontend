@@ -107,7 +107,6 @@ export default function ProductCard({
   const { isAuthenticated } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist: checkIsInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
@@ -126,20 +125,6 @@ export default function ProductCard({
     }
   }, [_id, id, isAuthenticated, checkIsInWishlist]);
 
-  // Auto-slide images infinitely
-  useEffect(() => {
-    if (!images || images.length <= 1) return;
-    if (isHovered) return; // Pause auto-slide on hover
-
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => {
-        return (prevIndex + 1) % images.length;
-      });
-    }, 3000); // Change image every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [images, isHovered]);
-  
   const handleProductClick = () => {
     router.push(`/product/${slug}`);
   };
@@ -156,12 +141,12 @@ export default function ProductCard({
   };
 
   // Get current image
-  const currentImage = images && images.length > 0 ? images[currentImageIndex] : null;
+  const currentImage = images && images.length > 0 ? images[0] : null;
   const currentImageUrl = currentImage ? getImageUrl(currentImage as any) : null;
-  const optimizedCurrentImageUrl =
+  const optimizedCurrentImageUrl: string | StaticImageData | undefined =
     typeof currentImageUrl === 'string'
-      ? optimizeCloudinaryUrl(currentImageUrl, { width: 900 })
-      : currentImageUrl;
+      ? optimizeCloudinaryUrl(currentImageUrl, { width: 700 })
+      : currentImageUrl || undefined;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -298,7 +283,7 @@ export default function ProductCard({
         onClick={handleProductClick}
       >
         <div className="w-full h-full relative overflow-hidden">
-          {currentImageUrl && !imageError ? (
+          {optimizedCurrentImageUrl && !imageError ? (
             <>
               <Image
                 src={optimizedCurrentImageUrl}
@@ -308,6 +293,7 @@ export default function ProductCard({
                   isHovered ? 'scale-110' : 'scale-100'
                 }`}
                 sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                quality={55}
                 onError={handleImageError}
                 placeholder="blur"
                 blurDataURL={BLUR_DATA_URL}

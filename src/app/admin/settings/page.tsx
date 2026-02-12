@@ -75,7 +75,7 @@ export default function SettingsPage() {
     adminNotifications: true,
 
     // Shipping Settings
-    shippingProvider: 'bluedart',
+    shippingProvider: 'delhivery',
     shippingAutoCreateShipment: false,
     shippingPickupPincode: '110001',
     shippingDefaultWeight: '0.5',
@@ -645,8 +645,10 @@ export default function SettingsPage() {
   const renderShippingSettings = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Blue Dart Shipping</h3>
-        <p className="mt-1 text-sm text-gray-500">Manage shipping automation and default shipment parameters</p>
+        <h3 className="text-lg font-medium text-gray-900">Shipping Provider</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Manage shipping automation and default shipment parameters. Configure Delhivery API credentials via environment variables.
+        </p>
       </div>
 
       <div className="bg-gray-50 border rounded-md p-4">
@@ -664,7 +666,7 @@ export default function SettingsPage() {
           disabled={testingShipping}
           className="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
         >
-          {testingShipping ? 'Testing...' : 'Test Blue Dart Connection'}
+          {testingShipping ? 'Testing...' : 'Test Shipping Connection'}
         </button>
       </div>
 
@@ -677,6 +679,7 @@ export default function SettingsPage() {
             onChange={handleInputChange}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
           >
+            <option value="delhivery">Delhivery</option>
             <option value="bluedart">Blue Dart</option>
             <option value="manual">Manual</option>
           </select>

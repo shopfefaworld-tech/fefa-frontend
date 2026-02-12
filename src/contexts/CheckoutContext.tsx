@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useCart } from './CartContext';
 import { useAuth } from './AuthContext';
 import checkoutService from '../services/checkoutService';
+import authService from '../services/authService';
 
 export interface ShippingAddress {
   firstName: string;
@@ -112,6 +113,7 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
 
   const { cart, subtotal, total, itemCount } = useCart();
   const { user } = useAuth();
+  const [savedAddressesCount, setSavedAddressesCount] = useState<number | null>(null);
 
   // Pre-fill email if user is logged in
   useEffect(() => {
@@ -119,6 +121,53 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       setShippingAddress(prev => ({ ...prev, email: user.email }));
     }
   }, [user, shippingAddress.email]);
+
+  // Pre-fill shipping address from saved default address (if any)
+  useEffect(() => {
+    const prefillFromSavedAddress = async () => {
+      if (!user) return;
+
+      try {
+        const { accessToken } = authService.getStoredTokens();
+        if (!accessToken) return;
+
+        const response = await authService.getProfile(accessToken);
+        const profileUser = (response as any).user || (response as any).data?.user || response;
+        const addresses = profileUser?.addresses || [];
+
+        setSavedAddressesCount(addresses.length);
+
+        if (!addresses.length) return;
+
+        const defaultAddress =
+          addresses.find((addr: any) => addr.isDefault) || addresses[0];
+
+        if (!defaultAddress) return;
+
+        setShippingAddress(prev => ({
+          ...prev,
+          firstName: defaultAddress.firstName || prev.firstName,
+          lastName: defaultAddress.lastName || prev.lastName,
+          email: prev.email || profileUser.email || '',
+          phone: defaultAddress.phone || prev.phone,
+          address: defaultAddress.addressLine1 || prev.address,
+          addressLine1: defaultAddress.addressLine1 || prev.addressLine1,
+          addressLine2: defaultAddress.addressLine2 || prev.addressLine2,
+          city: defaultAddress.city || prev.city,
+          state: defaultAddress.state || prev.state,
+          zipCode: defaultAddress.postalCode || prev.zipCode,
+          postalCode: defaultAddress.postalCode || prev.postalCode,
+          country: defaultAddress.country || prev.country || 'India',
+        }));
+      } catch (err) {
+        console.error('Failed to prefill shipping address from saved address:', err);
+      }
+    };
+
+    prefillFromSavedAddress();
+    // Only when authenticated user changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const clearError = () => setError(null);
 
@@ -185,6 +234,44 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
         phone: shippingAddress.phone,
       };
 
+      // Best-effort: save shipping address as a saved address for future orders
+      try {
+        const { accessToken } = authService.getStoredTokens();
+        if (accessToken) {
+          const addressPayload = {
+            type: 'home',
+            firstName: formattedShippingAddress.firstName,
+            lastName: formattedShippingAddress.lastName,
+            company: undefined as string | undefined,
+            addressLine1: formattedShippingAddress.addressLine1,
+            addressLine2: formattedShippingAddress.addressLine2 || undefined,
+            city: formattedShippingAddress.city,
+            state: formattedShippingAddress.state,
+            postalCode: formattedShippingAddress.postalCode,
+            country: formattedShippingAddress.country || 'India',
+            phone: formattedShippingAddress.phone,
+            // Make the first ever address default; otherwise respect existing defaults
+            isDefault: savedAddressesCount === 0,
+          };
+
+          const hasRequiredFields =
+            addressPayload.firstName &&
+            addressPayload.lastName &&
+            addressPayload.addressLine1 &&
+            addressPayload.city &&
+            addressPayload.state &&
+            addressPayload.postalCode &&
+            addressPayload.phone;
+
+          if (hasRequiredFields) {
+            await authService.addAddress(accessToken, addressPayload);
+          }
+        }
+      } catch (addressError) {
+        // Do not block checkout if saving address fails
+        console.error('Failed to save shipping address to saved addresses:', addressError);
+      }
+
       // Format cart items as fallback for backend (in case MongoDB cart sync failed)
       const formattedItems = cartItems.map(item => ({
         productId: typeof item.product === 'string' ? item.product : item.product._id,
@@ -206,6 +293,11 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
       }
 
       // Map API response to Order interface
+      const apiPricing = (response as any).order?.pricing;
+      const apiTotal =
+        (apiPricing && typeof apiPricing.total === 'number' ? apiPricing.total : undefined) ??
+        (typeof response.order.total === 'number' ? response.order.total : undefined);
+
       const newOrder: Order = {
         id: response.order._id || response.order.orderNumber,
         items: cartItems.map(item => ({
@@ -224,10 +316,23 @@ export const CheckoutProvider: React.FC<CheckoutProviderProps> = ({ children }) 
         })),
         shippingAddress,
         paymentMethod: methodToUse,
-        subtotal: response.order.pricing?.subtotal || subtotal,
-        discount: response.order.pricing?.discount || 0,
-        shipping: response.order.pricing?.shipping || (subtotal >= 1000 ? 0 : 99),
-        total: response.order.pricing?.total || total,
+        subtotal:
+          typeof apiPricing?.subtotal === 'number'
+            ? apiPricing.subtotal
+            : subtotal,
+        discount:
+          typeof apiPricing?.discount === 'number'
+            ? apiPricing.discount
+            : 0,
+        shipping:
+          typeof apiPricing?.shipping === 'number'
+            ? apiPricing.shipping
+            : (subtotal >= 1000 ? 0 : 99),
+        // Prefer backend-computed total (includes shipping), fall back to cart total
+        total:
+          typeof apiTotal === 'number'
+            ? apiTotal
+            : subtotal + (subtotal >= 1000 ? 0 : 99),
         status: response.order.status || 'pending',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()

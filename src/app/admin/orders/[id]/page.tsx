@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   MdArrowBack as ArrowLeft,
@@ -10,11 +10,10 @@ import {
   MdPhone as Phone,
   MdEmail as Mail,
   MdInventory as Package,
-  MdLocalShipping as Truck,
   MdAttachMoney as DollarSign,
   MdCalendarToday as Calendar
 } from 'react-icons/md';
-import adminService from '../../../../services/adminService';
+import PrintableReceipt, { type PrintableReceiptData } from '@/components/orders/PrintableReceipt';
 
 interface OrderItem {
   product: any;
@@ -82,24 +81,15 @@ interface OrderData {
 
 export default function OrderDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const orderId = params.id as string;
   
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [updating, setUpdating] = useState(false);
   const [creatingShipment, setCreatingShipment] = useState(false);
   const [requestingPickup, setRequestingPickup] = useState(false);
   const [refreshingTracking, setRefreshingTracking] = useState(false);
   const [generatingLabel, setGeneratingLabel] = useState(false);
-  const [newStatus, setNewStatus] = useState('');
-  const [statusNote, setStatusNote] = useState('');
-  const [trackingInfo, setTrackingInfo] = useState({
-    carrier: '',
-    trackingNumber: '',
-    url: ''
-  });
 
   useEffect(() => {
     loadOrder();
@@ -120,14 +110,6 @@ export default function OrderDetailsPage() {
 
       if (data.success && data.data) {
         setOrder(data.data);
-        setNewStatus(data.data.status);
-        if (data.data.tracking) {
-          setTrackingInfo({
-            carrier: data.data.tracking.carrier || '',
-            trackingNumber: data.data.tracking.trackingNumber || '',
-            url: data.data.tracking.trackingUrl || data.data.tracking.url || ''
-          });
-        }
       } else {
         setError(data.message || 'Failed to load order');
       }
@@ -174,52 +156,6 @@ export default function OrderDetailsPage() {
       console.error('Error creating shipment:', err);
     } finally {
       setCreatingShipment(false);
-    }
-  };
-
-  const handleUpdateOrder = async () => {
-    if (!order) return;
-    
-    try {
-      setUpdating(true);
-      
-      const updateData: any = {};
-      
-      if (newStatus !== order.status) {
-        updateData.status = newStatus;
-        updateData.note = statusNote || `Status updated to ${newStatus}`;
-      }
-      
-      if (trackingInfo.trackingNumber) {
-        updateData.tracking = {
-          ...trackingInfo,
-          trackingUrl: trackingInfo.url,
-        };
-      }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('fefa_access_token')}`
-        },
-        body: JSON.stringify(updateData)
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setOrder(data.data);
-        setStatusNote('');
-        alert('Order updated successfully');
-      } else {
-        alert(data.message || 'Failed to update order');
-      }
-    } catch (err) {
-      alert('Failed to update order');
-      console.error('Error updating order:', err);
-    } finally {
-      setUpdating(false);
     }
   };
 
@@ -306,6 +242,12 @@ export default function OrderDetailsPage() {
     }
   };
 
+  const handlePrintInvoice = () => {
+    if (!order) return;
+    // Prints the dedicated delivery receipt view.
+    window.print();
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -355,8 +297,84 @@ export default function OrderDetailsPage() {
     );
   }
 
+  const formatVariantSummary = (variant: any) => {
+    if (!variant) return undefined;
+    if (typeof variant === 'string') return variant;
+    if (typeof variant !== 'object') return undefined;
+    const entries = Object.entries(variant)
+      .map(([key, value]: [string, any]) => `${key}: ${value}`)
+      .join(', ');
+    return entries || undefined;
+  };
+
+  const receiptData: PrintableReceiptData = {
+    orderNumber: order.orderNumber,
+    createdAt: order.createdAt,
+    status: order.status,
+    paymentStatus: order.payment.status,
+    paymentMethod: order.payment.method,
+    customer: order.user
+      ? {
+          name: `${order.user.firstName} ${order.user.lastName}`,
+          email: order.user.email,
+          phone: order.user.phone,
+        }
+      : undefined,
+    shippingAddress: {
+      name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+      phone: order.shippingAddress.phone,
+      addressLine1: order.shippingAddress.addressLine1,
+      addressLine2: order.shippingAddress.addressLine2,
+      city: order.shippingAddress.city,
+      state: order.shippingAddress.state,
+      postalCode: order.shippingAddress.postalCode,
+      country: order.shippingAddress.country,
+    },
+    billingAddress: order.billingAddress
+      ? {
+          name: `${order.billingAddress.firstName || ''} ${order.billingAddress.lastName || ''}`.trim(),
+          phone: order.billingAddress.phone,
+          addressLine1: order.billingAddress.addressLine1,
+          addressLine2: order.billingAddress.addressLine2,
+          city: order.billingAddress.city,
+          state: order.billingAddress.state,
+          postalCode: order.billingAddress.postalCode,
+          country: order.billingAddress.country,
+        }
+      : undefined,
+    tracking: {
+      carrier: order.tracking?.carrier,
+      trackingNumber: order.tracking?.trackingNumber,
+      trackingUrl: order.tracking?.trackingUrl || order.tracking?.url,
+    },
+    items: order.items.map((item) => ({
+      name: item.name,
+      sku: item.sku,
+      quantity: item.quantity,
+      unitPrice: item.price,
+      total: item.total,
+      variantSummary: formatVariantSummary(item.variant),
+    })),
+    pricing: {
+      subtotal: order.pricing.subtotal,
+      tax: order.pricing.tax,
+      shipping: order.pricing.shipping,
+      discount: order.pricing.discount,
+      total: order.pricing.total,
+      currency: order.pricing.currency,
+    },
+  };
+
   return (
-    <div className="space-y-6">
+    <>
+      <div className="hidden print:block">
+        <PrintableReceipt
+          data={receiptData}
+          title="Delivery Box Receipt"
+          subtitle="Place this inside the package"
+        />
+      </div>
+      <div className="space-y-6 print:hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -373,7 +391,15 @@ export default function OrderDetailsPage() {
             </p>
           </div>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex items-center space-x-2">
+          <button
+            type="button"
+            onClick={handlePrintInvoice}
+            className="hidden sm:inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            <DollarSign className="h-4 w-4 mr-1" />
+            Print Delivery Receipt
+          </button>
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
           </span>
@@ -554,98 +580,40 @@ export default function OrderDetailsPage() {
             </div>
           </div>
 
-          {/* Update Order Status */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Update Order</h3>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Order Status Source</h3>
             </div>
             <div className="px-4 py-5 sm:p-6">
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
+                <p className="text-sm text-gray-700">
+                  Status updates are managed by Delhivery events and tracking sync. Manual status edits are disabled.
+                </p>
+                <div className="rounded-md border border-blue-200 bg-blue-50 p-3">
+                  <p className="text-sm text-blue-900">
+                    <span className="font-medium">Current status:</span>{' '}
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </p>
+                  <p className="mt-1 text-sm text-blue-900">
+                    <span className="font-medium">Tracking:</span>{' '}
+                    {order.tracking?.trackingNumber || 'Not assigned yet'}
+                  </p>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status Note (optional)
-                  </label>
-                  <textarea
-                    value={statusNote}
-                    onChange={(e) => setStatusNote(e.target.value)}
-                    rows={2}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="Add a note about this status change"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tracking Carrier
-                  </label>
-                  <input
-                    type="text"
-                    value={trackingInfo.carrier}
-                    onChange={(e) => setTrackingInfo({...trackingInfo, carrier: e.target.value})}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="e.g., FedEx, Blue Dart"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tracking Number
-                  </label>
-                  <input
-                    type="text"
-                    value={trackingInfo.trackingNumber}
-                    onChange={(e) => setTrackingInfo({...trackingInfo, trackingNumber: e.target.value})}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="Enter tracking number"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tracking URL
-                  </label>
-                  <input
-                    type="url"
-                    value={trackingInfo.url}
-                    onChange={(e) => setTrackingInfo({...trackingInfo, url: e.target.value})}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    placeholder="https://..."
-                  />
-                </div>
-
                 <button
-                  onClick={handleUpdateOrder}
-                  disabled={updating}
-                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  onClick={handleRefreshTracking}
+                  disabled={refreshingTracking || !order.tracking?.trackingNumber}
+                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-500 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {updating ? 'Updating...' : 'Update Order'}
+                  {refreshingTracking ? 'Syncing...' : 'Sync Status from Delhivery'}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Blue Dart Shipment */}
+          {/* Shipping Shipment */}
           <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Blue Dart Shipment</h3>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Shipment Details</h3>
             </div>
             <div className="px-4 py-5 sm:p-6">
               {order.tracking?.trackingNumber ? (
@@ -670,7 +638,7 @@ export default function OrderDetailsPage() {
                       Track Package
                     </a>
                   )}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                     <button
                       onClick={handleRequestPickup}
                       disabled={requestingPickup}
@@ -685,26 +653,19 @@ export default function OrderDetailsPage() {
                     >
                       {generatingLabel ? 'Generating...' : 'Generate Label'}
                     </button>
-                    <button
-                      onClick={handleRefreshTracking}
-                      disabled={refreshingTracking}
-                      className="inline-flex justify-center items-center px-3 py-2 border border-gray-500 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
-                    >
-                      {refreshingTracking ? 'Refreshing...' : 'Refresh Tracking'}
-                    </button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-gray-500">
-                    No shipment created yet. Create a Blue Dart shipment to get AWB and tracking.
+                    No shipment created yet. Create a shipment to get AWB and tracking.
                   </p>
                   <button
                     onClick={handleCreateShipment}
                     disabled={creatingShipment || order.status === 'pending' || order.status === 'cancelled'}
                     className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {creatingShipment ? 'Creating Shipment...' : 'Create Blue Dart Shipment'}
+                    {creatingShipment ? 'Creating Shipment...' : 'Create Shipment'}
                   </button>
                   {(order.status === 'pending' || order.payment.status === 'pending') && (
                     <p className="text-xs text-yellow-600 mt-2">
@@ -718,5 +679,6 @@ export default function OrderDetailsPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

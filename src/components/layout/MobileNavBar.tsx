@@ -56,12 +56,14 @@ export default function MobileNavBar() {
               <Link
                 href={item.href}
                 aria-label={item.name}
+                title={item.name}
                 className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
                 onMouseEnter={() => setHoveredIcon(item.name)}
                 onMouseLeave={() => setHoveredIcon(null)}
                 onClick={() => item.hasDropdown && handleDropdownToggle(item.name)}
               >
                 <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+                <span className="sr-only">{item.name}</span>
               </Link>
               
               {/* Hover Tooltip */}
@@ -98,6 +100,7 @@ export default function MobileNavBar() {
                         <button
                           onClick={() => setOpenDropdown(null)}
                           className="text-gray-500 hover:text-gray-700"
+                          aria-label="Close menu"
                         >
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -139,11 +142,13 @@ export default function MobileNavBar() {
           <Link 
             href="/wishlist" 
             aria-label="Wishlist"
+            title="Wishlist"
             className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 relative"
             onMouseEnter={() => setHoveredIcon('WISHLIST')}
             onMouseLeave={() => setHoveredIcon(null)}
           >
             <FiHeart className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+            <span className="sr-only">Wishlist</span>
             {wishlistCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                 {wishlistCount > 99 ? '99+' : wishlistCount}
@@ -169,11 +174,13 @@ export default function MobileNavBar() {
           <Link 
             href="/cart" 
             aria-label="Cart"
+            title="Cart"
             className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200 relative"
             onMouseEnter={() => setHoveredIcon('CART')}
             onMouseLeave={() => setHoveredIcon(null)}
           >
             <FiShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+            <span className="sr-only">Cart</span>
             {totalQuantity > 0 && (
               <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                 {totalQuantity > 99 ? '99+' : totalQuantity}
@@ -197,28 +204,32 @@ export default function MobileNavBar() {
         {/* User Profile Icon with Dropdown */}
         <div className="relative">
           {isLoading ? (
-            <button className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center">
+            <button aria-label="Loading profile" className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center">
               <div className="w-3 h-3 sm:w-4 sm:h-4 md:w-4 md:h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </button>
           ) : isAuthenticated ? (
             <button
               aria-label="Profile"
+              title="Profile"
               className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
               onMouseEnter={() => setHoveredIcon('PROFILE')}
               onMouseLeave={() => setHoveredIcon(null)}
               onClick={() => handleDropdownToggle('PROFILE')}
             >
               <FiUser className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+              <span className="sr-only">Profile</span>
             </button>
           ) : (
             <button 
               aria-label="Sign in"
+              title="Sign in"
               onClick={() => openLoginModal()}
               className="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-full bg-gray-100 flex items-center justify-center text-primary hover:transform hover:-translate-y-1 transition-all duration-300 hover:bg-gray-200"
               onMouseEnter={() => setHoveredIcon('PROFILE')}
               onMouseLeave={() => setHoveredIcon(null)}
             >
               <FiUser className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+              <span className="sr-only">Sign in</span>
             </button>
           )}
           

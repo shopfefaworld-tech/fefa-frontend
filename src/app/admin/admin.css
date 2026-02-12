@@ -1,6 +1,4 @@
 /* Enhanced Admin Theme - Matching Frontend Colors */
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
-
 :root {
   /* Core Brand Colors - Matching User Interface */
   --admin-background: #F8E4EB; /* Soft Pink - Background */
