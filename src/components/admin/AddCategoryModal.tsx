@@ -83,6 +83,7 @@ export default function AddCategoryModal({ isOpen, onClose, onSuccess }: AddCate
 
     try {
       setLoading(true);
+      const normalizedSortOrder = Number(formData.sortOrder) || 0;
       
       // Create FormData if image file exists, otherwise use JSON
       if (formData.imageFile) {
@@ -90,7 +91,7 @@ export default function AddCategoryModal({ isOpen, onClose, onSuccess }: AddCate
         formDataToSend.append('name', formData.name.trim());
         formDataToSend.append('description', formData.description.trim());
         formDataToSend.append('isActive', formData.isActive.toString());
-        formDataToSend.append('sortOrder', formData.sortOrder.toString());
+        formDataToSend.append('sortOrder', normalizedSortOrder.toString());
         formDataToSend.append('image', formData.imageFile);
 
         const result = await adminService.createCategory(formDataToSend);
@@ -118,7 +119,7 @@ export default function AddCategoryModal({ isOpen, onClose, onSuccess }: AddCate
           name: formData.name.trim(),
           description: formData.description.trim(),
           isActive: formData.isActive,
-          sortOrder: formData.sortOrder
+          sortOrder: normalizedSortOrder
         };
 
         const result = await adminService.createCategory(categoryData);

@@ -33,7 +33,7 @@ export default function BannersPage() {
   const [selectedPosition, setSelectedPosition] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedTargetType, setSelectedTargetType] = useState('All');
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortBy, setSortBy] = useState('sortOrder');
   const [sortOrder, setSortOrder] = useState('desc');
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);

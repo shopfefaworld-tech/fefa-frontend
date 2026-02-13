@@ -23,7 +23,7 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState('sortOrder');
   const [sortOrder, setSortOrder] = useState('asc');
   const [showInactive, setShowInactive] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);

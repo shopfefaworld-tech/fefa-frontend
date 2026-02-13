@@ -26,7 +26,7 @@ export async function GET() {
 
   const [banners, categories, products, collections, occasions] = await Promise.all([
     fetchJson<any>(`${API_BASE}/banners/active`, revalidateInit),
-    fetchJson<any>(`${API_BASE}/categories`, revalidateInit),
+    fetchJson<any>(`${API_BASE}/categories?sortBy=sortOrder&sortOrder=asc`, revalidateInit),
     fetchJson<any>(`${API_BASE}/products?isFeatured=true&limit=20`, revalidateInit),
     fetchJson<any>(`${API_BASE}/collections?sortBy=sortOrder&sortOrder=asc`, revalidateInit),
     fetchJson<any>(`${API_BASE}/occasions?sortBy=sortOrder&sortOrder=asc`, revalidateInit)

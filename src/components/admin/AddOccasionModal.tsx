@@ -99,6 +99,7 @@ export default function AddOccasionModal({ isOpen, onClose, onSuccess }: AddOcca
 
     try {
       setLoading(true);
+      const normalizedSortOrder = Number(formData.sortOrder) || 0;
       
       // Create FormData if image file exists, otherwise use JSON
       if (formData.imageFile) {
@@ -107,7 +108,7 @@ export default function AddOccasionModal({ isOpen, onClose, onSuccess }: AddOcca
         formDataToSend.append('value', formData.value.trim().toLowerCase());
         if (formData.description) formDataToSend.append('description', formData.description.trim());
         formDataToSend.append('isActive', formData.isActive.toString());
-        formDataToSend.append('sortOrder', formData.sortOrder.toString());
+        formDataToSend.append('sortOrder', normalizedSortOrder.toString());
         formDataToSend.append('image', formData.imageFile);
 
         const result = await adminService.createOccasion(formDataToSend);
@@ -136,7 +137,7 @@ export default function AddOccasionModal({ isOpen, onClose, onSuccess }: AddOcca
           value: formData.value.trim().toLowerCase(),
           description: formData.description.trim() || undefined,
           isActive: formData.isActive,
-          sortOrder: formData.sortOrder
+          sortOrder: normalizedSortOrder
         };
 
         const result = await adminService.createOccasion(occasionData);

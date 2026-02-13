@@ -130,7 +130,7 @@ const API_HELPERS = {
   // Categories API
   getCategories: async () => {
     try {
-      const response = await fetchWithRetry(API_HELPERS.getUrl(API_CONFIG.ENDPOINTS.CATEGORIES));
+      const response = await fetchWithRetry(API_HELPERS.getUrl(`${API_CONFIG.ENDPOINTS.CATEGORIES}?sortBy=sortOrder&sortOrder=asc`));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

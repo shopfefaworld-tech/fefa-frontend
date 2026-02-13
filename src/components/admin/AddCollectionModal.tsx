@@ -83,13 +83,14 @@ export default function AddCollectionModal({ isOpen, onClose, onSuccess }: AddCo
 
     try {
       setLoading(true);
+      const normalizedSortOrder = Number(formData.sortOrder) || 0;
       
       if (formData.imageFile) {
         const formDataToSend = new FormData();
         formDataToSend.append('name', formData.name.trim());
         formDataToSend.append('description', formData.description.trim());
         formDataToSend.append('isActive', formData.isActive.toString());
-        formDataToSend.append('sortOrder', formData.sortOrder.toString());
+        formDataToSend.append('sortOrder', normalizedSortOrder.toString());
         formDataToSend.append('image', formData.imageFile);
 
         const result = await adminService.createCollection(formDataToSend);
@@ -116,7 +117,7 @@ export default function AddCollectionModal({ isOpen, onClose, onSuccess }: AddCo
           name: formData.name.trim(),
           description: formData.description.trim(),
           isActive: formData.isActive,
-          sortOrder: formData.sortOrder
+          sortOrder: normalizedSortOrder
         };
 
         const result = await adminService.createCollection(collectionData);
