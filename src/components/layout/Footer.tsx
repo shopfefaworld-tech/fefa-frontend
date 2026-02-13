@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FiInstagram, FiFacebook, FiTwitter, FiYoutube, FiMail } from 'react-icons/fi';
+import { FiInstagram, FiMail } from 'react-icons/fi';
 import '@/styles/components/layout/Footer.css';
 
 const footerLinks = {
@@ -94,17 +94,8 @@ export default function Footer() {
             <p className="mt-1 text-xs xs:text-sm opacity-80">A Celebration of Femininity</p>
           </div>
           <div className="flex space-x-2 xs:space-x-3 sm:space-x-4">
-            <Link href="https://instagram.com" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="Instagram">
+            <Link href="https://www.instagram.com/shopfefa.world" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="Instagram">
               <FiInstagram className="w-4 h-4 xs:w-5 xs:h-5" />
-            </Link>
-            <Link href="https://facebook.com" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="Facebook">
-              <FiFacebook className="w-4 h-4 xs:w-5 xs:h-5" />
-            </Link>
-            <Link href="https://twitter.com" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="Twitter">
-              <FiTwitter className="w-4 h-4 xs:w-5 xs:h-5" />
-            </Link>
-            <Link href="https://youtube.com" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="YouTube">
-              <FiYoutube className="w-4 h-4 xs:w-5 xs:h-5" />
             </Link>
             <Link href="mailto:shopfefa.world@gmail.com" className="hover:text-accent transition-colors p-1.5 xs:p-2" aria-label="Email">
               <FiMail className="w-4 h-4 xs:w-5 xs:h-5" />

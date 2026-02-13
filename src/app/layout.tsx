@@ -42,8 +42,8 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL("https://shopfefa.world"),
   title: {
-    default: "fefa jewelry | Premium Minimal Jewelry for Indian Women",
-    template: "%s | fefa jewelry",
+    default: "FEFA – A Celebration of Femininity ✨",
+    template: "%s | FEFA",
   },
   description:
     "Premium minimal, everyday jewelry handcrafted for modern Indian women – necklaces, earrings, rings and bracelets for office, casual and festive wear.",
@@ -62,11 +62,11 @@ export const metadata: Metadata = {
     "fashion accessories",
   ],
   openGraph: {
-    title: "fefa jewelry | Premium Minimal Jewelry for Indian Women",
+    title: "FEFA – A Celebration of Femininity ✨",
     description:
       "Premium minimal, everyday jewelry handcrafted for modern Indian women – necklaces, earrings, rings and bracelets for office, casual and festive wear.",
     url: "https://www.shopfefa.world",
-    siteName: "fefa",
+    siteName: "FEFA",
     type: "website",
     locale: "en_IN",
     images: [
@@ -80,7 +80,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "fefa jewelry | Premium Minimal Jewelry for Indian Women",
+    title: "FEFA – A Celebration of Femininity ✨",
     description:
       "Premium minimal, everyday jewelry handcrafted for modern Indian women – necklaces, earrings, rings and bracelets for office, casual and festive wear.",
     images: ["/Fefa-shop-banner.png"],
