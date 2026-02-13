@@ -199,11 +199,43 @@ export default function CartPage() {
     return { rate: 0, label: '' };
   };
   
+  // Calculate coupon discount dynamically based on current subtotal and coupon details
+  const calculateCouponDiscount = () => {
+    if (!couponApplied || !appliedCouponDetails || subtotal <= 0) {
+      return 0;
+    }
+
+    const { discountType, discountValue, maxDiscount } = appliedCouponDetails;
+    
+    let discount = 0;
+
+    if (discountType === 'percentage' && typeof discountValue === 'number') {
+      // Percentage coupons should scale with current subtotal
+      discount = (subtotal * discountValue) / 100;
+    } else {
+      // Fixed coupons keep their rupee value but must not exceed subtotal
+      const baseDiscount = typeof discountValue === 'number' ? discountValue : couponDiscountAmount;
+      discount = baseDiscount;
+    }
+
+    // Respect maxDiscount if configured on the coupon
+    if (typeof maxDiscount === 'number' && maxDiscount > 0) {
+      discount = Math.min(discount, maxDiscount);
+    }
+
+    // Never allow coupon discount to exceed current subtotal
+    return Math.min(discount, subtotal);
+  };
+  
   const thresholdDiscount = getThresholdDiscount();
+  const couponEffectiveDiscount = calculateCouponDiscount();
   const thresholdDiscountAmount = subtotal * thresholdDiscount.rate;
-  // Use the higher of coupon discount (absolute) or threshold discount
-  const discountAmount = Math.max(couponDiscountAmount, thresholdDiscountAmount);
-  const finalTotal = subtotal - discountAmount;
+  // Use the higher of coupon discount (absolute) or threshold discount, but never exceed subtotal
+  const discountAmount = Math.min(
+    Math.max(couponEffectiveDiscount, thresholdDiscountAmount),
+    subtotal
+  );
+  const finalTotal = Math.max(subtotal - discountAmount, 0);
   // Shipping should be based on original subtotal, not discounted total
   const shipping = finalTotal > 0 ? (subtotal >= 1000 ? 0 : 99) : 0;
   const grandTotal = finalTotal + shipping;
@@ -488,10 +520,10 @@ export default function CartPage() {
                       <div className="flex justify-between text-green-600">
                         <span>
                           Discount 
-                          {thresholdDiscount.rate > 0 && thresholdDiscountAmount >= couponDiscountAmount && (
+                          {thresholdDiscount.rate > 0 && thresholdDiscountAmount >= couponEffectiveDiscount && (
                             <span className="text-xs ml-1">({thresholdDiscount.label} threshold)</span>
                           )} 
-                          {couponDiscountAmount > thresholdDiscountAmount && couponApplied && (
+                          {couponEffectiveDiscount > thresholdDiscountAmount && couponApplied && (
                             <span className="text-xs ml-1">(coupon)</span>
                           )}
                         </span>
@@ -603,13 +635,13 @@ export default function CartPage() {
                         <p className="text-green-600 text-sm">
                           {appliedCouponDetails?.discountType === 'percentage' && appliedCouponDetails.discountValue
                             ? `${appliedCouponDetails.discountValue}% off`
-                            : `₹${couponDiscountAmount.toFixed(2)} off`}
+                            : `₹${couponEffectiveDiscount.toFixed(2)} off`}
                           {appliedCouponDetails?.maxDiscount
                             ? ` (max ₹${appliedCouponDetails.maxDiscount})`
                             : ''}
                         </p>
                         <p className="text-green-600 text-xs">
-                          Code: {couponCode.toUpperCase()} • Saving ₹{couponDiscountAmount.toFixed(2)}
+                          Code: {couponCode.toUpperCase()} • Saving ₹{couponEffectiveDiscount.toFixed(2)}
                         </p>
                       </div>
                       <button
