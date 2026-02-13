@@ -122,6 +122,7 @@ export const loadProductsWithFilters = async (params: {
   page?: number;
   limit?: number;
   category?: string;
+  collection?: string;
   occasion?: string;
   occasions?: string[];
   minPrice?: number;
@@ -146,6 +147,7 @@ export const loadProductsWithFilters = async (params: {
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
     if (params.category) queryParams.append('category', params.category);
+    if (params.collection) queryParams.append('collection', params.collection);
     if (params.occasion) queryParams.append('occasion', params.occasion);
     if (params.occasions && params.occasions.length > 0) {
       queryParams.append('occasions', params.occasions.join(','));

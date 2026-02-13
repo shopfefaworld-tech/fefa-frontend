@@ -248,15 +248,13 @@ export default function Home() {
     setLoadingTrendingProducts(false);
   }, [dataLoading, safeProducts, HOMEPAGE_PRODUCT_LIMIT]);
 
-  // Load occasions (with cache + local fallback). Collections section is currently not rendered.
+  // Load occasions and collections (with cache + local fallback for occasions).
   useEffect(() => {
-    const loadOccasions = async () => {
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const cacheTtlMs = 5 * 60 * 1000;
+
+    const loadOccasions = async (): Promise<void> => {
       const cacheKey = 'fefa_home_occasions_cache';
-      const cacheTtlMs = 5 * 60 * 1000;
-      const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
-      setLoadingCollections(false);
-
       try {
         const cached = sessionStorage.getItem(cacheKey);
         if (cached) {
@@ -270,7 +268,6 @@ export default function Home() {
       } catch (_) {}
 
       let loadedOccasions: any[] = [];
-
       try {
         const occasionsResponse = await fetch(`${baseURL}/occasions?sortBy=sortOrder&sortOrder=asc`, {
           cache: 'force-cache'
@@ -283,7 +280,6 @@ export default function Home() {
         }
       } catch (_) {}
 
-      // Fallback to local data when backend is slow/unavailable
       if (loadedOccasions.length === 0) {
         try {
           const localResponse = await fetch('/data/collections-occasions.json', { cache: 'force-cache' });
@@ -298,16 +294,47 @@ export default function Home() {
 
       setOccasions(loadedOccasions);
       setLoadingOccasions(false);
-
       try {
-        sessionStorage.setItem(cacheKey, JSON.stringify({
-          data: loadedOccasions,
-          timestamp: Date.now()
-        }));
+        sessionStorage.setItem(cacheKey, JSON.stringify({ data: loadedOccasions, timestamp: Date.now() }));
       } catch (_) {}
     };
 
-    loadOccasions();
+    const loadCollections = async (): Promise<void> => {
+      setLoadingCollections(true);
+      const cacheKey = 'fefa_home_collections_cache';
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < cacheTtlMs && Array.isArray(parsed.data)) {
+            setCollections(parsed.data);
+            setLoadingCollections(false);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      let loadedCollections: any[] = [];
+      try {
+        const collectionsResponse = await fetch(`${baseURL}/collections?sortBy=sortOrder&sortOrder=asc`, {
+          cache: 'force-cache'
+        });
+        if (collectionsResponse.ok) {
+          const data = await collectionsResponse.json();
+          if (data.success && Array.isArray(data.data)) {
+            loadedCollections = (data.data || []).filter((col: any) => col.isActive !== false);
+          }
+        }
+      } catch (_) {}
+
+      setCollections(loadedCollections);
+      setLoadingCollections(false);
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify({ data: loadedCollections, timestamp: Date.now() }));
+      } catch (_) {}
+    };
+
+    void Promise.all([loadOccasions(), loadCollections()]);
   }, []);
 
   // Load collection product counts (if needed in future)
@@ -727,7 +754,7 @@ export default function Home() {
           priority
           fetchPriority="high"
           loading="eager"
-          quality={50}
+          quality={90}
           sizes="(max-width: 768px) 100vw, 1280px"
         />
       </section>
@@ -875,14 +902,14 @@ export default function Home() {
               ) : activeHeroBanner ? (
                 <div className="w-full">
                   <Image
-                    src={optimizeCloudinaryUrl(activeHeroBanner.image, { width: 1920 })}
+                    src={optimizeCloudinaryUrl(activeHeroBanner.image, { width: 1920, quality: 90 })}
                     alt={activeHeroBanner.title || 'Hero Banner'}
                     width={1920}
                     height={450}
                     className="w-full h-full object-cover"
                     style={{ maxHeight: '450px', objectFit: 'cover' }}
                     priority
-                    quality={60}
+                    quality={90}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 85vw"
                   />
                 </div>
@@ -930,6 +957,144 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Collections Section */}
+      <section id="collections-section" className="pb-4 pt-6 bg-white transition-colors duration-300">
+        <div className="container mx-auto px-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-4 xs:mb-5 sm:mb-6"
+          >
+            <h2 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl !font-cormorant text-primary mb-2 xs:mb-3">COLLECTIONS</h2>
+            <p className="text-dark-gray max-w-2xl mx-auto text-sm xs:text-base sm:text-lg">
+              Explore our curated jewelry collections
+            </p>
+          </motion.div>
+
+          <div className="relative group">
+            <button
+              onClick={() => scrollCollections('left')}
+              disabled={!canScrollCollectionsLeft}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                !canScrollCollectionsLeft 
+                  ? 'opacity-0 pointer-events-none' 
+                  : 'opacity-70 hover:opacity-100 hover:scale-110'
+              } flex items-center justify-center`}
+              aria-label="Previous collections"
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => scrollCollections('right')}
+              disabled={!canScrollCollectionsRight}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all duration-300 ${
+                !canScrollCollectionsRight 
+                  ? 'opacity-0 pointer-events-none' 
+                  : 'opacity-70 hover:opacity-100 hover:scale-110'
+              } flex items-center justify-center`}
+              aria-label="Next collections"
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            {loadingCollections ? (
+              <div 
+                className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-hidden scrollbar-hide pb-2 px-2 sm:px-3 md:px-4"
+                aria-hidden
+              >
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96">
+                    <div className="rounded-[1.25rem] xs:rounded-[1.5rem] overflow-hidden bg-gray-100 animate-pulse">
+                      <div className="aspect-[1/1.2] w-full bg-gray-200" />
+                      <div className="p-3 sm:p-4">
+                        <div className="h-5 bg-gray-200 rounded w-2/3 mx-auto" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div 
+                ref={setCollectionsSliderRef}
+                id="collections-slider"
+                className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 cursor-grab active:cursor-grabbing px-2 sm:px-3 md:px-4"
+                style={{ 
+                  scrollbarWidth: 'none', 
+                  msOverflowStyle: 'none',
+                  scrollBehavior: 'smooth',
+                  touchAction: 'auto'
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {collections.length > 0 ? (
+                  collections.slice(0, HOMEPAGE_CAROUSEL_LIMIT).map((collection: any, index: number) => (
+                    <motion.div
+                      key={collection.slug || collection._id || index}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                      className="group/card relative overflow-hidden rounded-[1.25rem] xs:rounded-[1.5rem] bg-transparent transition-all duration-500 cursor-pointer flex-shrink-0 w-48 xs:w-52 sm:w-56 md:w-64 lg:w-72 xl:w-96 flex flex-col"
+                    >
+                      <Link href={`/collections?collection=${collection.slug || collection._id}`} className="block flex flex-col h-full">
+                        <div className="relative aspect-[1/1.2] rounded-t-[1.25rem] xs:rounded-t-[1.5rem] overflow-hidden">
+                          {collection.image && !failedImages.has(collection.image) ? (
+                            <Image
+                              src={optimizeCloudinaryUrl(collection.image, { width: 800 })}
+                              alt={collection.name}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 475px) 192px, (max-width: 640px) 208px, (max-width: 768px) 224px, (max-width: 1024px) 256px, (max-width: 1280px) 288px, 384px"
+                              quality={55}
+                              onError={() => setFailedImages(prev => new Set(prev).add(collection.image))}
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50">
+                              <div className="absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-0">
+                                <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-cormorant text-primary opacity-20 group-hover/card:opacity-30 transition-opacity">
+                                  {collection.name ? collection.name.charAt(0) : 'C'}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-2 xs:p-3 sm:p-3 md:p-4 lg:p-4 text-center rounded-b-[1.25rem] xs:rounded-b-[1.5rem]">
+                          <motion.h3 
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                            viewport={{ once: true }}
+                            className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-cormorant mb-0.5 xs:mb-0.5 sm:mb-1 group-hover/card:scale-110 transition-transform duration-300 text-center leading-tight text-gray-900"
+                          >
+                            {collection.name}
+                          </motion.h3>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center w-full py-12">
+                    <p className="text-gray-500">No collections available</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Featured Products Section */}
       <section className="pb-4 pt-6 bg-white transition-colors duration-300">

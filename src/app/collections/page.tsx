@@ -328,6 +328,8 @@ function CollectionsContent() {
       const occasionsToFilter = selectedOccasions.includes('all') 
         ? [] 
         : selectedOccasions.filter(occ => occ !== 'all');
+
+      const collectionSlug = searchParams.get('collection') || undefined;
       
       let result;
       
@@ -367,6 +369,7 @@ function CollectionsContent() {
             page: 1,
             limit: 100, // Fetch more to ensure we get all products
             category: combo.category,
+            collection: collectionSlug,
             occasion: combo.occasion,
             minPrice: priceRange[0],
             maxPrice: priceRange[1],
@@ -428,6 +431,7 @@ function CollectionsContent() {
           page: page,
           limit: 9,
           category: categoriesToFilter.length > 0 ? categoriesToFilter[0] : undefined,
+          collection: collectionSlug,
           occasion: occasionsToFilter.length > 0 ? occasionsToFilter[0] : undefined,
           minPrice: priceRange[0],
           maxPrice: priceRange[1],
@@ -621,7 +625,7 @@ function CollectionsContent() {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  }, [selectedCategories, selectedOccasions, priceRange, sortBy, searchTerm]);
+  }, [selectedCategories, selectedOccasions, priceRange, sortBy, searchTerm, searchParams]);
 
   // Apply all pending filters
   const applyFilters = () => {
@@ -839,11 +843,12 @@ function CollectionsContent() {
   // Track if filters have been applied (to show products even when "all" is selected)
   const [filtersApplied, setFiltersApplied] = useState(false);
   
-  // Load products when any filter changes (if category is selected, occasion is selected, search is active, or filters have been applied)
+  // Load products when any filter changes (if category, collection, or occasion is selected, search is active, or filters have been applied)
   useEffect(() => {
     const hasCategorySelected = selectedCategories.length > 0 && !selectedCategories.includes('all');
-    // Show products if: category is selected, occasion is selected, search is active, or filters have been applied (even with "all" selected)
-    const shouldLoadProducts = hasCategorySelected || selectedOccasion || searchTerm || filtersApplied;
+    const hasCollectionParam = !!searchParams.get('collection');
+    // Show products if: category is selected, collection in URL, occasion is selected, search is active, or filters have been applied (even with "all" selected)
+    const shouldLoadProducts = hasCategorySelected || hasCollectionParam || selectedOccasion || searchTerm || filtersApplied;
     
     if (categories.length > 0 && shouldLoadProducts) {
       setCurrentPage(1);
@@ -856,7 +861,7 @@ function CollectionsContent() {
       setCurrentPage(1);
       setFiltersApplied(false);
     }
-  }, [loadFilteredProducts, categories.length, selectedCategories, selectedOccasion, searchTerm, priceRange, sortBy, filtersApplied]);
+  }, [loadFilteredProducts, categories.length, selectedCategories, selectedOccasion, searchTerm, priceRange, sortBy, filtersApplied, searchParams]);
   
   // Handle window width check for hydration safety
   useEffect(() => {
