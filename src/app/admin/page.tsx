@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   MdArrowForwardIos as ArrowRight,
@@ -11,6 +11,7 @@ import {
   MdAdd as Plus,
 } from 'react-icons/md';
 import adminService from '@/services/adminService';
+import analyticsService from '@/services/analyticsService';
 
 type DashboardOrder = {
   _id: string;
@@ -32,6 +33,7 @@ export default function AdminDashboard() {
     totalItems: 0,
   });
   const [toCollect, setToCollect] = useState(0);
+  const [thisWeekSales, setThisWeekSales] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -41,14 +43,15 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
 
-      const [statsRes, recentOrdersRes, inventoryRes, pendingOrdersRes] = await Promise.all([
-        adminService.getDashboardStats(),
-        adminService.getRecentOrders(5),
+      const [overviewRes, recentOrdersRes, inventoryRes, pendingOrdersRes, weeklyRevenueRes] = await Promise.all([
+        analyticsService.getOverview(),
+        adminService.getRecentOrders(20),
         adminService.getInventorySummary({ limit: 1 }),
-        adminService.getAllOrders({ status: 'pending', limit: 100 }),
+        adminService.getAllOrders({ paymentStatus: 'pending', limit: 200 }),
+        analyticsService.getRevenue('week'),
       ]);
 
-      if (statsRes.success) setStats(statsRes.data);
+      if (overviewRes.success) setStats(overviewRes.data);
       if (recentOrdersRes.success) setRecentOrders(recentOrdersRes.data || []);
       if (inventoryRes.success) {
         setInventoryTotals({
@@ -63,6 +66,25 @@ export default function AdminDashboard() {
         );
         setToCollect(pendingTotal);
       }
+
+      if (weeklyRevenueRes.success) {
+        const weekTotal = (weeklyRevenueRes.data || []).reduce(
+          (sum: number, entry: any) => sum + Number((entry as any)?.revenue || 0),
+          0
+        );
+        setThisWeekSales(weekTotal);
+      } else if (recentOrdersRes.success) {
+        // Fallback: approximate from recent orders within last 7 days
+        const now = Date.now();
+        const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+        const approxWeekSales = (recentOrdersRes.data || [])
+          .filter((o: DashboardOrder) => {
+            const createdAt = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+            return createdAt >= weekAgo;
+          })
+          .reduce((sum: number, order: DashboardOrder) => sum + Number(order?.pricing?.total || 0), 0);
+        setThisWeekSales(approxWeekSales);
+      }
     } finally {
       setLoading(false);
     }
@@ -76,17 +98,6 @@ export default function AdminDashboard() {
       setRefreshing(false);
     }
   };
-
-  const thisWeekSales = useMemo(() => {
-    const now = Date.now();
-    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
-    return recentOrders
-      .filter((o) => {
-        const createdAt = o.createdAt ? new Date(o.createdAt).getTime() : 0;
-        return createdAt >= weekAgo;
-      })
-      .reduce((sum, order) => sum + Number(order?.pricing?.total || 0), 0);
-  }, [recentOrders]);
 
   if (loading) {
     return (

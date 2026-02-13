@@ -1599,6 +1599,7 @@ class AdminService {
       // Add filters
       if (params.search) queryParams.append('search', params.search);
       if (params.status) queryParams.append('status', params.status);
+      if (params.paymentStatus) queryParams.append('paymentStatus', params.paymentStatus);
       
       // Add sorting
       if (params.sortBy) queryParams.append('sortBy', params.sortBy);

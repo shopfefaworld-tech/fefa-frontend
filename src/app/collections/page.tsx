@@ -774,10 +774,12 @@ function CollectionsContent() {
     const searchParam = searchParams.get('search');
     const categoryParam = searchParams.get('category');
     const occasionParam = searchParams.get('occasion');
+    const collectionParam = searchParams.get('collection');
     
     // Check if filters are present in URL (indicates filters have been applied)
-    // Only set this on initial load or when URL changes externally (not from applyFilters)
-    const hasUrlFilters = categoryParam || occasionParam || searchParam;
+    // Treat a collection slug in the URL as a real filter too, so
+    // landing on /collections?collection=... shows products, not the generic occasion chooser.
+    const hasUrlFilters = categoryParam || occasionParam || searchParam || collectionParam;
     if (hasUrlFilters) {
       setFiltersApplied(true);
     } else {
